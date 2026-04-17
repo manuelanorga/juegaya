@@ -130,7 +130,7 @@ export default function GamePage({ game }: { game: Game }) {
                       </li>
                     ))}
                   </ul>
-                  <div className="hidden md:block flex-shrink-0">
+                  <div className="flex-shrink-0">
                     <AdSlot size="300x250" label="Publicidad · 300×250" />
                   </div>
                 </div>
