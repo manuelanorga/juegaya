@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test de IQ Latam</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',sans-serif;background:#111120;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.container{max-width:600px;width:100%;}
+.card{background:#1e1e34;border-radius:20px;padding:32px;border:1px solid rgba(255,255,255,0.1);}
+.progress-bar{height:6px;background:#2e2e50;border-radius:3px;margin-bottom:28px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#ffd000,#ffaa00);border-radius:3px;transition:width .4s ease;}
+.question-num{font-size:12px;font-weight:800;color:#ffd000;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;}
+.question{font-size:20px;font-weight:800;line-height:1.4;margin-bottom:28px;}
+.options{display:flex;flex-direction:column;gap:12px;}
+.option{background:#262640;border:2px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px 20px;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;text-align:left;}
+.option:hover{border-color:#ffd000;background:#2e2e50;}
+.option.correct{border-color:#00e676;background:rgba(0,230,118,0.1);color:#00e676;}
+.option.wrong{border-color:#ff4444;background:rgba(255,68,68,0.1);color:#ff4444;}
+.option:disabled{cursor:not-allowed;}
+.result{text-align:center;}
+.result-emoji{font-size:80px;margin-bottom:16px;display:block;animation:pop .4s cubic-bezier(.34,1.56,.64,1);}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+.iq-score{font-size:72px;font-weight:900;color:#ffd000;line-height:1;}
+.iq-label{font-size:14px;color:rgba(255,255,255,0.4);font-weight:600;margin-bottom:8px;}
+.iq-title{font-size:26px;font-weight:900;margin-bottom:8px;}
+.iq-desc{font-size:14px;color:rgba(255,255,255,0.5);line-height:1.6;margin-bottom:28px;}
+.rank-badge{display:inline-block;background:rgba(255,208,0,0.1);border:1px solid rgba(255,208,0,0.3);border-radius:20px;padding:8px 20px;font-size:14px;font-weight:800;color:#ffd000;margin-bottom:24px;}
+.btn{display:block;width:100%;padding:16px;border-radius:14px;font-size:16px;font-weight:900;cursor:pointer;border:none;margin-bottom:12px;transition:transform .15s;}
+.btn:active{transform:scale(.97);}
+.btn-wa{background:#25D366;color:#fff;}
+.btn-retry{background:#262640;color:#fff;border:1px solid rgba(255,255,255,0.1);}
+.timer{font-size:13px;color:rgba(255,255,255,0.3);text-align:center;margin-top:16px;font-weight:600;}
+.intro{text-align:center;}
+.intro-emoji{font-size:72px;margin-bottom:16px;display:block;}
+.intro-title{font-size:28px;font-weight:900;margin-bottom:8px;}
+.intro-sub{font-size:14px;color:rgba(255,255,255,0.4);margin-bottom:28px;line-height:1.6;}
+.btn-start{background:linear-gradient(135deg,#ffd000,#ffaa00);color:#1a1000;font-size:18px;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card" id="card">
+
+    <!-- INTRO -->
+    <div class="intro" id="intro">
+      <span class="intro-emoji">🧠</span>
+      <div class="intro-title">Test de IQ Latam</div>
+      <div class="intro-sub">10 preguntas · ~3 minutos<br>Descubre si eres más inteligente que el 97% de Latam</div>
+      <button class="btn btn-start" onclick="startTest()">¡Comenzar test!</button>
+    </div>
+
+    <!-- QUIZ -->
+    <div id="quiz" style="display:none;">
+      <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+      <div class="question-num" id="qnum"></div>
+      <div class="question" id="question"></div>
+      <div class="options" id="options"></div>
+      <div class="timer" id="timer"></div>
+    </div>
+
+    <!-- RESULT -->
+    <div id="result" style="display:none;" class="result"></div>
+
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [
+  {
+    q: "Si tienes 3 manzanas y le das 2, ¿cuántas te quedan?",
+    opts: ["1", "2", "0", "3"],
+    correct: 0, points: 10
+  },
+  {
+    q: "¿Cuál es el siguiente número en la serie? 2, 4, 8, 16, __",
+    opts: ["24", "32", "20", "18"],
+    correct: 1, points: 15
+  },
+  {
+    q: "Un tren sale de la Ciudad de México a 120 km/h hacia Guadalajara (700 km). ¿En cuántas horas llega?",
+    opts: ["5.8h", "6.2h", "7h", "4.5h"],
+    correct: 0, points: 20
+  },
+  {
+    q: "¿Qué palabra no encaja? Perro, Gato, Mesa, Pájaro",
+    opts: ["Perro", "Gato", "Mesa", "Pájaro"],
+    correct: 2, points: 15
+  },
+  {
+    q: "Si CASA = 4 letras y PUERTA = 6 letras, ¿cuántas letras tiene VENTANA?",
+    opts: ["6", "7", "8", "5"],
+    correct: 1, points: 20
+  },
+  {
+    q: "¿Cuántos triángulos hay en una estrella de 6 puntas?",
+    opts: ["6", "8", "12", "2"],
+    correct: 2, points: 25
+  },
+  {
+    q: "Completa la analogía: Médico → Hospital :: Maestro → ?",
+    opts: ["Libro", "Escuela", "Estudiante", "Clase"],
+    correct: 1, points: 15
+  },
+  {
+    q: "¿Cuál es el resultado de: 15 × 15?",
+    opts: ["200", "225", "215", "230"],
+    correct: 1, points: 20
+  },
+  {
+    q: "Si el día de mañana es miércoles, ¿qué día fue hace 3 días?",
+    opts: ["Sábado", "Domingo", "Viernes", "Lunes"],
+    correct: 0, points: 25
+  },
+  {
+    q: "¿Qué número sigue en la serie? 1, 1, 2, 3, 5, 8, __",
+    opts: ["11", "12", "13", "10"],
+    correct: 2, points: 30
+  },
+]
+
+const IQ_LEVELS = [
+  { min: 0,   max: 39,  iq: 72,  emoji: '😅', title: 'Necesitas practicar más', desc: 'El 92% de Latam lo hace mejor. ¡No te rindas!', color: '#ff4444' },
+  { min: 40,  max: 79,  iq: 88,  emoji: '🤔', title: 'Por debajo del promedio', desc: 'Estás en el 60% inferior. Con práctica puedes mejorar.', color: '#ff9500' },
+  { min: 80,  max: 119, iq: 100, emoji: '😊', title: 'Inteligencia normal', desc: 'Estás en el promedio de Latam. Nada mal.', color: '#ffd000' },
+  { min: 120, max: 149, iq: 115, emoji: '😎', title: 'Por encima del promedio', desc: 'Eres más inteligente que el 75% de Latam. ¡Bien!', color: '#00d4ff' },
+  { min: 150, max: 174, iq: 128, emoji: '🧠', title: 'Inteligencia superior', desc: 'Top 10% de Latam. Eres NIVEL CRACK.', color: '#9b5fff' },
+  { min: 175, max: 200, iq: 142, emoji: '🔥', title: '¡GENIO LATAM!', desc: 'Top 3% de Latam. Solo 1 de cada 33 llega aquí.', color: '#ffd000' },
+]
+
+let current = 0
+let score = 0
+let answered = false
+let timerInterval
+
+function startTest() {
+  document.getElementById('intro').style.display = 'none'
+  document.getElementById('quiz').style.display = 'block'
+  showQuestion()
+}
+
+function showQuestion() {
+  answered = false
+  const q = QUESTIONS[current]
+  const pct = ((current) / QUESTIONS.length * 100)
+  document.getElementById('progress').style.width = pct + '%'
+  document.getElementById('qnum').textContent = `Pregunta ${current + 1} de ${QUESTIONS.length}`
+  document.getElementById('question').textContent = q.q
+  document.getElementById('options').innerHTML = q.opts.map((opt, i) =>
+    `<button class="option" onclick="answer(${i})">${opt}</button>`
+  ).join('')
+  startTimer()
+}
+
+let timeLeft = 20
+function startTimer() {
+  clearInterval(timerInterval)
+  timeLeft = 20
+  updateTimer()
+  timerInterval = setInterval(() => {
+    timeLeft--
+    updateTimer()
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval)
+      autoNext()
+    }
+  }, 1000)
+}
+
+function updateTimer() {
+  document.getElementById('timer').textContent = `⏱ ${timeLeft} segundos`
+}
+
+function autoNext() {
+  const btns = document.querySelectorAll('.option')
+  btns.forEach(b => b.disabled = true)
+  btns[QUESTIONS[current].correct].classList.add('correct')
+  setTimeout(next, 1000)
+}
+
+function answer(idx) {
+  if (answered) return
+  answered = true
+  clearInterval(timerInterval)
+  const q = QUESTIONS[current]
+  const btns = document.querySelectorAll('.option')
+  btns.forEach(b => b.disabled = true)
+  if (idx === q.correct) {
+    btns[idx].classList.add('correct')
+    score += q.points
+  } else {
+    btns[idx].classList.add('wrong')
+    btns[q.correct].classList.add('correct')
+  }
+  setTimeout(next, 1200)
+}
+
+function next() {
+  current++
+  if (current >= QUESTIONS.length) showResult()
+  else showQuestion()
+}
+
+function showResult() {
+  document.getElementById('quiz').style.display = 'none'
+  const level = IQ_LEVELS.find(l => score >= l.min && score <= l.max) || IQ_LEVELS[0]
+  const pct = Math.round((score / 195) * 100)
+  const shareMsg = `🧠 Hice el Test de IQ Latam en JuegaYa\n\nMi IQ estimado: ${level.iq}\n${level.emoji} ${level.title}\n\nTop ${100 - pct}% de Latam\n\n¿Puedes superarme? 👇\nhttps://juegaya.app/juego/test-iq`
+
+  document.getElementById('result').style.display = 'block'
+  document.getElementById('result').innerHTML = `
+    <span class="result-emoji">${level.emoji}</span>
+    <div class="iq-label">TU IQ ESTIMADO</div>
+    <div class="iq-score" style="color:${level.color}">${level.iq}</div>
+    <div style="margin:12px 0 8px;">
+      <div class="iq-title">${level.title}</div>
+    </div>
+    <div class="rank-badge">Top ${100 - pct}% de Latam 🌎</div>
+    <div class="iq-desc">${level.desc}</div>
+    <button class="btn btn-wa" onclick="share('${encodeURIComponent(shareMsg)}')">
+      💬 Compartir en WhatsApp
+    </button>
+    <button class="btn btn-retry" onclick="retry()">🔄 Intentar de nuevo</button>
+  `
+
+  // Send score to parent (JuegaYa portal)
+  window.parent.postMessage({
+    type: 'GAME_OVER',
+    game_id: 'test-iq',
+    score: score,
+    seconds_played: QUESTIONS.length * 15,
+  }, '*')
+}
+
+function share(msg) {
+  window.open(`https://wa.me/?text=${msg}`, '_blank')
+}
+
+function retry() {
+  current = 0
+  score = 0
+  answered = false
+  document.getElementById('result').style.display = 'none'
+  document.getElementById('intro').style.display = 'block'
+}
+</script>
+</body>
+</html>
