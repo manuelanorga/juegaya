@@ -15,6 +15,8 @@ interface Game {
   description: string
   tips: string[]
   faqs: { q: string; a: string }[]
+  aspectRatio?: string
+  fixedHeight?: string
 }
 
 const ALL_GAMES = [
@@ -27,11 +29,21 @@ const ALL_GAMES = [
   { slug: 'corre-mi-bro',    name: 'Corre mi Bro',          icon: null },
 ]
 
+const AdSlot = ({ size, label }: { size: string; label?: string }) => (
+  <div className="rounded-xl bg-[#1e1e34] border border-dashed border-white/10 flex flex-col items-center justify-center gap-1 text-white/20 text-xs font-bold"
+    style={{ minHeight: size === '728x90' ? '90px' : '250px' }}>
+    <span className="text-lg opacity-30">📢</span>
+    <span>{label || `Publicidad · ${size}`}</span>
+  </div>
+)
+
 export default function GamePage({ game }: { game: Game }) {
-  const related = ALL_GAMES.filter(g => g.slug !== game.slug).slice(0, 8)
+  const related = ALL_GAMES.filter(g => g.slug !== game.slug)
 
   return (
     <div className="min-h-screen bg-[#111120] text-white">
+
+      {/* HEADER */}
       <header className="sticky top-0 z-50 bg-[#111120]/95 backdrop-blur border-b border-white/5 h-[52px]">
         <div className="px-3 h-full flex items-center gap-2">
           <Link href="/" className="text-lg font-black text-yellow-400 flex-shrink-0">JUÉGAYA</Link>
@@ -47,11 +59,24 @@ export default function GamePage({ game }: { game: Game }) {
 
       <div className="flex flex-col xl:flex-row xl:h-[calc(100vh-52px)]">
 
-        <div className="flex-1 flex flex-col overflow-y-auto">
-          <div className="w-full bg-black flex items-center justify-center" style={game.fixedHeight ? {height: game.fixedHeight} : {aspectRatio: game.aspectRatio || '16/9', maxHeight: '80vh'}}>
-            <iframe src={game.iframeSrc} className="w-full h-full" title={`${game.name} gratis online`} allow="fullscreen" />
+        {/* COLUMNA PRINCIPAL */}
+        <div className="flex-1 flex flex-col overflow-y-auto min-w-0">
+
+          {/* IFRAME */}
+          <div className="w-full bg-black flex items-center justify-center"
+            style={game.fixedHeight
+              ? { height: game.fixedHeight }
+              : { aspectRatio: game.aspectRatio || '16/9', maxHeight: '80vh' }
+            }>
+            <iframe
+              src={game.iframeSrc}
+              className="w-full h-full"
+              title={`${game.name} gratis online`}
+              allow="fullscreen"
+            />
           </div>
 
+          {/* BARRA DEBAJO DEL JUEGO */}
           <div className="flex items-center gap-2 px-3 py-2 bg-[#1a1a2e] border-b border-white/5">
             <div className="flex items-center gap-2 flex-shrink-0 mr-2">
               <div className="w-7 h-7 rounded-lg bg-yellow-400 flex items-center justify-center text-xs font-black text-black">J</div>
@@ -66,6 +91,12 @@ export default function GamePage({ game }: { game: Game }) {
             </div>
           </div>
 
+          {/* AD 728x90 — justo debajo de la barra, como CrazyGames */}
+          <div className="px-3 py-2">
+            <AdSlot size="728x90" />
+          </div>
+
+          {/* INFO */}
           <div className="p-4 space-y-4">
             <div>
               <h1 className="text-xl font-black mb-2">{game.name}</h1>
@@ -79,11 +110,16 @@ export default function GamePage({ game }: { game: Game }) {
 
             <div className="flex flex-wrap gap-2">
               {game.tags.map(tag => (
-                <span key={tag} className="bg-white/5 border border-white/10 text-white/60 text-xs font-bold px-3 py-1.5 rounded-full cursor-pointer hover:border-yellow-400/30 hover:text-white transition-all">{tag}</span>
+                <span key={tag} className="bg-white/5 border border-white/10 text-white/60 text-xs font-bold px-3 py-1.5 rounded-full cursor-pointer hover:border-yellow-400/30 hover:text-white transition-all">
+                  {tag}
+                </span>
               ))}
             </div>
 
             <p className="text-white/60 text-sm leading-relaxed">{game.description}</p>
+
+            {/* AD 300x250 — en el contenido */}
+            <AdSlot size="300x250" label="Publicidad · 300×250" />
 
             {game.tips.length > 0 && (
               <div className="bg-[#1e1e34] rounded-xl border border-white/10 p-4">
@@ -98,6 +134,7 @@ export default function GamePage({ game }: { game: Game }) {
               </div>
             )}
 
+            {/* Juegos relacionados — mobile */}
             <div className="xl:hidden">
               <div className="font-black text-sm text-white/60 uppercase tracking-wider mb-3">Más juegos</div>
               <div className="grid grid-cols-2 gap-3">
@@ -115,6 +152,7 @@ export default function GamePage({ game }: { game: Game }) {
               </div>
             </div>
 
+            {/* FAQ */}
             <div className="bg-[#1e1e34] rounded-xl border border-white/10 p-4">
               <h2 className="font-black text-sm mb-4">Preguntas frecuentes</h2>
               <div className="space-y-4">
@@ -126,30 +164,36 @@ export default function GamePage({ game }: { game: Game }) {
                 ))}
               </div>
             </div>
+
           </div>
         </div>
 
-        <div className="hidden xl:flex flex-col w-[280px] flex-shrink-0 border-l border-white/5 overflow-y-auto bg-[#0e0e1a]">
+        {/* SIDEBAR — desktop */}
+        <div className="hidden xl:flex flex-col w-[300px] flex-shrink-0 border-l border-white/5 overflow-y-auto bg-[#0e0e1a]">
+
+          {/* AD 300x250 — ARRIBA del sidebar */}
           <div className="p-3 border-b border-white/5">
-            <div className="font-black text-sm text-white/40 uppercase tracking-wider">Más juegos</div>
+            <AdSlot size="300x250" label="Publicidad · 300×250" />
           </div>
-          <div className="p-2 space-y-1">
-            {related.map((g, i) => (
-              <Link key={i} href={`/juego/${g.slug}`} className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer">
-                <div className="w-16 h-16 rounded-lg overflow-hidden bg-[#1e1e34] flex-shrink-0 flex items-center justify-center text-2xl">
-                  {g.icon ? <img src={g.icon} alt={g.name} className="w-full h-full object-cover" /> : '🎮'}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-black text-sm truncate group-hover:text-yellow-400 transition-colors">{g.name}</div>
-                  <div className="text-xs text-white/40 mt-1">Jugar gratis →</div>
-                </div>
-              </Link>
-            ))}
+
+          {/* Juegos relacionados */}
+          <div className="p-3 border-b border-white/5">
+            <div className="font-black text-xs text-white/40 uppercase tracking-wider mb-3">Más juegos</div>
+            <div className="space-y-1">
+              {related.map((g, i) => (
+                <Link key={i} href={`/juego/${g.slug}`} className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer">
+                  <div className="w-14 h-14 rounded-lg overflow-hidden bg-[#1e1e34] flex-shrink-0 flex items-center justify-center text-2xl">
+                    {g.icon ? <img src={g.icon} alt={g.name} className="w-full h-full object-cover" /> : '🎮'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-black text-sm truncate group-hover:text-yellow-400 transition-colors">{g.name}</div>
+                    <div className="text-xs text-white/40 mt-1">Jugar gratis →</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
-          <div className="m-3 rounded-xl bg-[#1e1e34] border border-dashed border-white/8 h-[250px] flex flex-col items-center justify-center gap-2 text-white/20 text-xs font-bold">
-            <span className="text-2xl opacity-40">📢</span>
-            <span>Publicidad · 300×250</span>
-          </div>
+
         </div>
 
       </div>
