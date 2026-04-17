@@ -7,10 +7,11 @@ export const metadata: Metadata = {
 }
 
 const GAMES = [
-  { slug: 'cazador-zombies', name: 'Cazador de Zombies', description: 'Elimina hordas de zombies — 20 niveles', emoji: '🧟', difficulty: 75, players: '9,240', color: 'from-green-900 to-gray-900', badge: 'Nuevo' },
-  { slug: 'test-iq', name: 'Test de IQ Latam', description: '¿Eres más inteligente que el 97%?', emoji: '🧠', difficulty: 85, players: '15,020', color: 'from-purple-900 to-pink-900', badge: 'Viral' },
-  { slug: 'neon-bird', name: 'Neon Bird', description: 'Solo un genio llega al nivel 5', emoji: '🐦', difficulty: 58, players: '12,380', color: 'from-purple-900 to-blue-900', badge: 'Popular' },
-  { slug: 'test-reflejos', name: 'Test de Reflejos', description: '¿Tus reflejos son de élite o de abuelo?', emoji: '⚡', difficulty: 70, players: '8,430', color: 'from-yellow-900 to-orange-900', badge: 'Nuevo' },
+  { slug: 'gelatinas-locas', name: 'Gelatinas Locas', description: 'Combina 3 y supera todos los niveles', emoji: '🍬', icon: '/juegos/gelatinas-locas/icons/icon-256.png', difficulty: 45, players: '11,430', color: 'from-pink-900 to-purple-900', badge: 'Nuevo' },
+  { slug: 'cazador-zombies', name: 'Cazador de Zombies', description: 'Elimina hordas de zombies — 20 niveles', emoji: '🧟', icon: '/juegos/cazador-zombies/icons/icon-256.png', difficulty: 75, players: '9,240', color: 'from-green-900 to-gray-900', badge: 'Nuevo' },
+  { slug: 'test-iq', name: 'Test de IQ Latam', description: '¿Eres más inteligente que el 97%?', emoji: '🧠', icon: null, difficulty: 85, players: '15,020', color: 'from-purple-900 to-pink-900', badge: 'Viral' },
+  { slug: 'neon-bird', name: 'Neon Bird', description: 'Esquiva los obstáculos y sube al ranking', emoji: '🐦', icon: null, difficulty: 58, players: '12,380', color: 'from-blue-900 to-purple-900', badge: 'Popular' },
+  { slug: 'test-reflejos', name: 'Test de Reflejos', description: '¿Tus reflejos son de élite o de abuelo?', emoji: '⚡', icon: null, difficulty: 70, players: '8,430', color: 'from-yellow-900 to-orange-900', badge: 'Nuevo' },
 ]
 
 export default function Home() {
@@ -55,7 +56,10 @@ export default function Home() {
               {GAMES.map((game, i) => (
                 <Link key={i} href={`/juego/${game.slug}`} className="flex-shrink-0 w-[200px] bg-[#1e1e34] rounded-2xl border border-white/10 overflow-hidden hover:-translate-y-1 transition-all group">
                   <div className={`h-[130px] bg-gradient-to-br ${game.color} flex items-center justify-center relative`}>
-                    <span className="text-[60px] group-hover:scale-110 transition-transform">{game.emoji}</span>
+                    {game.icon
+  ? <img src={game.icon} alt={game.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+  : <span className="text-[60px] group-hover:scale-110 transition-transform">{game.emoji}</span>
+}
                     <span className="absolute top-2 left-2 bg-yellow-400 text-black text-[11px] font-black px-2 py-0.5 rounded">{game.difficulty}%</span>
                     <span className="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{game.badge}</span>
                   </div>
