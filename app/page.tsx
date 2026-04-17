@@ -7,6 +7,7 @@ export const metadata: Metadata = {
 }
 
 const GAMES = [
+  { slug: 'escape-vikingo', name: 'El Escape del Vikingo', description: 'Ayuda al vikingo a escapar de sus enemigos', emoji: '🪖', icon: '/juegos/escape-vikingo/icons/icon-256.png', difficulty: 68, players: '7,650', color: 'from-orange-900 to-yellow-900', badge: 'Nuevo' },
   { slug: 'gelatinas-locas', name: 'Gelatinas Locas', description: 'Combina 3 y supera todos los niveles', emoji: '🍬', icon: '/juegos/gelatinas-locas/icons/icon-256.png', difficulty: 45, players: '11,430', color: 'from-pink-900 to-purple-900', badge: 'Nuevo' },
   { slug: 'cazador-zombies', name: 'Cazador de Zombies', description: 'Elimina hordas de zombies — 20 niveles', emoji: '🧟', icon: '/juegos/cazador-zombies/icons/icon-256.png', difficulty: 75, players: '9,240', color: 'from-green-900 to-gray-900', badge: 'Nuevo' },
   { slug: 'test-iq', name: 'Test de IQ Latam', description: '¿Eres más inteligente que el 97%?', emoji: '🧠', icon: null, difficulty: 85, players: '15,020', color: 'from-purple-900 to-pink-900', badge: 'Viral' },
