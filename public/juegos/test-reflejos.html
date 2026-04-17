@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test de Reflejos</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',sans-serif;background:#111120;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.container{max-width:500px;width:100%;text-align:center;}
+.card{background:#1e1e34;border-radius:20px;padding:40px 32px;border:1px solid rgba(255,255,255,0.1);}
+.emoji{font-size:80px;margin-bottom:16px;display:block;}
+.title{font-size:26px;font-weight:900;margin-bottom:8px;}
+.sub{font-size:14px;color:rgba(255,255,255,0.4);margin-bottom:32px;line-height:1.6;}
+.btn{display:block;width:100%;padding:16px;border-radius:14px;font-size:16px;font-weight:900;cursor:pointer;border:none;margin-bottom:12px;transition:transform .15s;font-family:'Segoe UI',sans-serif;}
+.btn:active{transform:scale(.97);}
+.btn-start{background:linear-gradient(135deg,#ffd000,#ffaa00);color:#1a1000;}
+.btn-wa{background:#25D366;color:#fff;}
+.btn-retry{background:#262640;color:#fff;border:1px solid rgba(255,255,255,0.1);}
+.target-area{width:100%;height:300px;border-radius:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .1s;position:relative;overflow:hidden;margin-bottom:20px;border:2px solid rgba(255,255,255,0.1);}
+.target-area.waiting{background:#1a1a2e;}
+.target-area.ready{background:#1a3a1a;animation:pulse .3s ease-in-out;}
+.target-area.toosoon{background:#3a1a1a;}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
+.target-text{font-size:22px;font-weight:900;pointer-events:none;}
+.target-emoji{font-size:60px;pointer-events:none;}
+.countdown{font-size:72px;font-weight:900;color:#ffd000;}
+.result-time{font-size:80px;font-weight:900;line-height:1;}
+.result-label{font-size:13px;color:rgba(255,255,255,0.4);font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;}
+.rank-badge{display:inline-block;background:rgba(255,208,0,0.1);border:1px solid rgba(255,208,0,0.3);border-radius:20px;padding:8px 20px;font-size:14px;font-weight:800;color:#ffd000;margin:12px 0 20px;}
+.attempts{display:flex;justify-content:center;gap:8px;margin-bottom:20px;}
+.attempt-dot{width:12px;height:12px;border-radius:50%;background:#2e2e50;}
+.attempt-dot.done{background:#ffd000;}
+.attempt-dot.current{background:#00d4ff;animation:blink .8s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.times-list{display:flex;flex-direction:column;gap:6px;margin-bottom:20px;}
+.time-row{display:flex;justify-content:space-between;align-items:center;background:#262640;border-radius:8px;padding:8px 14px;font-size:13px;}
+.time-val{font-weight:900;color:#ffd000;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card" id="card">
+
+    <div id="intro">
+      <span class="emoji">⚡</span>
+      <div class="title">Test de Reflejos</div>
+      <div class="sub">3 intentos · Cuando la pantalla se ponga verde, ¡toca lo más rápido que puedas!<br><br>Descubre si tus reflejos son de élite o de abuelo 😄</div>
+      <button class="btn btn-start" onclick="startGame()">¡Comenzar!</button>
+    </div>
+
+    <div id="game" style="display:none;">
+      <div class="attempts" id="attempts"></div>
+      <div class="target-area waiting" id="targetArea" onclick="handleClick()">
+        <div class="target-text" id="targetText">
+          <span class="target-emoji">👆</span><br>
+          Toca cuando sea VERDE
+        </div>
+      </div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.3);font-weight:600;" id="instruction">Espera...</div>
+    </div>
+
+    <div id="result" style="display:none;"></div>
+
+  </div>
+</div>
+
+<script>
+let attempts = []
+let currentAttempt = 0
+let waitTimeout = null
+let startTime = null
+let gameState = 'waiting'
+const TOTAL_ATTEMPTS = 3
+
+const RANKS = [
+  { max: 150,  label: '🔥 REFLEJOS DE DIOS',     desc: 'Top 1% de Latam. Eres sobrehumano.', color: '#ffd000' },
+  { max: 200,  label: '⚡ ÉLITE',                 desc: 'Top 5% de Latam. Reflejos increíbles.', color: '#00d4ff' },
+  { max: 250,  label: '😎 CRACK',                 desc: 'Top 15% de Latam. Muy por encima del promedio.', color: '#9b5fff' },
+  { max: 300,  label: '👍 Bueno',                 desc: 'Por encima del promedio latinoamericano.', color: '#00e676' },
+  { max: 400,  label: '😊 Normal',                desc: 'Reflejos promedio. Puedes mejorar.', color: '#ffd000' },
+  { max: 9999, label: '😅 Necesitas practicar',   desc: 'El 80% de Latam tiene mejores reflejos.', color: '#ff6b35' },
+]
+
+function startGame() {
+  document.getElementById('intro').style.display = 'none'
+  document.getElementById('game').style.display = 'block'
+  attempts = []
+  currentAttempt = 0
+  renderAttempts()
+  nextAttempt()
+}
+
+function renderAttempts() {
+  document.getElementById('attempts').innerHTML = Array.from({length: TOTAL_ATTEMPTS}, (_, i) => {
+    let cls = 'attempt-dot'
+    if (i < currentAttempt) cls += ' done'
+    else if (i === currentAttempt) cls += ' current'
+    return `<div class="${cls}"></div>`
+  }).join('')
+}
+
+function nextAttempt() {
+  gameState = 'waiting'
+  const area = document.getElementById('targetArea')
+  const text = document.getElementById('targetText')
+  area.className = 'target-area waiting'
+  text.innerHTML = '<span style="font-size:48px;">🔴</span><br><span style="font-size:16px;font-weight:700;color:rgba(255,255,255,0.4);">Espera...</span>'
+  document.getElementById('instruction').textContent = 'No toques todavía...'
+
+  const delay = 1500 + Math.random() * 3000
+  waitTimeout = setTimeout(() => {
+    gameState = 'ready'
+    area.className = 'target-area ready'
+    text.innerHTML = '<span style="font-size:48px;">🟢</span><br><span style="font-size:20px;font-weight:900;">¡TOCA AHORA!</span>'
+    document.getElementById('instruction').textContent = '¡¡TOCA!!'
+    startTime = Date.now()
+  }, delay)
+}
+
+function handleClick() {
+  if (gameState === 'waiting') {
+    clearTimeout(waitTimeout)
+    gameState = 'toosoon'
+    const area = document.getElementById('targetArea')
+    const text = document.getElementById('targetText')
+    area.className = 'target-area toosoon'
+    text.innerHTML = '<span style="font-size:48px;">❌</span><br><span style="font-size:18px;font-weight:900;">¡Muy pronto!</span>'
+    document.getElementById('instruction').textContent = 'Intento desperdiciado'
+    attempts.push(999)
+    currentAttempt++
+    renderAttempts()
+    setTimeout(() => {
+      if (currentAttempt >= TOTAL_ATTEMPTS) showResult()
+      else nextAttempt()
+    }, 1500)
+    return
+  }
+
+  if (gameState === 'ready') {
+    const time = Date.now() - startTime
+    gameState = 'done'
+    attempts.push(time)
+    currentAttempt++
+    renderAttempts()
+
+    const area = document.getElementById('targetArea')
+    const text = document.getElementById('targetText')
+    area.className = 'target-area'
+    area.style.background = '#1a2a3a'
+    text.innerHTML = `<span style="font-size:56px;font-weight:900;color:#ffd000;">${time}ms</span><br><span style="font-size:14px;color:rgba(255,255,255,0.4);">Intento ${currentAttempt}</span>`
+
+    setTimeout(() => {
+      if (currentAttempt >= TOTAL_ATTEMPTS) showResult()
+      else nextAttempt()
+    }, 1200)
+  }
+}
+
+function showResult() {
+  document.getElementById('game').style.display = 'none'
+  const validTimes = attempts.filter(t => t < 900)
+  const avg = validTimes.length > 0
+    ? Math.round(validTimes.reduce((a, b) => a + b, 0) / validTimes.length)
+    : 999
+  const rank = RANKS.find(r => avg <= r.max) || RANKS[RANKS.length - 1]
+  const shareMsg = `⚡ Mi tiempo de reacción es ${avg}ms\n${rank.label}\n\n${rank.desc}\n\n¿Puedes superarme? 👇\nhttps://juegaya.app/juego/test-reflejos`
+
+  document.getElementById('result').style.display = 'block'
+  document.getElementById('result').innerHTML = `
+    <div class="result-label">TU TIEMPO PROMEDIO</div>
+    <div class="result-time" style="color:${rank.color}">${avg}ms</div>
+    <div style="font-size:20px;font-weight:900;margin:12px 0 4px;">${rank.label}</div>
+    <div class="rank-badge">Top Latam 🌎</div>
+    <div class="times-list">
+      ${attempts.map((t, i) => `
+        <div class="time-row">
+          <span>Intento ${i+1}</span>
+          <span class="time-val">${t >= 900 ? '❌ Muy pronto' : t + 'ms'}</span>
+        </div>
+      `).join('')}
+    </div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:20px;">${rank.desc}</div>
+    <button class="btn btn-wa" onclick="share('${encodeURIComponent(shareMsg)}')">💬 Compartir en WhatsApp</button>
+    <button class="btn btn-retry" onclick="retry()">🔄 Intentar de nuevo</button>
+  `
+
+  window.parent.postMessage({ type: 'GAME_OVER', game_id: 'test-reflejos', score: Math.max(0, 500 - avg), seconds_played: 30 }, '*')
+}
+
+function share(msg) { window.open(`https://wa.me/?text=${msg}`, '_blank') }
+function retry() {
+  document.getElementById('result').style.display = 'none'
+  document.getElementById('intro').style.display = 'block'
+  attempts = []
+  currentAttempt = 0
+}
+</script>
+</body>
+</html>
