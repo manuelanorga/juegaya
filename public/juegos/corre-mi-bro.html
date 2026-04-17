@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Corre mi Bro</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#111120;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:'Segoe UI',sans-serif;color:#fff;overflow:hidden;}
+canvas{border-radius:16px;display:block;}
+#ui{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+.screen{display:none;flex-direction:column;align-items:center;gap:16px;text-align:center;pointer-events:all;padding:20px;max-width:380px;width:100%;}
+.screen.active{display:flex;}
+.card{background:rgba(30,30,52,0.97);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:28px 24px;width:100%;}
+.title{font-size:32px;font-weight:900;color:#ffd000;margin-bottom:4px;}
+.sub{font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:20px;line-height:1.5;}
+.btn{width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:900;cursor:pointer;border:none;margin-bottom:10px;font-family:'Segoe UI',sans-serif;transition:transform .1s;}
+.btn:active{transform:scale(.97);}
+.btn-gold{background:linear-gradient(135deg,#ffd000,#ffaa00);color:#1a1000;}
+.btn-wa{background:#25D366;color:#fff;}
+.btn-outline{background:#262640;color:#fff;border:1px solid rgba(255,255,255,0.15);}
+.city-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.city-btn{padding:14px 10px;border-radius:12px;border:2px solid rgba(255,255,255,0.1);background:#1e1e34;cursor:pointer;transition:all .2s;pointer-events:all;}
+.city-btn:hover,.city-btn.selected{border-color:#ffd000;background:rgba(255,208,0,0.1);}
+.city-flag{font-size:28px;display:block;margin-bottom:4px;}
+.city-name{font-size:13px;font-weight:800;}
+.char-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.char-btn{padding:16px 10px;border-radius:12px;border:2px solid rgba(255,255,255,0.1);background:#1e1e34;cursor:pointer;transition:all .2s;pointer-events:all;}
+.char-btn:hover,.char-btn.selected{border-color:#ffd000;background:rgba(255,208,0,0.1);}
+.char-emoji{font-size:36px;display:block;margin-bottom:4px;}
+.char-name{font-size:13px;font-weight:800;}
+.score-display{position:absolute;top:16px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.1);border-radius:30px;padding:8px 20px;font-size:16px;font-weight:900;color:#ffd000;pointer-events:none;display:none;}
+.lives{position:absolute;top:16px;right:16px;font-size:20px;pointer-events:none;display:none;}
+.result-score{font-size:64px;font-weight:900;color:#ffd000;line-height:1;}
+.result-dist{font-size:18px;color:rgba(255,255,255,0.6);margin-bottom:4px;}
+.rank-pill{display:inline-block;background:rgba(255,208,0,0.12);border:1px solid rgba(255,208,0,0.3);border-radius:20px;padding:6px 16px;font-size:13px;font-weight:800;color:#ffd000;margin-bottom:16px;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="score-display" id="scoreDisplay">0m</div>
+<div class="lives" id="livesDisplay">❤️❤️❤️</div>
+
+<div id="ui">
+  <!-- CITY SELECT -->
+  <div class="screen active" id="cityScreen">
+    <div class="card">
+      <div class="title">Corre mi Bro 🏃</div>
+      <div class="sub">Elige tu ciudad y escapa del caos urbano latino</div>
+      <div class="city-grid">
+        <div class="city-btn" onclick="selectCity('lima','🇵🇪','Lima','#e63946','#2d1a00')" id="city-lima">
+          <span class="city-flag">🇵🇪</span><div class="city-name">Lima</div>
+        </div>
+        <div class="city-btn" onclick="selectCity('cdmx','🇲🇽','CDMX','#2d6a4f','#1a2d00')" id="city-cdmx">
+          <span class="city-flag">🇲🇽</span><div class="city-name">CDMX</div>
+        </div>
+        <div class="city-btn" onclick="selectCity('bogota','🇨🇴','Bogotá','#e9c46a','#2d2000')" id="city-bogota">
+          <span class="city-flag">🇨🇴</span><div class="city-name">Bogotá</div>
+        </div>
+        <div class="city-btn" onclick="selectCity('baires','🇦🇷','Buenos Aires','#4361ee','#00102d')" id="city-baires">
+          <span class="city-flag">🇦🇷</span><div class="city-name">Buenos Aires</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAR SELECT -->
+  <div class="screen" id="charScreen">
+    <div class="card">
+      <div class="title">Elige tu bro</div>
+      <div class="sub">¿Quién va a correr hoy?</div>
+      <div class="char-grid">
+        <div class="char-btn" onclick="selectChar('chico','🧑')" id="char-chico">
+          <span class="char-emoji">🧑</span><div class="char-name">El Bro</div>
+        </div>
+        <div class="char-btn" onclick="selectChar('chica','👩')" id="char-chica">
+          <span class="char-emoji">👩</span><div class="char-name">La Bro</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME OVER -->
+  <div class="screen" id="gameoverScreen">
+    <div class="card">
+      <div style="font-size:48px;margin-bottom:8px;" id="goEmoji">😅</div>
+      <div style="font-size:20px;font-weight:900;margin-bottom:4px;" id="goTitle">¡Te atraparon!</div>
+      <div class="result-dist" id="goDist"></div>
+      <div class="result-score" id="goScore"></div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:12px;">metros corridos</div>
+      <div class="rank-pill" id="goRank"></div>
+      <button class="btn btn-wa" onclick="shareResult()">💬 Compartir en WhatsApp</button>
+      <button class="btn btn-gold" onclick="restartGame()">🔄 Correr de nuevo</button>
+      <button class="btn btn-outline" onclick="changeCityChar()">🏙️ Cambiar ciudad</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const W = Math.min(window.innerWidth, 480)
+const H = Math.min(window.innerHeight, 700)
+const canvas = document.getElementById('c')
+const ctx = canvas.getContext('2d')
+canvas.width = W
+canvas.height = H
+
+// Game state
+let city = null, cityColor = null, cityBg = null, cityFlag = null, cityName = null
+let charEmoji = null
+let gameRunning = false
+let score = 0, distance = 0, lives = 3
+let speed = 4, frame = 0
+let raf
+
+// Lane system — 3 lanes
+const LANE_COUNT = 3
+const LANE_W = W / LANE_COUNT
+const lanes = [LANE_W*0.5, LANE_W*1.5, LANE_W*2.5]
+let playerLane = 1
+let playerY = H * 0.65
+let playerX = lanes[playerLane]
+let jumping = false, jumpVY = 0
+let sliding = false, slideTimer = 0
+
+// Obstacles & coins
+let obstacles = []
+let coins = []
+let particles = []
+let bgOffset = 0
+
+// City themes
+const CITIES = {
+  lima:    { color:'#e63946', bg:'#1a0a00', sky:'#1a0505', road:'#2d1500', stripe:'#e63946', obstacles:['🛺','🚌','🪣'], coins:'🪙' },
+  cdmx:    { color:'#2d6a4f', bg:'#001a0a', sky:'#001505', road:'#001500', stripe:'#2d6a4f', obstacles:['🌮','🚌','🏗️'], coins:'🪙' },
+  bogota:  { color:'#e9c46a', bg:'#1a1500', sky:'#100f00', road:'#201800', stripe:'#e9c46a', obstacles:['🥐','🚌','⛽'], coins:'🪙' },
+  baires:  { color:'#4361ee', bg:'#00001a', sky:'#000510', road:'#000520', stripe:'#4361ee', obstacles:['🥩','🚌','🏛️'], coins:'🪙' },
+}
+
+function selectCity(id, flag, name, color, bg) {
+  city = id; cityFlag = flag; cityName = name
+  document.querySelectorAll('.city-btn').forEach(b => b.classList.remove('selected'))
+  document.getElementById('city-'+id).classList.add('selected')
+  setTimeout(() => {
+    document.getElementById('cityScreen').classList.remove('active')
+    document.getElementById('charScreen').classList.add('active')
+  }, 300)
+}
+
+function selectChar(id, emoji) {
+  charEmoji = emoji
+  document.querySelectorAll('.char-btn').forEach(b => b.classList.remove('selected'))
+  document.getElementById('char-'+id).classList.add('selected')
+  setTimeout(() => {
+    document.getElementById('charScreen').classList.remove('active')
+    startGame()
+  }, 300)
+}
+
+function startGame() {
+  score = 0; distance = 0; lives = 3; speed = 4; frame = 0
+  playerLane = 1; playerX = lanes[1]; jumping = false; sliding = false
+  obstacles = []; coins = []; particles = []
+  gameRunning = true
+  document.getElementById('scoreDisplay').style.display = 'block'
+  document.getElementById('livesDisplay').style.display = 'block'
+  updateLivesDisplay()
+  setupControls()
+  if (raf) cancelAnimationFrame(raf)
+  loop()
+}
+
+function setupControls() {
+  // Touch swipe
+  let tx = 0, ty = 0
+  canvas.ontouchstart = e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY }
+  canvas.ontouchend = e => {
+    const dx = e.changedTouches[0].clientX - tx
+    const dy = e.changedTouches[0].clientY - ty
+    if (Math.abs(dx) > Math.abs(dy)) {
+      if (dx > 30) moveRight()
+      else if (dx < -30) moveLeft()
+    } else {
+      if (dy < -30) doJump()
+      else if (dy > 30) doSlide()
+    }
+  }
+  // Keyboard
+  document.onkeydown = e => {
+    if (e.key === 'ArrowLeft')  moveLeft()
+    if (e.key === 'ArrowRight') moveRight()
+    if (e.key === 'ArrowUp' || e.key === ' ') doJump()
+    if (e.key === 'ArrowDown') doSlide()
+  }
+}
+
+function moveLeft()  { if (playerLane > 0) playerLane-- }
+function moveRight() { if (playerLane < 2) playerLane++ }
+function doJump() {
+  if (!jumping && !sliding) { jumping = true; jumpVY = -18 }
+}
+function doSlide() {
+  if (!jumping) { sliding = true; slideTimer = 40 }
+}
+
+function updateLivesDisplay() {
+  document.getElementById('livesDisplay').textContent = '❤️'.repeat(lives) + '🖤'.repeat(3-lives)
+}
+
+function spawnObstacle() {
+  const theme = CITIES[city]
+  const lane = Math.floor(Math.random() * 3)
+  const emoji = theme.obstacles[Math.floor(Math.random() * theme.obstacles.length)]
+  obstacles.push({ x: lanes[lane], y: -60, lane, emoji, w: 44, h: 44 })
+}
+
+function spawnCoin() {
+  const lane = Math.floor(Math.random() * 3)
+  coins.push({ x: lanes[lane], y: -30, lane, collected: false })
+}
+
+function addParticle(x, y, color) {
+  for (let i = 0; i < 8; i++) {
+    const angle = Math.random() * Math.PI * 2
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * (Math.random() * 4 + 1),
+      vy: Math.sin(angle) * (Math.random() * 4 + 1),
+      life: 1, color, r: Math.random() * 5 + 2
+    })
+  }
+}
+
+function loop() {
+  if (!gameRunning) return
+  raf = requestAnimationFrame(loop)
+  frame++
+
+  const theme = CITIES[city]
+
+  // Draw background
+  ctx.fillStyle = theme.sky
+  ctx.fillRect(0, 0, W, H)
+
+  // Road
+  ctx.fillStyle = theme.road
+  ctx.fillRect(0, H * 0.35, W, H)
+
+  // Lane stripes
+  bgOffset = (bgOffset + speed) % 60
+  ctx.strokeStyle = theme.stripe + '44'
+  ctx.lineWidth = 3
+  ctx.setLineDash([30, 30])
+  for (let l = 1; l < LANE_COUNT; l++) {
+    ctx.beginPath()
+    ctx.moveTo(LANE_W * l, H * 0.35)
+    ctx.lineTo(LANE_W * l, H)
+    ctx.stroke()
+  }
+  ctx.setLineDash([])
+
+  // Buildings (simple rects as background)
+  ctx.fillStyle = theme.bg
+  const bldgs = [[0,80,60,180],[70,100,80,160],[160,60,70,200],[240,90,90,170],[340,70,60,190],[410,85,70,165]]
+  bldgs.forEach(([x,y,w,h]) => {
+    ctx.fillRect(x, H*0.35 - h, w, h)
+    ctx.fillStyle = theme.color + '33'
+    for (let wy = H*0.35-h+10; wy < H*0.35-10; wy += 20) {
+      for (let wx = x+5; wx < x+w-5; wx += 14) {
+        ctx.fillRect(wx, wy, 8, 10)
+      }
+    }
+    ctx.fillStyle = theme.bg
+  })
+
+  // City name & flag
+  ctx.font = 'bold 14px Segoe UI'
+  ctx.fillStyle = 'rgba(255,255,255,0.25)'
+  ctx.textAlign = 'left'
+  ctx.fillText(cityFlag + ' ' + cityName, 12, 28)
+
+  // Speed increases every 200m
+  speed = 4 + Math.floor(distance / 200) * 0.5
+
+  // Spawn
+  if (frame % Math.max(50, 90 - Math.floor(distance/100)*3) === 0) spawnObstacle()
+  if (frame % 60 === 0) spawnCoin()
+
+  // Update player position
+  playerX += (lanes[playerLane] - playerX) * 0.2
+
+  // Jump physics
+  if (jumping) {
+    jumpVY += 1
+    playerY += jumpVY
+    if (playerY >= H * 0.65) { playerY = H * 0.65; jumping = false; jumpVY = 0 }
+  }
+
+  // Slide timer
+  if (sliding) {
+    slideTimer--
+    if (slideTimer <= 0) sliding = false
+  }
+
+  // Draw coins
+  coins.forEach(coin => {
+    coin.y += speed
+    if (!coin.collected) {
+      ctx.font = '22px serif'
+      ctx.textAlign = 'center'
+      ctx.fillText('🪙', coin.x, coin.y)
+      // Collect
+      if (Math.abs(coin.x - playerX) < 35 && Math.abs(coin.y - playerY) < 35) {
+        coin.collected = true
+        score += 10
+        addParticle(coin.x, coin.y, '#ffd000')
+      }
+    }
+  })
+  coins = coins.filter(c => c.y < H + 40 && !c.collected)
+
+  // Draw obstacles
+  obstacles.forEach(obs => {
+    obs.y += speed
+    ctx.font = '36px serif'
+    ctx.textAlign = 'center'
+    ctx.fillText(obs.emoji, obs.x, obs.y)
+
+    // Collision
+    const hitH = sliding ? 20 : 44
+    const hitOffsetY = sliding ? 20 : 0
+    if (
+      Math.abs(obs.x - playerX) < 34 &&
+      playerY + hitOffsetY - obs.y < hitH &&
+      playerY + hitOffsetY - obs.y > -hitH &&
+      obs.y > H * 0.3
+    ) {
+      obs.y = -200
+      lives--
+      addParticle(playerX, playerY, '#ff4444')
+      updateLivesDisplay()
+      if (lives <= 0) { gameRunning = false; showGameOver(); return }
+    }
+  })
+  obstacles = obstacles.filter(o => o.y < H + 60)
+
+  // Draw player
+  ctx.font = sliding ? '28px serif' : '44px serif'
+  ctx.textAlign = 'center'
+  ctx.fillText(charEmoji || '🧑', playerX, playerY + (sliding ? 10 : 0))
+  if (jumping) {
+    ctx.font = '18px serif'
+    ctx.fillText('💨', playerX - 20, playerY + 20)
+  }
+
+  // Particles
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy; p.life -= 0.05
+    ctx.beginPath()
+    ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI*2)
+    ctx.fillStyle = p.color
+    ctx.globalAlpha = p.life
+    ctx.fill()
+    ctx.globalAlpha = 1
+  })
+  particles = particles.filter(p => p.life > 0)
+
+  // Distance & score
+  distance += speed * 0.1
+  const totalScore = Math.floor(distance) + score
+
+  document.getElementById('scoreDisplay').textContent =
+    Math.floor(distance) + 'm · 🪙' + score
+
+  // HUD speed indicator
+  ctx.font = 'bold 11px Segoe UI'
+  ctx.fillStyle = 'rgba(255,255,255,0.3)'
+  ctx.textAlign = 'right'
+  ctx.fillText('⚡ ' + speed.toFixed(1) + 'x', W - 12, 28)
+}
+
+function showGameOver() {
+  cancelAnimationFrame(raf)
+  document.getElementById('scoreDisplay').style.display = 'none'
+  document.getElementById('livesDisplay').style.display = 'none'
+  document.onkeydown = null
+  canvas.ontouchstart = null
+  canvas.ontouchend = null
+
+  const dist = Math.floor(distance)
+  const totalScore = dist + score
+
+  const ranks = [
+    { min: 1000, label: '🔥 LEYENDA DEL BARRIO', emoji: '👑' },
+    { min: 500,  label: '😎 CRACK TOTAL',         emoji: '🔥' },
+    { min: 250,  label: '💪 BUEN CORREDOR',        emoji: '💪' },
+    { min: 100,  label: '😅 TE FALTA CARDIO',      emoji: '😅' },
+    { min: 0,    label: '💀 NI ARRANCASTE',         emoji: '💀' },
+  ]
+  const rank = ranks.find(r => dist >= r.min) || ranks[ranks.length-1]
+
+  document.getElementById('goEmoji').textContent = rank.emoji
+  document.getElementById('goTitle').textContent = rank.label
+  document.getElementById('goDist').textContent = cityFlag + ' ' + cityName
+  document.getElementById('goScore').textContent = dist
+  document.getElementById('goRank').textContent = '🪙 ' + score + ' monedas recolectadas'
+  document.getElementById('gameoverScreen').classList.add('active')
+
+  window.parent.postMessage({
+    type: 'GAME_OVER', game_id: 'corre-mi-bro',
+    score: totalScore, seconds_played: Math.floor(dist / speed)
+  }, '*')
+}
+
+function shareResult() {
+  const dist = Math.floor(distance)
+  const msg = `🏃 Corrí ${dist}m en las calles de ${cityName} ${cityFlag}\n\nJuego: Corre mi Bro en JuegaYa\n\n¿Puedes superarme? 👇\nhttps://juegaya.app/juego/corre-mi-bro`
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
+}
+
+function restartGame() {
+  document.getElementById('gameoverScreen').classList.remove('active')
+  startGame()
+}
+
+function changeCityChar() {
+  document.getElementById('gameoverScreen').classList.remove('active')
+  document.getElementById('cityScreen').classList.add('active')
+  document.querySelectorAll('.city-btn,.char-btn').forEach(b => b.classList.remove('selected'))
+}
+</script>
+</body>
+</html>
