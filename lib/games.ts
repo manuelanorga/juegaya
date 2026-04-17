@@ -12,6 +12,10 @@ export interface Game {
   description: string
   tips: string[]
   faqs: { q: string; a: string }[]
+  color?: string
+  emoji?: string
+  badge?: string
+  difficulty?: number
   aspectRatio?: string
   fixedHeight?: string
 }
