@@ -7,6 +7,7 @@ export const metadata: Metadata = {
 }
 
 const GAMES = [
+  { slug: 'test-iq', name: 'Test de IQ Latam', description: '¿Eres más inteligente que el 97%?', emoji: '🧠', difficulty: 85, players: '15,020', color: 'from-purple-900 to-pink-900', badge: 'Viral' },
   { slug: 'neon-bird', name: 'Neon Bird', description: 'Solo un genio llega al nivel 5', emoji: '🐦', difficulty: 58, players: '12,380', color: 'from-purple-900 to-blue-900', badge: 'Popular' },
   { slug: 'neon-bird', name: 'Juego Imposible', description: 'Nivel 3 es casi imposible', emoji: '🎯', difficulty: 92, players: '9,520', color: 'from-red-900 to-purple-900', badge: 'Difícil' },
   { slug: 'neon-bird', name: 'Test de Reflejos', description: '¿Reaccionas más rápido?', emoji: '⚡', difficulty: 71, players: '6,800', color: 'from-yellow-900 to-orange-900', badge: 'Nuevo' },
