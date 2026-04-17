@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 const GAMES = [
   { slug: 'test-iq', name: 'Test de IQ Latam', description: '¿Eres más inteligente que el 97%?', emoji: '🧠', difficulty: 85, players: '15,020', color: 'from-purple-900 to-pink-900', badge: 'Viral' },
   { slug: 'neon-bird', name: 'Neon Bird', description: 'Solo un genio llega al nivel 5', emoji: '🐦', difficulty: 58, players: '12,380', color: 'from-purple-900 to-blue-900', badge: 'Popular' },
+  { slug: 'test-reflejos', name: 'Test de Reflejos', description: '¿Tus reflejos son de élite o de abuelo?', emoji: '⚡', difficulty: 70, players: '8,430', color: 'from-yellow-900 to-orange-900', badge: 'Nuevo' },
 ]
 
 export default function Home() {
