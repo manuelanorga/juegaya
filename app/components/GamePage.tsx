@@ -48,7 +48,7 @@ export default function GamePage({ game }: { game: Game }) {
       <div className="flex flex-col xl:flex-row xl:h-[calc(100vh-52px)]">
 
         <div className="flex-1 flex flex-col overflow-y-auto">
-          <div className="w-full bg-black" style={{aspectRatio:'16/9'}}>
+          <div className="w-full bg-black flex items-center justify-center" style={game.fixedHeight ? {height: game.fixedHeight} : {aspectRatio: game.aspectRatio || '16/9', maxHeight: '80vh'}}>
             <iframe src={game.iframeSrc} className="w-full h-full" title={`${game.name} gratis online`} allow="fullscreen" />
           </div>
 
