@@ -11,6 +11,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/juego/test-reflejos/`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${base}/juego/corre-mi-bro/`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${base}/juego/cazador-zombies/`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${base}/juego/gelatinas-locas/`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${base}/juego/escape-vikingo/`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${base}/juegos/arcade/`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
     { url: `${base}/ranking/`, lastModified: now, changeFrequency: 'daily', priority: 0.7 },
   ]
