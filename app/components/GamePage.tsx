@@ -31,7 +31,7 @@ const ALL_GAMES = [
 
 const AdSlot = ({ size, label }: { size: string; label?: string }) => (
   <div className="rounded-xl bg-[#1e1e34] border border-dashed border-white/10 flex flex-col items-center justify-center gap-1 text-white/20 text-xs font-bold"
-    style={{ minHeight: size === '728x90' ? '90px' : '250px' }}>
+    style={{ minHeight: size === '728x90' ? '90px' : '250px', minWidth: size === '300x250' ? '300px' : undefined }}>
     <span className="text-lg opacity-30">📢</span>
     <span>{label || `Publicidad · ${size}`}</span>
   </div>
@@ -91,7 +91,7 @@ export default function GamePage({ game }: { game: Game }) {
             </div>
           </div>
 
-          {/* AD 728x90 — justo debajo de la barra, como CrazyGames */}
+          {/* AD 728x90 — justo debajo de la barra */}
           <div className="px-3 py-2">
             <AdSlot size="728x90" />
           </div>
@@ -118,19 +118,22 @@ export default function GamePage({ game }: { game: Game }) {
 
             <p className="text-white/60 text-sm leading-relaxed">{game.description}</p>
 
-            {/* AD 300x250 — en el contenido */}
-            <AdSlot size="300x250" label="Publicidad · 300×250" />
-
+            {/* TIPS + AD 300x250 al lado */}
             {game.tips.length > 0 && (
               <div className="bg-[#1e1e34] rounded-xl border border-white/10 p-4">
                 <div className="font-black text-sm mb-3">💡 Tips y trucos</div>
-                <ul className="space-y-2">
-                  {game.tips.map((tip, i) => (
-                    <li key={i} className="text-white/50 text-sm flex items-start gap-2">
-                      <span className="text-yellow-400 mt-0.5 flex-shrink-0">•</span>{tip}
-                    </li>
-                  ))}
-                </ul>
+                <div className="flex gap-4 items-start">
+                  <ul className="space-y-2 flex-1">
+                    {game.tips.map((tip, i) => (
+                      <li key={i} className="text-white/50 text-sm flex items-start gap-2">
+                        <span className="text-yellow-400 mt-0.5 flex-shrink-0">•</span>{tip}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="hidden md:block flex-shrink-0">
+                    <AdSlot size="300x250" label="Publicidad · 300×250" />
+                  </div>
+                </div>
               </div>
             )}
 
@@ -171,27 +174,25 @@ export default function GamePage({ game }: { game: Game }) {
         {/* SIDEBAR — desktop */}
         <div className="hidden xl:flex flex-col w-[300px] flex-shrink-0 border-l border-white/5 overflow-y-auto bg-[#0e0e1a]">
 
-          {/* AD 300x250 — ARRIBA del sidebar */}
+          {/* AD 300x250 — ARRIBA */}
           <div className="p-3 border-b border-white/5">
             <AdSlot size="300x250" label="Publicidad · 300×250" />
           </div>
 
           {/* Juegos relacionados */}
-          <div className="p-3 border-b border-white/5">
-            <div className="font-black text-xs text-white/40 uppercase tracking-wider mb-3">Más juegos</div>
-            <div className="space-y-1">
-              {related.map((g, i) => (
-                <Link key={i} href={`/juego/${g.slug}`} className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer">
-                  <div className="w-14 h-14 rounded-lg overflow-hidden bg-[#1e1e34] flex-shrink-0 flex items-center justify-center text-2xl">
-                    {g.icon ? <img src={g.icon} alt={g.name} className="w-full h-full object-cover" /> : '🎮'}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-black text-sm truncate group-hover:text-yellow-400 transition-colors">{g.name}</div>
-                    <div className="text-xs text-white/40 mt-1">Jugar gratis →</div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+          <div className="p-2">
+            <div className="font-black text-xs text-white/40 uppercase tracking-wider mb-3 px-2">Más juegos</div>
+            {related.map((g, i) => (
+              <Link key={i} href={`/juego/${g.slug}`} className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer">
+                <div className="w-14 h-14 rounded-lg overflow-hidden bg-[#1e1e34] flex-shrink-0 flex items-center justify-center text-2xl">
+                  {g.icon ? <img src={g.icon} alt={g.name} className="w-full h-full object-cover" /> : '🎮'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-black text-sm truncate group-hover:text-yellow-400 transition-colors">{g.name}</div>
+                  <div className="text-xs text-white/40 mt-1">Jugar gratis →</div>
+                </div>
+              </Link>
+            ))}
           </div>
 
         </div>
