@@ -22,6 +22,7 @@ const SECCIONES = [
 const PREVIEW_VIDEOS: Record<string, string> = {
   'gelatinas-locas': '/previews/gelatinas-locas.mp4',
   'neon-bird': '/previews/neon-bird.mp4',
+  'cuanto-sabes-historia': '/previews/cuanto-sabes-historia.mp4',
   'cazador-zombies': '/previews/cazador-zombies.mp4',
 }
 
