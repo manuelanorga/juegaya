@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { GAMES } from "@/lib/games"
-import RecentGames from "@/app/components/RecentGames"
-import HeroCarousel from "@/app/components/HeroCarousel"
+import { GAMES, Game } from '@/lib/games'
+import RecentGames from '@/app/components/RecentGames'
 
 export const metadata: Metadata = {
   title: 'JuegaYa — Juegos Gratis Online Sin Descargar',
@@ -10,22 +9,24 @@ export const metadata: Metadata = {
 }
 
 const SECCIONES = [
-  { title: '🔥 Populares',      slug: 'populares',    filter: () => true },
-  { title: '🧠 Inteligencia',   slug: 'inteligencia', filter: (g: any) => g.tags?.includes('IQ') || g.categorySlug === 'inteligencia' },
-  { title: '😂 Virales',        slug: 'virales',      filter: (g: any) => g.tags?.includes('Viral') || g.badge === 'Viral' },
-  { title: '🔥 Difíciles',      slug: 'dificiles',    filter: (g: any) => (g.difficulty || 0) >= 68 },
-  { title: '🕹️ Arcade',         slug: 'arcade',       filter: (g: any) => g.categorySlug === 'arcade' },
-  { title: '🧩 Puzzle',         slug: 'puzzle',       filter: (g: any) => g.categorySlug === 'puzzle' },
-  { title: '⚡ Rápidos',        slug: 'rapidos',      filter: (g: any) => g.tags?.includes('Mobile') },
-  { title: '⚔️ Acción',         slug: 'accion',       filter: (g: any) => g.categorySlug === 'accion' },
+  { title: '🔥 Populares',    slug: 'populares',    filter: () => true,                                                          destacado: 'test-iq' },
+  { title: '🧠 Inteligencia', slug: 'inteligencia', filter: (g: Game) => g.tags?.includes('IQ') || g.categorySlug === 'inteligencia', destacado: 'test-iq' },
+  { title: '😂 Virales',      slug: 'virales',      filter: (g: Game) => g.tags?.includes('Viral') || g.badge === 'Viral',       destacado: 'test-reflejos' },
+  { title: '🔥 Difíciles',    slug: 'dificiles',    filter: (g: Game) => (g.difficulty || 0) >= 68,                              destacado: 'cazador-zombies' },
+  { title: '🕹️ Arcade',       slug: 'arcade',       filter: (g: Game) => g.categorySlug === 'arcade',                           destacado: 'neon-bird' },
+  { title: '🧩 Puzzle',       slug: 'puzzle',       filter: (g: Game) => g.categorySlug === 'puzzle',                           destacado: 'gelatinas-locas' },
+  { title: '⚡ Rápidos',      slug: 'rapidos',      filter: (g: Game) => g.tags?.includes('Mobile'),                            destacado: 'test-reflejos' },
+  { title: '⚔️ Acción',       slug: 'accion',       filter: (g: Game) => g.categorySlug === 'accion',                           destacado: 'cazador-zombies' },
 ]
 
-function GameCard({ game }: { game: any }) {
+const PREVIEW_VIDEOS: Record<string, string> = {
+  'gelatinas-locas': '/previews/gelatinas-locas.mp4',
+  'cazador-zombies': '/previews/cazador-zombies.mp4',
+}
+
+function GameCard({ game }: { game: Game }) {
   return (
-    <Link
-      href={`/juego/${game.slug}`}
-      className="flex-shrink-0 w-[140px] md:w-[160px] group"
-    >
+    <Link href={`/juego/${game.slug}`} className="flex-shrink-0 w-[140px] md:w-[160px] group">
       <div className={`w-full aspect-square rounded-xl overflow-hidden bg-gradient-to-br ${game.color || 'from-blue-900 to-purple-900'} relative`}>
         {game.icon
           ? <img src={game.icon} alt={game.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -45,18 +46,57 @@ function GameCard({ game }: { game: any }) {
   )
 }
 
-function Seccion({ title, slug, games }: { title: string; slug: string; games: any[] }) {
-  const mostrar = games.length > 0 ? games : GAMES
+function Destacado({ game }: { game: Game }) {
+  const video = PREVIEW_VIDEOS[game.slug]
   return (
-    <section className="mb-8">
+    <Link href={`/juego/${game.slug}`} className="group block mx-4 md:mx-6 mb-4 rounded-2xl overflow-hidden relative h-[160px] md:h-[200px] border border-white/5 hover:border-yellow-400/20 transition-all">
+      <div className={`absolute inset-0 bg-gradient-to-br ${game.color || 'from-blue-900 to-purple-900'}`} />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent z-10" />
+
+      {/* Video o imagen de fondo */}
+      {video ? (
+        <video src={video} autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover opacity-60" />
+      ) : game.icon ? (
+        <img src={game.icon} alt={game.name} className="absolute right-0 top-0 h-full w-auto object-cover opacity-70 group-hover:scale-105 transition-transform duration-500" />
+      ) : (
+        <div className="absolute right-6 top-1/2 -translate-y-1/2 text-[80px] opacity-60">{game.emoji || '🎮'}</div>
+      )}
+
+      {/* Info */}
+      <div className="absolute left-5 top-1/2 -translate-y-1/2 z-20">
+        {game.badge && (
+          <span className="inline-block bg-yellow-400 text-black text-[10px] font-black px-2 py-0.5 rounded mb-2">
+            {game.badge}
+          </span>
+        )}
+        <div className="font-black text-lg md:text-xl mb-1">{game.name}</div>
+        <div className="text-white/50 text-xs mb-3">{game.description?.slice(0, 60)}...</div>
+        <span className="inline-block bg-yellow-400 text-black font-black text-xs px-4 py-1.5 rounded-full group-hover:scale-105 transition-transform">
+          ¡Jugar ahora!
+        </span>
+      </div>
+    </Link>
+  )
+}
+
+function Seccion({ title, slug, games, destacadoSlug }: { title: string; slug: string; games: Game[]; destacadoSlug: string }) {
+  const mostrar = games.length > 0 ? games : GAMES
+  const destacado = GAMES.find(g => g.slug === destacadoSlug) || mostrar[0]
+  const resto = mostrar.filter(g => g.slug !== destacado?.slug)
+
+  return (
+    <section className="mb-10">
       <div className="flex items-center justify-between mb-3 px-4 md:px-6">
         <h2 className="text-base font-black">{title}</h2>
-        <Link href={`/juegos/${slug}`} className="text-xs font-bold text-yellow-400 hover:underline">
-          Ver todo →
-        </Link>
+        <Link href={`/juegos/${slug}`} className="text-xs font-bold text-yellow-400 hover:underline">Ver todo →</Link>
       </div>
+
+      {/* Destacado */}
+      {destacado && <Destacado game={destacado} />}
+
+      {/* Scroll horizontal */}
       <div className="flex gap-3 overflow-x-auto pb-2 px-4 md:px-6 scrollbar-hide">
-        {mostrar.slice(0, 10).map((game, i) => (
+        {resto.slice(0, 10).map((game, i) => (
           <GameCard key={i} game={game} />
         ))}
       </div>
@@ -85,17 +125,16 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="pt-4"></div>
-      <RecentGames />
-
-      {/* HERO */}
-      <HeroCarousel />
+      {/* SEGUIR JUGANDO */}
+      <div className="pt-4">
+        <RecentGames />
+      </div>
 
       {/* SECCIONES */}
       <div className="py-2">
         {SECCIONES.map((sec, i) => {
           const games = GAMES.filter(sec.filter)
-          return <Seccion key={i} title={sec.title} slug={sec.slug} games={games} />
+          return <Seccion key={i} title={sec.title} slug={sec.slug} games={games} destacadoSlug={sec.destacado} />
         })}
       </div>
 
