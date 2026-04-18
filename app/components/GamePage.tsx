@@ -1,4 +1,5 @@
 'use client'
+import { useEffect } from 'react'
 import Link from 'next/link'
 
 interface Game {
@@ -38,6 +39,11 @@ const AdSlot = ({ size, label }: { size: string; label?: string }) => (
 )
 
 export default function GamePage({ game }: { game: Game }) {
+  useEffect(() => {
+    const history = JSON.parse(localStorage.getItem("jy_history") || "[]")
+    const filtered = history.filter((s: string) => s !== game.slug)
+    localStorage.setItem("jy_history", JSON.stringify([game.slug, ...filtered].slice(0, 5)))
+  }, [game.slug])
   const related = ALL_GAMES.filter(g => g.slug !== game.slug)
 
   return (

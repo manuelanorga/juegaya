@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { GAMES } from '@/lib/games'
+import { GAMES } from "@/lib/games"
+import RecentGames from "@/app/components/RecentGames"
 
 export const metadata: Metadata = {
   title: 'JuegaYa — Juegos Gratis Online Sin Descargar',
@@ -101,6 +102,7 @@ export default function Home() {
         </div>
       </div>
 
+      <RecentGames />
       {/* SECCIONES */}
       <div className="py-2">
         {SECCIONES.map((sec, i) => {
