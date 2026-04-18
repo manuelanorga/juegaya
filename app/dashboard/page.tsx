@@ -34,8 +34,14 @@ export default function Dashboard() {
   const days = eachDayOfInterval({ start: subDays(new Date(), range - 1), end: new Date() })
   const chartData = days.map(day => {
     const dayStr = format(day, 'yyyy-MM-dd')
-    const dayViews = views.filter(v => v.created_at?.slice(0,10) === dayStr)
-    const daySessions = sessions.filter(s => s.first_seen?.slice(0,10) === dayStr)
+    const dayViews = views.filter(v => {
+      const d = v.created_at ? new Date(v.created_at).toISOString().slice(0,10) : ''
+      return d === dayStr
+    })
+    const daySessions = sessions.filter(s => {
+      const d = s.first_seen ? new Date(s.first_seen).toISOString().slice(0,10) : ''
+      return d === dayStr
+    })
     return {
       date: format(day, 'dd MMM', { locale: es }),
       visitas: dayViews.length,
