@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 }
 
 const SECCIONES = [
-  { title: '🔥 Populares',    slug: 'populares',    filter: () => true,                                                          destacado: 'test-iq' },
+  { title: '🔥 Populares',    slug: 'populares',    filter: () => true,                                                          destacado: 'cuanto-sabes-historia' },
   { title: '🧠 Inteligencia', slug: 'inteligencia', filter: (g: Game) => g.tags?.includes('IQ') || g.categorySlug === 'inteligencia', destacado: 'test-iq' },
   { title: '😂 Virales',      slug: 'virales',      filter: (g: Game) => g.tags?.includes('Viral') || g.badge === 'Viral',       destacado: 'test-reflejos' },
   { title: '🔥 Difíciles',    slug: 'dificiles',    filter: (g: Game) => (g.difficulty || 0) >= 68,                              destacado: 'cazador-zombies' },
