@@ -39,7 +39,7 @@ export default function Dashboard() {
       return d === dayStr
     })
     const daySessions = sessions.filter(s => {
-      const d = s.first_seen ? new Date(s.first_seen).toISOString().slice(0,10) : ''
+      const d = s.last_seen ? new Date(s.last_seen).toISOString().slice(0,10) : ''
       return d === dayStr
     })
     return {
