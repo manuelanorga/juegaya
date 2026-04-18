@@ -5,8 +5,8 @@ import { GAMES } from '@/lib/games'
 
 const DESTACADOS = [
   { slug: 'test-iq',         label: '🔥 Viral',    tagline: 'El 97% falla este test...', sub: '¿Eres del 3% restante?',     cta: '¡Demostrar ahora!' },
-  { slug: 'cazador-zombies', label: '💥 Acción',   tagline: 'Sobrevive la horda zombie', sub: '20 niveles. Sin piedad.',     cta: '¡Jugar gratis!' },
-  { slug: 'gelatinas-locas', label: '🧩 Puzzle',   tagline: 'Combina y supera records',  sub: 'El puzzle más adictivo.',    cta: '¡Empezar!' },
+  { slug: "cazador-zombies", previewVideo: "/previews/cazador-zombies.mp4", label: '💥 Acción',   tagline: 'Sobrevive la horda zombie', sub: '20 niveles. Sin piedad.',     cta: '¡Jugar gratis!' },
+  { slug: "gelatinas-locas", previewVideo: "/previews/gelatinas-locas.mp4", label: '🧩 Puzzle',   tagline: 'Combina y supera records',  sub: 'El puzzle más adictivo.',    cta: '¡Empezar!' },
   { slug: 'neon-bird',       label: '⚡ Arcade',   tagline: 'Reflejos de élite',         sub: '¿Cuánto aguantas?',          cta: '¡Volar ahora!' },
   { slug: 'test-reflejos',   label: '🧠 Test',     tagline: '¿Más rápido que el 95%?',  sub: 'Mide tu tiempo de reacción.', cta: '¡Medir reflejos!' },
 ]
@@ -87,7 +87,16 @@ export default function HeroCarousel() {
 
         {/* Imagen/Preview del juego */}
         <div className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${animating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-          {game.icon ? (
+          {item.previewVideo ? (
+          <video
+            src={item.previewVideo}
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="w-[110px] h-[110px] md:w-[140px] md:h-[140px] rounded-2xl object-cover shadow-2xl relative z-10"
+          />
+        ) : game.icon ? (
             <div className="relative">
               <div className="absolute inset-0 blur-2xl opacity-40 scale-110" style={{ background: GLOWS[current] }} />
               <img
