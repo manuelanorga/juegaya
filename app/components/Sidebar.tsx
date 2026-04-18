@@ -60,7 +60,7 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`${width} bg-[#0e0e1a] border-r border-white/5 flex flex-col flex-shrink-0 z-50 overflow-hidden transition-all duration-200 h-screen sticky top-0`}
+      className={`${width} bg-[#0e0e1a] border-r border-white/5 hidden md:flex flex-col flex-shrink-0 z-50 overflow-hidden transition-all duration-200 h-screen sticky top-0`}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
