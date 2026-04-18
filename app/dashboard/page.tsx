@@ -22,7 +22,7 @@ export default function Dashboard() {
 
     const [{ data: viewsData }, { data: sessionsData }] = await Promise.all([
       supabase.from('page_views').select('*').gte('created_at', from),
-      supabase.from('sessions').select('*').gte('last_seen', from),
+      supabase.from("sessions").select("*").gte("first_seen", from),
     ])
 
     setViews(viewsData || [])
@@ -34,8 +34,8 @@ export default function Dashboard() {
   const days = eachDayOfInterval({ start: subDays(new Date(), range - 1), end: new Date() })
   const chartData = days.map(day => {
     const dayStr = format(day, 'yyyy-MM-dd')
-    const dayViews = views.filter(v => v.created_at?.startsWith(dayStr))
-    const daySessions = sessions.filter(s => s.last_seen?.startsWith(dayStr))
+    const dayViews = views.filter(v => v.created_at?.slice(0,10) === dayStr)
+    const daySessions = sessions.filter(s => s.first_seen?.slice(0,10) === dayStr)
     return {
       date: format(day, 'dd MMM', { locale: es }),
       visitas: dayViews.length,
