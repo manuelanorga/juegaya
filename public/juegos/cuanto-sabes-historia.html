@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>¿Cuánto sabes de Historia?</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0a18; color: #fff; font-family: 'Segoe UI', sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  #game { width: 100%; max-width: 480px; min-height: 100vh; display: flex; flex-direction: column; }
+  .screen { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 32px 24px; text-align: center; }
+  .screen.active { display: flex; }
+  .logo { font-size: 28px; font-weight: 900; line-height: 1.2; margin-bottom: 8px; }
+  .logo span { color: #ffd000; }
+  .tagline { color: rgba(255,255,255,0.45); font-size: 13px; margin-bottom: 28px; }
+  .info-box { background: rgba(255,208,0,0.08); border: 1px solid rgba(255,208,0,0.2); border-radius: 14px; padding: 16px 20px; margin-bottom: 28px; width: 100%; text-align: left; }
+  .info-box div { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.9; }
+  .btn-primary { background: #ffd000; color: #1a1000; font-weight: 900; font-size: 16px; padding: 14px 40px; border-radius: 50px; border: none; cursor: pointer; width: 100%; max-width: 280px; }
+  .btn-secondary { background: rgba(255,255,255,0.08); color: #fff; font-weight: 700; font-size: 14px; padding: 10px 24px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.15); cursor: pointer; margin-top: 12px; width: 100%; max-width: 280px; }
+  .loading-icon { font-size: 48px; margin-bottom: 16px; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(0.95)} }
+  .loading-text { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .loading-sub { font-size: 13px; color: rgba(255,255,255,0.4); }
+  #quiz-screen { justify-content: flex-start; padding: 0; }
+  .quiz-header { width: 100%; padding: 16px 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .q-count { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.4); }
+  .timer-wrap { flex: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
+  .timer-bar { height: 100%; background: #ffd000; border-radius: 10px; transition: width .1s linear; }
+  .timer-bar.urgent { background: #ff4444; }
+  .timer-num { font-size: 18px; font-weight: 900; color: #ffd000; min-width: 28px; text-align: right; }
+  .timer-num.urgent { color: #ff4444; }
+  .quiz-body { flex: 1; padding: 20px; width: 100%; display: flex; flex-direction: column; }
+  .progress-dots { display: flex; gap: 5px; justify-content: center; margin-bottom: 16px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.15); }
+  .dot.done-correct { background: #00c864; }
+  .dot.done-wrong { background: #ff4444; }
+  .dot.current { background: #ffd000; transform: scale(1.3); }
+  .category-badge { display: inline-block; background: rgba(255,208,0,0.12); color: #ffd000; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: .5px; }
+  .question { font-size: 17px; font-weight: 800; line-height: 1.4; margin-bottom: 20px; min-height: 60px; }
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .option { background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 14px 12px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; text-align: left; color: #fff; }
+  .option:hover { background: rgba(255,208,0,0.1); border-color: rgba(255,208,0,0.4); }
+  .option.correct { background: rgba(0,200,100,0.15); border-color: #00c864; color: #00ff80; }
+  .option.wrong { background: rgba(255,50,50,0.15); border-color: #ff4444; color: #ff8888; }
+  .option.disabled { pointer-events: none; }
+  .feedback { margin-top: 14px; font-size: 13px; font-weight: 600; min-height: 20px; text-align: center; }
+  .feedback.correct { color: #00ff80; }
+  .feedback.wrong { color: #ff8888; }
+  .fun-fact { margin-top: 8px; font-size: 12px; color: rgba(255,255,255,0.4); line-height: 1.5; font-style: italic; }
+  .iq-label { font-size: 13px; color: rgba(255,255,255,0.4); margin-bottom: 4px; }
+  .iq-score { font-size: 80px; font-weight: 900; color: #ffd000; line-height: 1; }
+  .rank-badge { background: rgba(255,208,0,0.15); border: 1px solid rgba(255,208,0,0.3); color: #ffd000; font-size: 13px; font-weight: 800; padding: 8px 20px; border-radius: 30px; margin: 14px 0; }
+  .verdict { font-size: 22px; font-weight: 900; margin-bottom: 6px; }
+  .verdict-sub { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 20px; max-width: 300px; line-height: 1.5; }
+  .stats-row { display: flex; gap: 12px; margin-bottom: 20px; width: 100%; }
+  .stat { background: rgba(255,255,255,0.06); border-radius: 12px; padding: 12px; text-align: center; flex: 1; }
+  .stat-val { font-size: 22px; font-weight: 900; }
+  .stat-lbl { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+  .share-btn { background: #25D366; color: #fff; font-weight: 900; font-size: 15px; padding: 14px; border-radius: 50px; border: none; cursor: pointer; width: 100%; margin-bottom: 10px; }
+  .error-box { background: rgba(255,50,50,0.1); border: 1px solid rgba(255,50,50,0.3); border-radius: 12px; padding: 16px; margin-bottom: 20px; font-size: 13px; color: rgba(255,150,150,0.9); }
+</style>
+</head>
+<body>
+<div id="game">
+  <div class="screen active" id="start-screen">
+    <div class="logo">¿Cuánto sabes<br>de <span>Historia?</span></div>
+    <div class="tagline">10 preguntas únicas · 10 segundos cada una · Generadas por IA</div>
+    <div class="info-box">
+      <div>⏱ 10 segundos por pregunta<br>🧠 Preguntas generadas al momento<br>🏆 Cada partida es diferente<br>📲 Comparte tu resultado por WhatsApp</div>
+    </div>
+    <button class="btn-primary" onclick="startGame()">¡Empezar ahora!</button>
+  </div>
+
+  <div class="screen" id="loading-screen">
+    <div class="loading-icon">🧠</div>
+    <div class="loading-text">Generando tus preguntas...</div>
+    <div class="loading-sub">La IA está creando un test único para ti</div>
+  </div>
+
+  <div class="screen" id="error-screen">
+    <div style="font-size:48px;margin-bottom:16px;">😅</div>
+    <div style="font-size:18px;font-weight:800;margin-bottom:8px;">Error al generar preguntas</div>
+    <div class="error-box" id="error-msg">No se pudo conectar con la IA.</div>
+    <button class="btn-primary" onclick="startGame()">Intentar de nuevo</button>
+  </div>
+
+  <div class="screen" id="quiz-screen">
+    <div class="quiz-header">
+      <span class="q-count" id="q-count">1 / 10</span>
+      <div class="timer-wrap"><div class="timer-bar" id="timer-bar"></div></div>
+      <span class="timer-num" id="timer-num">10</span>
+    </div>
+    <div class="quiz-body">
+      <div class="progress-dots" id="dots"></div>
+      <span class="category-badge" id="q-category">Historia</span>
+      <div class="question" id="q-text"></div>
+      <div class="options" id="options"></div>
+      <div class="feedback" id="feedback"></div>
+      <div class="fun-fact" id="fun-fact"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="result-screen">
+    <div class="iq-label">Tu IQ histórico</div>
+    <div class="iq-score" id="iq-score">127</div>
+    <div class="rank-badge" id="rank-badge">Top 12% en Latam</div>
+    <div class="verdict" id="verdict">Cerebro de élite</div>
+    <div class="verdict-sub" id="verdict-sub"></div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-val" id="res-correct">0</div><div class="stat-lbl">Correctas</div></div>
+      <div class="stat"><div class="stat-val" id="res-bonus">0</div><div class="stat-lbl">Pts bonus</div></div>
+      <div class="stat"><div class="stat-val" id="res-total">0</div><div class="stat-lbl">Total</div></div>
+    </div>
+    <button class="share-btn" onclick="shareResult()">💬 Compartir por WhatsApp</button>
+    <button class="btn-secondary" onclick="startGame()">Jugar de nuevo</button>
+  </div>
+</div>
+
+<script>
+let questions=[], current=0, score=0, correctCount=0, timeBonus=0;
+let timerInterval=null, timeLeft=10, answered=false;
+const results=[];
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+async function startGame(){
+  current=0;score=0;correctCount=0;timeBonus=0;results.length=0;questions=[];
+  showScreen('loading-screen');
+  try {
+    const response = await fetch('/api/preguntas');
+    const parsed = await response.json();
+    if(!parsed.questions || parsed.questions.length < 10) throw new Error('Preguntas insuficientes');
+    questions = parsed.questions;
+    showScreen('quiz-screen');
+    loadQuestion();
+  } catch(err) {
+    document.getElementById('error-msg').textContent = 'Error: ' + (err.message || 'No se pudo generar el test');
+    showScreen('error-screen');
+  }
+}
+
+function loadQuestion(){
+  if(current>=questions.length){showResult();return;}
+  answered=false;
+  const q=questions[current];
+  document.getElementById('q-count').textContent=`${current+1} / 10`;
+  document.getElementById('q-category').textContent=q.category||'Historia';
+  document.getElementById('q-text').textContent=q.question;
+  document.getElementById('feedback').textContent='';
+  document.getElementById('feedback').className='feedback';
+  document.getElementById('fun-fact').textContent='';
+  const opts=document.getElementById('options');
+  opts.innerHTML='';
+  q.options.forEach((o,i)=>{
+    const btn=document.createElement('button');
+    btn.className='option';btn.textContent=o;
+    btn.onclick=()=>answer(i);
+    opts.appendChild(btn);
+  });
+  updateDots();startTimer();
+}
+
+function startTimer(){
+  timeLeft=10;clearInterval(timerInterval);updateTimerUI();
+  timerInterval=setInterval(()=>{
+    timeLeft--;updateTimerUI();
+    if(timeLeft<=0){clearInterval(timerInterval);if(!answered)timeOut();}
+  },1000);
+}
+
+function updateTimerUI(){
+  const pct=(timeLeft/10)*100;
+  const bar=document.getElementById('timer-bar');
+  const num=document.getElementById('timer-num');
+  bar.style.width=pct+'%';
+  if(timeLeft<=3){bar.classList.add('urgent');num.classList.add('urgent');}
+  else{bar.classList.remove('urgent');num.classList.remove('urgent');}
+  num.textContent=timeLeft;
+}
+
+function answer(i){
+  if(answered)return;
+  answered=true;clearInterval(timerInterval);
+  const q=questions[current];
+  const opts=document.querySelectorAll('.option');
+  opts.forEach(o=>o.classList.add('disabled'));
+  opts[q.correct].classList.add('correct');
+  if(i!==q.correct)opts[i].classList.add('wrong');
+  const fb=document.getElementById('feedback');
+  if(i===q.correct){
+    correctCount++;const bonus=timeLeft*10;timeBonus+=bonus;score+=100+bonus;
+    fb.textContent=`¡Correcto! +${100+bonus} pts`;fb.className='feedback correct';results.push('correct');
+  } else {
+    fb.textContent=`Incorrecto. Era: ${q.options[q.correct]}`;fb.className='feedback wrong';results.push('wrong');
+  }
+  if(q.fact)document.getElementById('fun-fact').textContent='💡 '+q.fact;
+  updateDots();
+  setTimeout(()=>{current++;loadQuestion();},1600);
+}
+
+function timeOut(){
+  answered=true;
+  const q=questions[current];
+  document.querySelectorAll('.option').forEach(o=>o.classList.add('disabled'));
+  document.querySelectorAll('.option')[q.correct].classList.add('correct');
+  document.getElementById('feedback').textContent='¡Tiempo agotado! Era: '+q.options[q.correct];
+  document.getElementById('feedback').className='feedback wrong';
+  results.push('wrong');updateDots();
+  setTimeout(()=>{current++;loadQuestion();},1600);
+}
+
+function updateDots(){
+  const dots=document.getElementById('dots');dots.innerHTML='';
+  for(let i=0;i<10;i++){
+    const d=document.createElement('div');d.className='dot';
+    if(i<results.length)d.classList.add('done-'+results[i]);
+    else if(i===current)d.classList.add('current');
+    dots.appendChild(d);
+  }
+}
+
+function calcIQ(){
+  return Math.min(160,Math.max(70,80+(correctCount*8)+Math.round(timeBonus/60)));
+}
+
+function showResult(){
+  const iq=calcIQ();
+  const pct=Math.min(99,Math.round(((iq-70)/90)*100));
+  let verdict,sub,rank;
+  if(iq>=145){verdict="Einstein reencarnado";sub=`Superaste al ${pct}% de jugadores.`;rank="Top 1% en Latam";}
+  else if(iq>=130){verdict="Genio histórico";sub=`Eres más inteligente que el ${pct}% de jugadores.`;rank="Top 5% en Latam";}
+  else if(iq>=115){verdict="Cerebro de élite";sub=`Tu conocimiento supera al ${pct}% de jugadores.`;rank="Top 20% en Latam";}
+  else if(iq>=100){verdict="Muy por encima del promedio";sub=`Superaste al ${pct}% de jugadores.`;rank="Top 35% en Latam";}
+  else if(iq>=85){verdict="Promedio histórico";sub=`Un resultado decente. ¡Puedes mejorar!`;rank="Promedio en Latam";}
+  else{verdict="Necesitas estudiar más";sub=`No te preocupes, el conocimiento se entrena.`;rank="Sigue practicando";}
+  document.getElementById('iq-score').textContent=iq;
+  document.getElementById('rank-badge').textContent=rank;
+  document.getElementById('verdict').textContent=verdict;
+  document.getElementById('verdict-sub').textContent=sub;
+  document.getElementById('res-correct').textContent=correctCount+'/10';
+  document.getElementById('res-bonus').textContent=timeBonus;
+  document.getElementById('res-total').textContent=score;
+  showScreen('result-screen');
+}
+
+function shareResult(){
+  const iq=calcIQ();
+  const pct=Math.min(99,Math.round(((iq-70)/90)*100));
+  const txt=`🧠 Hice el test "¿Cuánto sabes de Historia?" en JuegaYa\n\nMi IQ histórico es: ${iq}\nSoy más listo que el ${pct}% de Latam\n${correctCount}/10 correctas\n\n¿Puedes superarme? 👇\njuegaya.app/juego/cuanto-sabes-historia`;
+  window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+}
+</script>
+</body>
+</html>
