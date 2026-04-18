@@ -69,7 +69,7 @@ export default function Home() {
       {/* HEADER */}
       <header className="sticky top-0 z-40 bg-[#111120]/95 backdrop-blur border-b border-white/5 h-[52px]">
         <div className="px-4 md:px-6 h-full flex items-center gap-4">
-          <img src="/logo.png" alt="JuegaYa" className="h-10 w-auto" />
+          <img src="/logo.png" alt="JuegaYa" className="h-28 w-auto" />
           <div className="flex-1 max-w-md">
             <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2">
               <span className="text-white/30 text-sm">🔍</span>
