@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { GAMES } from "@/lib/games"
 import RecentGames from "@/app/components/RecentGames"
+import HeroCarousel from "@/app/components/HeroCarousel"
 
 export const metadata: Metadata = {
   title: 'JuegaYa — Juegos Gratis Online Sin Descargar',
@@ -88,24 +89,8 @@ export default function Home() {
       <RecentGames />
 
       {/* HERO */}
-      <div className="px-4 md:px-6 pb-1 -mt-6">
-        <div className="relative rounded-2xl overflow-hidden h-[200px] md:h-[240px] border border-orange-500/15 bg-gradient-to-br from-[#1a0020] via-[#2d0015] to-[#1a1000]">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_50%,rgba(255,60,0,0.2),transparent_50%)]" />
-          <div className="absolute left-6 top-1/2 -translate-y-1/2 z-10">
-            <h1 className="text-2xl md:text-3xl font-black leading-tight mb-2">
-              🔥 El 97% falla<br />
-              <span className="text-yellow-400">este juego...</span>
-            </h1>
-            <p className="text-base font-black text-yellow-400 mb-4">¿y tú?</p>
-            <Link href="/juego/test-iq" className="inline-block bg-gradient-to-r from-yellow-400 to-yellow-500 text-black font-black px-6 py-2.5 rounded-full text-sm">
-              ¡JUGAR AHORA!
-            </Link>
-          </div>
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[80px] md:text-[100px] leading-none">🧠</div>
-        </div>
-      </div>
+      <HeroCarousel />
 
-      <div className="pt-4"></div>
       {/* SECCIONES */}
       <div className="py-2">
         {SECCIONES.map((sec, i) => {
