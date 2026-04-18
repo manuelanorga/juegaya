@@ -106,7 +106,7 @@ export default function GameListPage() {
                     target="_blank"
                     className="text-xs font-bold text-yellow-400 hover:underline"
                   >
-                    ▶ Play
+                    ► Play
                   </a>
                 </td>
                 <td className="px-4 py-3">
