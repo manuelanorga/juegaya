@@ -88,7 +88,7 @@ export default function Home() {
       <RecentGames />
 
       {/* HERO */}
-      <div className="px-4 md:px-6 py-4">
+      <div className="px-4 md:px-6 pb-1 -mt-6">
         <div className="relative rounded-2xl overflow-hidden h-[200px] md:h-[240px] border border-orange-500/15 bg-gradient-to-br from-[#1a0020] via-[#2d0015] to-[#1a1000]">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_50%,rgba(255,60,0,0.2),transparent_50%)]" />
           <div className="absolute left-6 top-1/2 -translate-y-1/2 z-10">
