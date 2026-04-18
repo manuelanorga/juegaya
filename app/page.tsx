@@ -106,7 +106,6 @@ export default function Home() {
       </div>
 
       <div className="pt-4"></div>
-      <RecentGames />
       {/* SECCIONES */}
       <div className="py-2">
         {SECCIONES.map((sec, i) => {
