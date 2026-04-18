@@ -46,7 +46,7 @@ export default function GamePage({ game }: { game: Game }) {
       {/* HEADER */}
       <header className="sticky top-0 z-50 bg-[#111120]/95 backdrop-blur border-b border-white/5 h-[52px]">
         <div className="px-3 h-full flex items-center gap-2">
-          <Link href="/" className="text-lg font-black text-yellow-400 flex-shrink-0">JUÉGAYA</Link>
+          <Link href="/"><img src="/logo.png" alt="JuegaYa" className="h-36 w-auto" /></Link>
           <span className="text-white/20 hidden sm:block">›</span>
           <Link href={`/juegos/${game.categorySlug}`} className="text-sm text-white/40 hidden sm:block hover:text-white transition-colors">{game.category}</Link>
           <span className="text-white/20 hidden sm:block">›</span>
