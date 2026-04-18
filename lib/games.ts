@@ -22,6 +22,28 @@ export interface Game {
 
 export const GAMES: Game[] = [
   {
+    slug: 'cuanto-sabes-historia',
+    name: '¿Cuánto sabes de Historia?',
+    icon: null,
+    emoji: '🏛️',
+    iframeSrc: '/juegos/cuanto-sabes-historia.html',
+    category: 'Inteligencia',
+    categorySlug: 'inteligencia',
+    rating: 4.9,
+    votes: '0',
+    players: '0',
+    badge: 'Nuevo',
+    difficulty: 80,
+    color: 'from-amber-900 to-yellow-900',
+    tags: ['IQ', 'Historia', 'Test', 'Viral', 'Mobile'],
+    description: 'Preguntas únicas generadas por IA sobre historia mundial y latinoamericana. Cada partida es diferente.',
+    tips: ['Lee bien antes de responder','Los primeros segundos valen más puntos','Comparte tu resultado para retar amigos'],
+    faqs: [
+      { q: '¿Las preguntas son siempre las mismas?', a: 'No. La IA genera 10 preguntas únicas en cada partida.' },
+      { q: '¿Es gratis?', a: 'Sí, 100% gratis. Sin registro ni descargas.' },
+    ],
+  },
+  {
     slug: 'escape-vikingo',
     name: 'El Escape del Vikingo',
     icon: '/juegos/escape-vikingo/icons/icon-256.png',
