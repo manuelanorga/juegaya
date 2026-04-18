@@ -11,33 +11,25 @@ export async function GET() {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1000,
+        max_tokens: 2000,
         messages: [{
           role: 'user',
-          content: `Genera exactamente 10 preguntas de trivia sobre historia mundial y latinoamericana. Varía los temas: conquistas, guerras, personajes históricos, civilizaciones, revoluciones, eventos importantes.
-
-Responde SOLO con JSON válido, sin texto adicional, sin backticks:
-{
-  "questions": [
-    {
-      "question": "pregunta aquí",
-      "options": ["opción A", "opción B", "opción C", "opción D"],
-      "correct": 0,
-      "category": "categoría corta",
-      "fact": "dato curioso de una línea"
-    }
-  ]
-}`
+          content: `Genera exactamente 10 preguntas de trivia sobre historia mundial y latinoamericana. Responde SOLO con JSON válido sin backticks ni texto adicional:
+{"questions":[{"question":"pregunta","options":["A","B","C","D"],"correct":0,"category":"categoria","fact":"dato curioso"}]}`
         }]
       })
     })
 
     const data = await response.json()
-    const text = data.content[0].text.trim()
+    if(data.error) return NextResponse.json({ error: data.error.message }, { status: 500 })
+
+    let text = data.content[0].text.trim()
+    text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+    
     const parsed = JSON.parse(text)
     return NextResponse.json(parsed)
 
-  } catch (err) {
-    return NextResponse.json({ error: 'Error generando preguntas' }, { status: 500 })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
