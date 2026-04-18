@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 import { GAMES } from '@/lib/games'
 
 export default function GameListPage() {
@@ -39,7 +40,6 @@ export default function GameListPage() {
 
   return (
     <div className="p-8">
-      {/* HEADER */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-black">Game List</h1>
@@ -47,29 +47,20 @@ export default function GameListPage() {
         </div>
       </div>
 
-      {/* FILTROS */}
       <div className="flex gap-3 mb-6">
         <div className="flex-1 flex items-center gap-2 bg-[#1e1e34] border border-white/10 rounded-xl px-4 py-2.5">
           <span className="text-white/30">🔍</span>
-          <input
-            type="text"
-            placeholder="Buscar por nombre o slug..."
-            value={search}
+          <input type="text" placeholder="Buscar por nombre o slug..." value={search}
             onChange={e => setSearch(e.target.value)}
-            className="bg-transparent text-sm text-white placeholder-white/30 outline-none w-full"
-          />
+            className="bg-transparent text-sm text-white placeholder-white/30 outline-none w-full" />
         </div>
-        <select
-          value={filterCat}
-          onChange={e => setFilterCat(e.target.value)}
-          className="bg-[#1e1e34] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none"
-        >
+        <select value={filterCat} onChange={e => setFilterCat(e.target.value)}
+          className="bg-[#1e1e34] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none">
           <option value="">Todas las categorías</option>
           {categories.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
       </div>
 
-      {/* TABLE */}
       <div className="bg-[#1e1e34] rounded-2xl border border-white/5 overflow-hidden">
         <table className="w-full">
           <thead>
@@ -83,13 +74,10 @@ export default function GameListPage() {
             {filtered.map((game, i) => (
               <tr key={game.slug} className="border-b border-white/5 hover:bg-white/2 transition-colors">
                 <td className="px-4 py-3 text-sm text-white/30">{i + 1}</td>
-                <td className="px-4 py-3 text-xs text-white/40 font-mono">{game.slug.slice(0, 12)}...</td>
+                <td className="px-4 py-3 text-xs text-white/40 font-mono">{game.slug.slice(0,12)}...</td>
                 <td className="px-4 py-3">
                   <div className="w-10 h-10 rounded-lg overflow-hidden bg-[#111120] flex items-center justify-center">
-                    {game.icon
-                      ? <img src={game.icon} alt={game.name} className="w-full h-full object-cover" />
-                      : <span className="text-xl">{game.emoji || '🎮'}</span>
-                    }
+                    {game.icon ? <img src={game.icon} alt={game.name} className="w-full h-full object-cover" /> : <span className="text-xl">{game.emoji || '🎮'}</span>}
                   </div>
                 </td>
                 <td className="px-4 py-3">
@@ -97,106 +85,74 @@ export default function GameListPage() {
                   {game.badge && <span className="text-[10px] bg-yellow-400/15 text-yellow-400 font-bold px-2 py-0.5 rounded-full">{game.badge}</span>}
                 </td>
                 <td className="px-4 py-3 text-sm text-white/50">{game.category}</td>
-                <td className="px-4 py-3 text-sm text-white/50">
-                  {game.iframeSrc.startsWith('http') ? '🌐 Externo' : '📁 Local'}
-                </td>
+                <td className="px-4 py-3 text-sm text-white/50">{game.iframeSrc.startsWith('http') ? 'Externo' : 'Local'}</td>
                 <td className="px-4 py-3">
-                  
-                    href={`/juego/${game.slug}`}
-                    target="_blank"
-                    className="text-xs font-bold text-yellow-400 hover:underline"
-                  >
+                  <Link href={`/juego/${game.slug}`} target="_blank" className="text-xs font-bold text-yellow-400 hover:underline">
                     Play
-                  </a>
+                  </Link>
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => openEdit(game)}
+                    <button onClick={() => openEdit(game)}
                       className="w-8 h-8 bg-white/5 hover:bg-yellow-400/10 hover:text-yellow-400 rounded-lg flex items-center justify-center text-white/50 transition-all text-sm"
-                      title="Editar"
-                    >✏️</button>
-                    <button
+                      title="Editar">✏️</button>
+                    <button onClick={() => confirm(`¿Eliminar ${game.name}?`)}
                       className="w-8 h-8 bg-white/5 hover:bg-red-400/10 hover:text-red-400 rounded-lg flex items-center justify-center text-white/50 transition-all text-sm"
-                      title="Eliminar"
-                      onClick={() => confirm(`¿Eliminar ${game.name}?`)}
-                    >🗑️</button>
+                      title="Eliminar">🗑️</button>
                   </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-
         {filtered.length === 0 && (
           <div className="text-center py-12 text-white/30 text-sm">No se encontraron juegos</div>
         )}
       </div>
 
-      {/* EDIT MODAL */}
       {editGame && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={e => { if(e.target === e.currentTarget) setEditGame(null) }}>
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+          onClick={e => { if(e.target === e.currentTarget) setEditGame(null) }}>
           <div className="bg-[#1e1e34] rounded-2xl border border-white/10 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 sticky top-0 bg-[#1e1e34]">
               <h2 className="font-black text-base">Editar juego</h2>
-              <button onClick={() => setEditGame(null)} className="text-white/30 hover:text-white text-xl">✕</button>
+              <button onClick={() => setEditGame(null)} className="text-white/30 hover:text-white text-xl">x</button>
             </div>
-
             <div className="p-6 space-y-4">
-              <div>
-                <label className="text-xs font-bold text-white/40 uppercase tracking-wider mb-1.5 block">Título del juego</label>
-                <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})}
-                  className="w-full bg-[#111120] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50" />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-white/40 uppercase tracking-wider mb-1.5 block">Slug</label>
-                <input type="text" value={form.slug} onChange={e => setForm({...form, slug: e.target.value})}
-                  className="w-full bg-[#111120] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50 font-mono" />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-white/40 uppercase tracking-wider mb-1.5 block">Descripción</label>
-                <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={3}
-                  className="w-full bg-[#111120] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50 resize-none" />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-white/40 uppercase tracking-wider mb-1.5 block">Instrucciones / Tips</label>
-                <textarea value={form.instructions} onChange={e => setForm({...form, instructions: e.target.value})} rows={3}
-                  placeholder="Una instrucción por línea..."
-                  className="w-full bg-[#111120] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50 resize-none" />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-white/40 uppercase tracking-wider mb-1.5 block">URL del juego</label>
-                <input type="text" value={form.iframeSrc} onChange={e => setForm({...form, iframeSrc: e.target.value})}
-                  placeholder="https://... o /juegos/mi-juego.html"
-                  className="w-full bg-[#111120] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50 font-mono" />
-              </div>
-
+              {[
+                { label: 'Título del juego', key: 'name', type: 'input' },
+                { label: 'Slug', key: 'slug', type: 'input', mono: true },
+                { label: 'Descripción', key: 'description', type: 'textarea' },
+                { label: 'Instrucciones / Tips', key: 'instructions', type: 'textarea', placeholder: 'Una instrucción por línea...' },
+                { label: 'URL del juego', key: 'iframeSrc', type: 'input', mono: true, placeholder: 'https://... o /juegos/mi-juego.html' },
+                { label: 'Tags (separados por coma)', key: 'tags', type: 'input', placeholder: 'Arcade, Mobile, Viral...' },
+              ].map(field => (
+                <div key={field.key}>
+                  <label className="text-xs font-bold text-white/40 uppercase tracking-wider mb-1.5 block">{field.label}</label>
+                  {field.type === 'textarea' ? (
+                    <textarea value={form[field.key] || ''} onChange={e => setForm({...form, [field.key]: e.target.value})}
+                      placeholder={field.placeholder} rows={3}
+                      className="w-full bg-[#111120] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50 resize-none" />
+                  ) : (
+                    <input type="text" value={form[field.key] || ''} onChange={e => setForm({...form, [field.key]: e.target.value})}
+                      placeholder={field.placeholder}
+                      className={`w-full bg-[#111120] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50 ${field.mono ? 'font-mono' : ''}`} />
+                  )}
+                </div>
+              ))}
               <div>
                 <label className="text-xs font-bold text-white/40 uppercase tracking-wider mb-1.5 block">Categoría</label>
-                <select value={form.category} onChange={e => setForm({...form, category: e.target.value})}
+                <select value={form.category || ''} onChange={e => setForm({...form, category: e.target.value})}
                   className="w-full bg-[#111120] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50">
                   {categories.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
-
-              <div>
-                <label className="text-xs font-bold text-white/40 uppercase tracking-wider mb-1.5 block">Tags (separados por coma)</label>
-                <input type="text" value={form.tags} onChange={e => setForm({...form, tags: e.target.value})}
-                  placeholder="Arcade, Mobile, Viral..."
-                  className="w-full bg-[#111120] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50" />
-              </div>
-
               <div className="flex items-center gap-3">
                 <input type="checkbox" id="published" checked={form.published} onChange={e => setForm({...form, published: e.target.checked})}
                   className="w-4 h-4 accent-yellow-400" />
                 <label htmlFor="published" className="text-sm font-semibold text-white/70">Publicar juego</label>
               </div>
             </div>
-
             <div className="flex gap-3 px-6 py-4 border-t border-white/5 sticky bottom-0 bg-[#1e1e34]">
               <button onClick={() => setEditGame(null)}
                 className="flex-1 py-2.5 rounded-xl font-bold text-sm bg-white/5 text-white/50 hover:bg-white/10 transition-all">
@@ -204,7 +160,7 @@ export default function GameListPage() {
               </button>
               <button onClick={handleSave}
                 className={`flex-1 py-2.5 rounded-xl font-black text-sm transition-all ${saved ? 'bg-green-400 text-black' : 'bg-yellow-400 text-black hover:bg-yellow-300'}`}>
-                {saved ? '✓ Guardado' : 'Guardar cambios'}
+                {saved ? 'Guardado' : 'Guardar cambios'}
               </button>
             </div>
           </div>
