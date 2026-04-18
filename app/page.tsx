@@ -84,6 +84,9 @@ export default function Home() {
         </div>
       </header>
 
+      <div className="pt-4"></div>
+      <RecentGames />
+
       {/* HERO */}
       <div className="px-4 md:px-6 py-4">
         <div className="relative rounded-2xl overflow-hidden h-[200px] md:h-[240px] border border-orange-500/15 bg-gradient-to-br from-[#1a0020] via-[#2d0015] to-[#1a1000]">
@@ -102,6 +105,7 @@ export default function Home() {
         </div>
       </div>
 
+      <div className="pt-4"></div>
       <RecentGames />
       {/* SECCIONES */}
       <div className="py-2">
