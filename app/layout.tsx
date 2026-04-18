@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Nunito } from 'next/font/google'
 import './globals.css'
 import Sidebar from './components/Sidebar'
+import Tracker from './components/Tracker'
 
 const nunito = Nunito({ subsets: ['latin'], weight: ['400','600','700','800','900'] })
 
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es">
       <body className={`${nunito.className} bg-[#111120] text-white flex min-h-screen`}>
         <Sidebar />
+        <Tracker />
         <div className="flex-1 min-w-0">{children}</div>
       </body>
     </html>
