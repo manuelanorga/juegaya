@@ -1,6 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { GAMES } from '@/lib/games'
+import { supabase } from '@/lib/supabase'
 
 const SECCIONES = [
   { slug: 'populares',    title: '🔥 Populares' },
@@ -14,58 +15,68 @@ const SECCIONES = [
 ]
 
 const PREVIEW_VIDEOS: Record<string, string> = {
-  'gelatinas-locas':      '/previews/gelatinas-locas.mp4',
-  'cazador-zombies':      '/previews/cazador-zombies.mp4',
-  'neon-bird':            '/previews/neon-bird.mp4',
-  'cuanto-sabes-historia':'/previews/cuanto-sabes-historia.mp4',
-}
-
-const DEFAULT_DESTACADOS: Record<string, string> = {
-  'populares':    'cuanto-sabes-historia',
-  'inteligencia': 'test-iq',
-  'virales':      'test-reflejos',
-  'dificiles':    'cazador-zombies',
-  'arcade':       'neon-bird',
-  'puzzle':       'gelatinas-locas',
-  'rapidos':      'test-reflejos',
-  'accion':       'cazador-zombies',
+  'gelatinas-locas':       '/previews/gelatinas-locas.mp4',
+  'cazador-zombies':       '/previews/cazador-zombies.mp4',
+  'neon-bird':             '/previews/neon-bird.mp4',
+  'cuanto-sabes-historia': '/previews/cuanto-sabes-historia.mp4',
 }
 
 export default function DestacadosPage() {
-  const [destacados, setDestacados] = useState<Record<string, string>>(DEFAULT_DESTACADOS)
-  const [saved, setSaved] = useState(false)
+  const [destacados, setDestacados] = useState<Record<string, string>>({})
+  const [saving, setSaving] = useState<string | null>(null)
+  const [saved, setSaved] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadDestacados()
+  }, [])
+
+  async function loadDestacados() {
+    const { data } = await supabase.from('destacados').select('*')
+    if (data) {
+      const map: Record<string, string> = {}
+      data.forEach(d => { map[d.seccion] = d.game_slug })
+      setDestacados(map)
+    }
+    setLoading(false)
+  }
+
+  async function handleSave(seccion: string) {
+    setSaving(seccion)
+    await supabase.from('destacados').upsert({
+      seccion,
+      game_slug: destacados[seccion],
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'seccion' })
+    setSaving(null)
+    setSaved(seccion)
+    setTimeout(() => setSaved(null), 2000)
+  }
 
   function handleChange(seccion: string, slug: string) {
     setDestacados(prev => ({ ...prev, [seccion]: slug }))
-    setSaved(false)
   }
 
-  function handleSave() {
-    localStorage.setItem('jy_destacados', JSON.stringify(destacados))
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
-  }
+  if (loading) return (
+    <div className="p-8 flex items-center justify-center min-h-[400px]">
+      <div className="text-white/30 text-sm">Cargando...</div>
+    </div>
+  )
 
   return (
     <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-black">Juegos Destacados</h1>
-          <p className="text-white/40 text-sm mt-1">Elige el juego destacado para cada sección del home</p>
-        </div>
-        <button
-          onClick={handleSave}
-          className={`px-6 py-2.5 rounded-full font-black text-sm transition-all ${saved ? 'bg-green-400 text-black' : 'bg-yellow-400 text-black hover:bg-yellow-300'}`}
-        >
-          {saved ? '✓ Guardado' : 'Guardar cambios'}
-        </button>
+      <div className="mb-8">
+        <h1 className="text-2xl font-black">Juegos Destacados</h1>
+        <p className="text-white/40 text-sm mt-1">Elige el juego destacado para cada sección del home. Los cambios se aplican en tiempo real.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {SECCIONES.map(sec => {
-          const selectedSlug = destacados[sec.slug]
+          const selectedSlug = destacados[sec.slug] || ''
           const selectedGame = GAMES.find(g => g.slug === selectedSlug)
           const video = PREVIEW_VIDEOS[selectedSlug]
+          const isSaving = saving === sec.slug
+          const isSaved = saved === sec.slug
 
           return (
             <div key={sec.slug} className="bg-[#1e1e34] rounded-2xl border border-white/5 overflow-hidden">
@@ -86,21 +97,17 @@ export default function DestacadosPage() {
                   <div className="font-black text-sm">{selectedGame?.name || '—'}</div>
                 </div>
                 {video && (
-                  <div className="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">
-                    VIDEO
-                  </div>
+                  <div className="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">VIDEO</div>
                 )}
               </div>
 
               {/* Selector */}
               <div className="p-4">
-                <label className="text-xs font-bold text-white/40 uppercase tracking-wider mb-2 block">
-                  Juego destacado
-                </label>
+                <label className="text-xs font-bold text-white/40 uppercase tracking-wider mb-2 block">Juego destacado</label>
                 <select
                   value={selectedSlug}
                   onChange={e => handleChange(sec.slug, e.target.value)}
-                  className="w-full bg-[#111120] border border-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white outline-none focus:border-yellow-400/50 transition-colors"
+                  className="w-full bg-[#111120] border border-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white outline-none focus:border-yellow-400/50 transition-colors mb-3"
                 >
                   {GAMES.map(game => (
                     <option key={game.slug} value={game.slug}>
@@ -109,9 +116,9 @@ export default function DestacadosPage() {
                   ))}
                 </select>
 
-                {/* Info del juego seleccionado */}
+                {/* Info */}
                 {selectedGame && (
-                  <div className="mt-3 flex items-center gap-3 bg-white/3 rounded-xl p-3">
+                  <div className="flex items-center gap-3 bg-white/3 rounded-xl p-3 mb-3">
                     <div className="w-10 h-10 rounded-lg overflow-hidden bg-[#111120] flex-shrink-0 flex items-center justify-center">
                       {selectedGame.icon
                         ? <img src={selectedGame.icon} alt={selectedGame.name} className="w-full h-full object-cover" />
@@ -122,13 +129,25 @@ export default function DestacadosPage() {
                       <div className="text-sm font-black truncate">{selectedGame.name}</div>
                       <div className="text-xs text-white/40 mt-0.5 flex items-center gap-2">
                         <span>{selectedGame.category}</span>
-                        {PREVIEW_VIDEOS[selectedGame.slug] && <span className="text-red-400 font-bold">• Video preview</span>}
+                        {PREVIEW_VIDEOS[selectedGame.slug] && <span className="text-red-400 font-bold">• Video</span>}
                         {selectedGame.badge && <span className="text-yellow-400 font-bold">• {selectedGame.badge}</span>}
                       </div>
                     </div>
                     <div className="text-xs font-black text-white/30">⭐ {selectedGame.rating}</div>
                   </div>
                 )}
+
+                <button
+                  onClick={() => handleSave(sec.slug)}
+                  disabled={isSaving}
+                  className={`w-full py-2 rounded-xl font-black text-sm transition-all ${
+                    isSaved ? 'bg-green-400 text-black' :
+                    isSaving ? 'bg-white/10 text-white/30' :
+                    'bg-yellow-400 text-black hover:bg-yellow-300'
+                  }`}
+                >
+                  {isSaved ? '✓ Guardado' : isSaving ? 'Guardando...' : 'Guardar'}
+                </button>
               </div>
             </div>
           )

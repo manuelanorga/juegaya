@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { GAMES, Game } from '@/lib/games'
 import RecentGames from '@/app/components/RecentGames'
+import { supabase } from '@/lib/supabase'
 
 export const metadata: Metadata = {
   title: 'JuegaYa — Juegos Gratis Online Sin Descargar',
@@ -106,7 +107,10 @@ function Seccion({ title, slug, games, destacadoSlug }: { title: string; slug: s
   )
 }
 
-export default function Home() {
+export default async function Home() {
+  const { data: destacadosData } = await supabase.from('destacados').select('*')
+  const destacadosMap: Record<string, string> = {}
+  if (destacadosData) destacadosData.forEach((d: any) => { destacadosMap[d.seccion] = d.game_slug })
   return (
     <div className="min-h-screen bg-[#111120] text-white">
 
@@ -136,7 +140,7 @@ export default function Home() {
       <div className="py-2">
         {SECCIONES.map((sec, i) => {
           const games = GAMES.filter(sec.filter)
-          return <Seccion key={i} title={sec.title} slug={sec.slug} games={games} destacadoSlug={sec.destacado} />
+          return <Seccion key={i} title={sec.title} slug={sec.slug} games={games} destacadoSlug={destacadosMap[sec.slug] || sec.destacado} />
         })}
       </div>
 
