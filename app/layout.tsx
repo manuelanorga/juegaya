@@ -23,10 +23,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <head>
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-0626686325162895" crossorigin="anonymous"></script>
-      </head>
       <body className={`${nunito.className} bg-[#111120] text-white flex min-h-screen`}>
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-0626686325162895"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
         <Sidebar />
         <Tracker />
         <div className="flex-1 min-w-0">{children}</div>
