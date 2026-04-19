@@ -8,7 +8,7 @@ export default function AdminLogin() {
   const router = useRouter()
 
   function handleLogin() {
-    if (password === 'juegaya2026') {
+    if (password === 'Randallrh100@@@') {
       document.cookie = 'dashboard_auth=juegaya_admin_2026; path=/; max-age=86400'
       router.push('/dashboard')
     } else {
