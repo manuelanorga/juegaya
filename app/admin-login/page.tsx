@@ -9,7 +9,7 @@ export default function AdminLogin() {
 
   function handleLogin() {
     if (password === 'Randallrh100@@@') {
-      document.cookie = 'dashboard_auth=juegaya_admin_2026; path=/; max-age=86400'
+      document.cookie = 'dashboard_auth=juegaya_admin_Randall2026; path=/; max-age=86400'
       router.push('/dashboard')
     } else {
       setError(true)
