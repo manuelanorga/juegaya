@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { Nunito } from 'next/font/google'
-import Script from 'next/script'
 import './globals.css'
 import Sidebar from './components/Sidebar'
 import Tracker from './components/Tracker'
@@ -13,6 +12,9 @@ export const metadata: Metadata = {
   description: 'JuegaYa es la plataforma de juegos HTML5 gratis más grande de Latinoamérica.',
   keywords: ['juegos gratis online', 'juegos html5', 'juegos sin descargar', 'juegos en español'],
   robots: { index: true, follow: true },
+  verification: {
+    google: 'ca-pub-0626686325162895',
+  },
   openGraph: {
     type: 'website', locale: 'es_MX', url: 'https://juegaya.app', siteName: 'JuegaYa',
     title: 'JuegaYa — Juegos Gratis Online Sin Descargar',
@@ -24,13 +26,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <body className={`${nunito.className} bg-[#111120] text-white flex min-h-screen`}>
-        <Script
+      <head>
+        <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-0626686325162895"
           crossOrigin="anonymous"
-          strategy="afterInteractive"
         />
+      </head>
+      <body className={`${nunito.className} bg-[#111120] text-white flex min-h-screen`}>
         <Sidebar />
         <Tracker />
         <div className="flex-1 min-w-0">{children}</div>
