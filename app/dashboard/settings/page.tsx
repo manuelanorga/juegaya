@@ -46,6 +46,9 @@ export default function SettingsPage() {
     slot300x250Sidebar: true,
     adblockDetection: true,
     adblockMessage: 'Por favor desactiva tu AdBlock para apoyar JuegaYa y seguir jugando gratis.',
+    codeBanner728: '',
+    code300x250Content: '',
+    code300x250Sidebar: '',
   })
 
   const SaveBtn = ({ section }: { section: string }) => (
@@ -69,7 +72,7 @@ export default function SettingsPage() {
 
   const Textarea = ({ value, onChange, placeholder, rows = 3 }: any) => (
     <textarea value={value} onChange={onChange} placeholder={placeholder} rows={rows}
-      className="w-full bg-[#111120] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50 resize-none" />
+      className="w-full bg-[#111120] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50 resize-none font-mono text-xs" />
   )
 
   const Toggle = ({ label, sub, checked, onChange }: any) => (
@@ -109,7 +112,6 @@ export default function SettingsPage() {
         <p className="text-white/40 text-sm mt-1">Configuración general del portal</p>
       </div>
 
-      {/* TABS */}
       <div className="flex gap-2 mb-8 bg-[#1e1e34] p-1.5 rounded-2xl w-fit">
         {TABS.map((t, i) => (
           <button key={i} onClick={() => setTab(i)}
@@ -119,18 +121,14 @@ export default function SettingsPage() {
         ))}
       </div>
 
-      {/* TAB 1 — GENERAL */}
       {tab === 0 && (
         <div className="max-w-2xl space-y-6">
-
-          {/* Modo mantenimiento */}
           {general.maintenanceMode && (
             <div className="bg-red-400/10 border border-red-400/25 rounded-xl p-4 flex items-center gap-3">
               <span className="text-lg">⚠️</span>
               <div className="text-sm text-red-300 font-semibold">El sitio está en modo mantenimiento — no es visible al público</div>
             </div>
           )}
-
           <div className="bg-[#1e1e34] rounded-2xl border border-white/5 p-6 space-y-4">
             <h2 className="font-black text-base border-b border-white/5 pb-3">Información del sitio</h2>
             <Field label="Site Title">
@@ -162,10 +160,8 @@ export default function SettingsPage() {
                 <option value="18">+18 años</option>
               </select>
             </Field>
-            <div className="flex items-center justify-between pt-2">
-              <Toggle label="Modo mantenimiento" sub="El sitio mostrará una página de 'Volvemos pronto'"
-                checked={general.maintenanceMode} onChange={(v: boolean) => setGeneral({...general, maintenanceMode: v})} />
-            </div>
+            <Toggle label="Modo mantenimiento" sub="El sitio mostrará una página de 'Volvemos pronto'"
+              checked={general.maintenanceMode} onChange={(v: boolean) => setGeneral({...general, maintenanceMode: v})} />
             <div className="flex justify-end pt-2">
               <SaveBtn section="general" />
             </div>
@@ -183,7 +179,6 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* TAB 2 — USUARIO */}
       {tab === 1 && (
         <div className="max-w-2xl space-y-6">
           <div className="bg-[#1e1e34] rounded-2xl border border-white/5 p-6">
@@ -202,7 +197,6 @@ export default function SettingsPage() {
               <SaveBtn section="user" />
             </div>
           </div>
-
           <div className="bg-[#1e1e34] rounded-2xl border border-white/5 p-6">
             <h2 className="font-black text-base border-b border-white/5 pb-3 mb-4">CAPTCHA</h2>
             <Toggle label="Mostrar CAPTCHA en registro" sub="Añade verificación anti-bot en el formulario de registro"
@@ -214,7 +208,6 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* TAB 3 — SEO */}
       {tab === 2 && (
         <div className="max-w-2xl space-y-6">
           <div className="bg-[#1e1e34] rounded-2xl border border-white/5 p-6 space-y-4">
@@ -232,16 +225,13 @@ export default function SettingsPage() {
               <SaveBtn section="seo-google" />
             </div>
           </div>
-
           <div className="bg-[#1e1e34] rounded-2xl border border-white/5 p-6 space-y-4">
             <h2 className="font-black text-base border-b border-white/5 pb-3">Robots.txt</h2>
-            <Textarea value={seo.robotsTxt} onChange={(e: any) => setSeo({...seo, robotsTxt: e.target.value})}
-              rows={8} />
+            <Textarea value={seo.robotsTxt} onChange={(e: any) => setSeo({...seo, robotsTxt: e.target.value})} rows={8} />
             <div className="flex justify-end">
               <SaveBtn section="robots" />
             </div>
           </div>
-
           <div className="bg-[#1e1e34] rounded-2xl border border-white/5 p-6 space-y-4">
             <h2 className="font-black text-base border-b border-white/5 pb-3">Meta Tags Globales</h2>
             <Field label="Meta tags adicionales (se insertan en el head)">
@@ -255,7 +245,6 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* TAB 4 — MONETIZACIÓN */}
       {tab === 3 && (
         <div className="max-w-2xl space-y-6">
           <div className="bg-[#1e1e34] rounded-2xl border border-white/5 p-6 space-y-4">
@@ -279,6 +268,34 @@ export default function SettingsPage() {
               checked={monetization.slot300x250Sidebar} onChange={(v: boolean) => setMonetization({...monetization, slot300x250Sidebar: v})} />
             <div className="flex justify-end pt-4">
               <SaveBtn section="slots" />
+            </div>
+          </div>
+
+          <div className="bg-[#1e1e34] rounded-2xl border border-white/5 p-6 space-y-5">
+            <h2 className="font-black text-base border-b border-white/5 pb-3">Códigos de anuncios</h2>
+            <div className="bg-blue-400/10 border border-blue-400/20 rounded-xl p-3 text-xs text-blue-300">
+              Pega el código completo de cada bloque de AdSense. Se aplicarán automáticamente en todas las páginas de juegos al guardar.
+            </div>
+            <Field label="Código Banner 728×90 — debajo del juego">
+              <Textarea value={monetization.codeBanner728}
+                onChange={(e: any) => setMonetization({...monetization, codeBanner728: e.target.value})}
+                placeholder={'<ins class="adsbygoogle"\n  style="display:inline-block;width:728px;height:90px"\n  data-ad-client="ca-pub-XXXXXXXX"\n  data-ad-slot="XXXXXXXXXX"></ins>'}
+                rows={5} />
+            </Field>
+            <Field label="Código 300×250 — en contenido (sección Tips)">
+              <Textarea value={monetization.code300x250Content}
+                onChange={(e: any) => setMonetization({...monetization, code300x250Content: e.target.value})}
+                placeholder={'<ins class="adsbygoogle"\n  style="display:inline-block;width:300px;height:250px"\n  data-ad-client="ca-pub-XXXXXXXX"\n  data-ad-slot="XXXXXXXXXX"></ins>'}
+                rows={5} />
+            </Field>
+            <Field label="Código 300×250 — en sidebar (desktop)">
+              <Textarea value={monetization.code300x250Sidebar}
+                onChange={(e: any) => setMonetization({...monetization, code300x250Sidebar: e.target.value})}
+                placeholder={'<ins class="adsbygoogle"\n  style="display:inline-block;width:300px;height:250px"\n  data-ad-client="ca-pub-XXXXXXXX"\n  data-ad-slot="XXXXXXXXXX"></ins>'}
+                rows={5} />
+            </Field>
+            <div className="flex justify-end">
+              <SaveBtn section="ad-codes" />
             </div>
           </div>
 
