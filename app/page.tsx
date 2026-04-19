@@ -165,10 +165,10 @@ export default async function Home() {
       {/* FOOTER */}
       <footer className="border-t border-white/5 bg-[#0e0e1a] py-6 px-4 md:px-6">
         <div className="flex flex-wrap gap-4 text-xs text-white/30 font-semibold mb-3">
-          <span className="cursor-pointer hover:text-white">Sobre nosotros</span>
-          <span className="cursor-pointer hover:text-white">Contacto</span>
-          <span className="cursor-pointer hover:text-white">Términos</span>
-          <span className="cursor-pointer hover:text-white">Privacidad</span>
+          <a href="/sobre-nosotros" className="hover:text-white transition-colors">Sobre nosotros</a>
+          <a href="/contacto" className="hover:text-white transition-colors">Contacto</a>
+          <a href="/terminos" className="hover:text-white transition-colors">Términos</a>
+          <a href="/privacidad" className="hover:text-white transition-colors">Privacidad</a>
           <span className="ml-auto">🇪🇸 Español</span>
         </div>
       </footer>
