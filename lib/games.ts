@@ -26,6 +26,7 @@ export const GAMES: Game[] = [
     name: '¿Cuánto sabes de Historia?',
     icon: null,
     emoji: '🏛️',
+    aspectRatio: '3/4',
     iframeSrc: '/juegos/cuanto-sabes-historia.html',
     category: 'Inteligencia',
     categorySlug: 'inteligencia',
