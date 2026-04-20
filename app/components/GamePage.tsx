@@ -1,5 +1,5 @@
 'use client'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 
 interface Game {
@@ -57,6 +57,17 @@ export default function GamePage({ game }: { game: Game }) {
   }, [game.slug])
   const related = ALL_GAMES.filter(g => g.slug !== game.slug)
 
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const toggleFullscreen = () => {
+    const el = iframeRef.current
+    if (!el) return
+    if (document.fullscreenElement) {
+      document.exitFullscreen()
+    } else {
+      el.requestFullscreen().catch(() => {})
+    }
+  }
+
   const arStr = game.aspectRatio || '16/9'
   const arParts = arStr.split('/').map(Number)
   const arValue = arParts[0] / arParts[1]
@@ -107,6 +118,7 @@ export default function GamePage({ game }: { game: Game }) {
             {game.fixedHeight ? (
               <div style={{ height: game.fixedHeight, width: '100%' }}>
                 <iframe
+                  ref={iframeRef}
                   src={game.iframeSrc}
                   className="w-full h-full block"
                   title={`${game.name} gratis online`}
@@ -116,6 +128,7 @@ export default function GamePage({ game }: { game: Game }) {
               </div>
             ) : (
               <iframe
+                ref={iframeRef}
                 src={game.iframeSrc}
                 className="game-frame block"
                 title={`${game.name} gratis online`}
@@ -136,7 +149,7 @@ export default function GamePage({ game }: { game: Game }) {
               <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white">🤍</button>
               <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white">💬</button>
               <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white">🎵</button>
-              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white">⛶</button>
+              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white" onClick={toggleFullscreen}>⛶</button>
             </div>
           </div>
 
