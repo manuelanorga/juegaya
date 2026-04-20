@@ -43,7 +43,7 @@ const injectResponsiveCSS = (e: React.SyntheticEvent<HTMLIFrameElement>) => {
     const doc = (e.target as HTMLIFrameElement).contentDocument;
     if (doc) {
       const s = doc.createElement('style');
-      s.textContent = 'html,body{height:100%!important;min-height:0!important;max-height:100%!important;overflow:hidden!important}';
+      s.textContent = 'html,body{height:100%!important;min-height:0!important}';
       doc.head.appendChild(s);
     }
   } catch(_){}
@@ -66,43 +66,19 @@ export default function GamePage({ game }: { game: Game }) {
     <div className="min-h-screen bg-[#111120] text-white">
 
       <style>{`
-        .game-viewport {
-          height: calc(100svh - 52px);
-          display: flex;
-          flex-direction: column;
-        }
-        .game-area {
-          flex: 1;
-          min-height: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #111120;
-        }
         .game-frame {
           width: 100%;
-          height: 100%;
+          ${isLandscape
+            ? `aspect-ratio: ${arStr}; max-height: calc(100svh - 52px);`
+            : `height: calc(100svh - 52px);`
+          }
         }
-        ${isLandscape ? `
-        .game-frame {
-          aspect-ratio: ${arStr};
-          height: auto;
-          max-height: 100%;
-        }` : ''}
-
         @media (min-width: 1280px) {
-          .game-viewport {
-            height: auto;
-          }
-          .game-area {
-            flex: none;
-          }
           .game-frame {
             height: auto;
-            width: 100%;
             aspect-ratio: ${arStr};
-            max-height: calc(100vh - 100px);
-            max-width: min(100%, calc((100vh - 100px) * ${arValue}));
+            max-height: calc(100vh - 52px);
+            max-width: min(100%, calc((100vh - 52px) * ${arValue}));
           }
         }
       `}</style>
@@ -126,50 +102,45 @@ export default function GamePage({ game }: { game: Game }) {
         {/* COLUMNA PRINCIPAL */}
         <div className="flex-1 flex flex-col overflow-y-auto min-w-0">
 
-          {/* GAME VIEWPORT: iframe + barra caben exacto en pantalla */}
-          <div className="game-viewport">
-
-            {/* IFRAME */}
-            <div className="game-area">
-              {game.fixedHeight ? (
-                <div style={{ height: game.fixedHeight, width: '100%' }}>
-                  <iframe
-                    src={game.iframeSrc}
-                    className="w-full h-full block"
-                    title={`${game.name} gratis online`}
-                    allow="fullscreen"
-                    onLoad={injectResponsiveCSS}
-                  />
-                </div>
-              ) : (
+          {/* IFRAME */}
+          <div className="w-full bg-[#111120] flex items-start justify-center">
+            {game.fixedHeight ? (
+              <div style={{ height: game.fixedHeight, width: '100%' }}>
                 <iframe
                   src={game.iframeSrc}
-                  className="game-frame block"
+                  className="w-full h-full block"
                   title={`${game.name} gratis online`}
                   allow="fullscreen"
                   onLoad={injectResponsiveCSS}
                 />
-              )}
-            </div>
-
-            {/* BARRA DEBAJO DEL JUEGO — siempre visible, nunca tapa el juego */}
-            <div className="flex-shrink-0 flex items-center gap-2 px-3 py-2 bg-[#1a1a2e] border-b border-white/5">
-              <div className="flex items-center gap-2 flex-shrink-0 mr-2">
-                <div className="w-7 h-7 rounded-lg bg-yellow-400 flex items-center justify-center text-xs font-black text-black">J</div>
-                <span className="font-black text-sm truncate max-w-[140px]">{game.name}</span>
               </div>
-              <div className="flex items-center gap-1 ml-auto">
-                <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white">👍</button>
-                <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white">🤍</button>
-                <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white">💬</button>
-                <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white">🎵</button>
-                <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white">⛶</button>
-              </div>
-            </div>
-
+            ) : (
+              <iframe
+                src={game.iframeSrc}
+                className="game-frame block"
+                title={`${game.name} gratis online`}
+                allow="fullscreen"
+                onLoad={injectResponsiveCSS}
+              />
+            )}
           </div>
 
-          {/* AD 728x90 — justo debajo del game viewport */}
+          {/* BARRA DEBAJO DEL JUEGO */}
+          <div className="flex items-center gap-2 px-3 py-2 bg-[#1a1a2e] border-b border-white/5">
+            <div className="flex items-center gap-2 flex-shrink-0 mr-2">
+              <div className="w-7 h-7 rounded-lg bg-yellow-400 flex items-center justify-center text-xs font-black text-black">J</div>
+              <span className="font-black text-sm truncate max-w-[140px]">{game.name}</span>
+            </div>
+            <div className="flex items-center gap-1 ml-auto">
+              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white">👍</button>
+              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white">🤍</button>
+              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white">💬</button>
+              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white">🎵</button>
+              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white">⛶</button>
+            </div>
+          </div>
+
+          {/* AD 728x90 — justo debajo de la barra */}
           <div className="px-3 py-2">
             <AdSlot size="728x90" />
           </div>
