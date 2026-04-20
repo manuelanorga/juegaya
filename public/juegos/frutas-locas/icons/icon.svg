@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a1a3a"/>
+      <stop offset="1" stop-color="#060d1f"/>
+    </linearGradient>
+    <radialGradient id="sandia" cx="0.35" cy="0.35" r="0.85">
+      <stop offset="0" stop-color="#bbf7d0"/>
+      <stop offset="0.55" stop-color="#16a34a"/>
+      <stop offset="1" stop-color="#14532d"/>
+    </radialGradient>
+    <radialGradient id="cereza" cx="0.3" cy="0.3" r="0.85">
+      <stop offset="0" stop-color="#fecdd3"/>
+      <stop offset="0.55" stop-color="#f43f5e"/>
+      <stop offset="1" stop-color="#881337"/>
+    </radialGradient>
+    <radialGradient id="naranja" cx="0.3" cy="0.3" r="0.85">
+      <stop offset="0" stop-color="#fed7aa"/>
+      <stop offset="0.55" stop-color="#fb923c"/>
+      <stop offset="1" stop-color="#7c2d12"/>
+    </radialGradient>
+    <radialGradient id="uva" cx="0.3" cy="0.3" r="0.85">
+      <stop offset="0" stop-color="#e9d5ff"/>
+      <stop offset="0.55" stop-color="#a855f7"/>
+      <stop offset="1" stop-color="#581c87"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="256" height="256" rx="48" fill="url(#bg)"/>
+
+  <circle cx="128" cy="148" r="108" fill="#0066ff" opacity="0.08"/>
+  <circle cx="128" cy="148" r="72" fill="#00ffcc" opacity="0.06"/>
+
+  <g>
+    <circle cx="52" cy="62" r="20" fill="url(#cereza)"/>
+    <circle cx="52" cy="62" r="20" fill="none" stroke="#881337" stroke-width="1.5"/>
+    <rect x="50" y="40" width="4" height="8" fill="#4a7c1c" rx="1"/>
+    <ellipse cx="48" cy="55" rx="7" ry="4" fill="white" opacity="0.5" transform="rotate(-25 48 55)"/>
+  </g>
+
+  <g>
+    <circle cx="210" cy="78" r="26" fill="url(#naranja)"/>
+    <circle cx="210" cy="78" r="26" fill="none" stroke="#7c2d12" stroke-width="1.5"/>
+    <rect x="208" y="50" width="4" height="9" fill="#4a7c1c" rx="1"/>
+    <ellipse cx="205" cy="70" rx="9" ry="5" fill="white" opacity="0.45" transform="rotate(-25 205 70)"/>
+  </g>
+
+  <g>
+    <circle cx="40" cy="198" r="18" fill="url(#uva)"/>
+    <circle cx="40" cy="198" r="18" fill="none" stroke="#581c87" stroke-width="1.5"/>
+    <ellipse cx="36" cy="192" rx="6" ry="3" fill="white" opacity="0.45" transform="rotate(-25 36 192)"/>
+  </g>
+
+  <g>
+    <circle cx="128" cy="148" r="78" fill="url(#sandia)"/>
+    <circle cx="128" cy="148" r="78" fill="none" stroke="#14532d" stroke-width="3"/>
+
+    <g stroke="#14532d" stroke-width="8" stroke-linecap="round" fill="none">
+      <path d="M 75 98 Q 128 78 178 96"/>
+      <path d="M 62 128 Q 128 100 192 124"/>
+      <path d="M 56 158 Q 128 128 198 154"/>
+      <path d="M 64 190 Q 128 168 192 188"/>
+      <path d="M 82 218 Q 128 200 172 214"/>
+    </g>
+
+    <ellipse cx="96" cy="118" rx="26" ry="16" fill="white" opacity="0.42" transform="rotate(-30 96 118)"/>
+    <ellipse cx="155" cy="100" rx="9" ry="5" fill="white" opacity="0.35" transform="rotate(-20 155 100)"/>
+
+    <rect x="123" y="62" width="10" height="14" fill="#4a7c1c" rx="2"/>
+    <ellipse cx="145" cy="68" rx="13" ry="7" fill="#65a030" transform="rotate(-20 145 68)"/>
+  </g>
+</svg>

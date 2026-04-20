@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#060d1f">
+<title>Frutas Locas - JuegaYa</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: radial-gradient(ellipse at top, #0a1a3a 0%, #060d1f 70%);
+    color: white;
+    min-height: 100vh;
+    min-height: 100svh;
+    overflow: hidden;
+    overscroll-behavior: none;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+  #wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    max-width: 440px;
+    margin: 0 auto;
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100svh;
+  }
+  #title-bar {
+    text-align: center;
+    padding: 2px 0;
+  }
+  #title-bar h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(90deg, #00ffcc, #0066ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  #title-bar .tag {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 2px;
+  }
+  #hud {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .hud-box {
+    background: rgba(10, 20, 40, 0.7);
+    border: 1px solid rgba(0, 102, 255, 0.25);
+    border-radius: 14px;
+    padding: 8px 12px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .hud-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 600;
+  }
+  .hud-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #00ffcc;
+    margin-top: 2px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  #next-wrap {
+    background: rgba(10, 20, 40, 0.7);
+    border: 1px solid rgba(0, 102, 255, 0.25);
+    border-radius: 14px;
+    padding: 6px 8px 4px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    text-align: center;
+  }
+  #next-canvas {
+    display: block;
+    width: 52px;
+    height: 58px;
+  }
+  #game-canvas {
+    display: block;
+    width: 100%;
+    max-width: 400px;
+    aspect-ratio: 2 / 3;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 102, 255, 0.2);
+    touch-action: none;
+    cursor: pointer;
+  }
+  #overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(6, 13, 31, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  #overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .panel {
+    background: linear-gradient(180deg, rgba(10, 26, 58, 0.98) 0%, rgba(6, 13, 31, 0.98) 100%);
+    border: 1px solid rgba(0, 102, 255, 0.35);
+    border-radius: 24px;
+    padding: 28px 24px;
+    text-align: center;
+    max-width: 320px;
+    width: calc(100% - 32px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 102, 255, 0.1);
+    transform: scale(0.92);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  #overlay.visible .panel {
+    transform: scale(1);
+  }
+  .panel h1 {
+    margin: 0 0 4px;
+    font-size: 26px;
+    font-weight: 700;
+    color: white;
+  }
+  .panel .sub {
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .stat {
+    background: rgba(0, 102, 255, 0.08);
+    border: 1px solid rgba(0, 102, 255, 0.2);
+    border-radius: 12px;
+    padding: 12px 6px;
+  }
+  .stat-label {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.55);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    font-weight: 600;
+  }
+  .stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #00ffcc;
+    margin-top: 4px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(180deg, #0066ff, #0052cc);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 102, 255, 0.4);
+    transition: transform 0.12s, box-shadow 0.15s;
+    font-family: inherit;
+    letter-spacing: 0.2px;
+  }
+  .btn:active {
+    transform: scale(0.97);
+    box-shadow: 0 2px 8px rgba(0, 102, 255, 0.3);
+  }
+</style>
+</head>
+<body>
+
+<div id="wrap">
+  <div id="title-bar">
+    <h1>Frutas Locas</h1>
+    <div class="tag">Fusión de frutas · Físicas reales</div>
+  </div>
+
+  <div id="hud">
+    <div class="hud-box">
+      <div class="hud-label">Puntos</div>
+      <div class="hud-value" id="score">0</div>
+    </div>
+    <div id="next-wrap">
+      <div class="hud-label">Siguiente</div>
+      <canvas id="next-canvas" width="52" height="58"></canvas>
+    </div>
+    <div class="hud-box">
+      <div class="hud-label">Récord</div>
+      <div class="hud-value" id="best">0</div>
+    </div>
+  </div>
+
+  <canvas id="game-canvas" width="400" height="600"></canvas>
+</div>
+
+<div id="overlay">
+  <div class="panel">
+    <h1 id="overlay-title">¡Se acabó!</h1>
+    <div class="sub" id="overlay-sub">Las frutas llegaron al tope</div>
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-label">Puntos</div>
+        <div class="stat-value" id="go-score">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Récord</div>
+        <div class="stat-value" id="go-best">0</div>
+      </div>
+    </div>
+    <button class="btn" id="retry-btn">Jugar de nuevo</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<script>
+(() => {
+  // ========== CONFIG ==========
+  const W = 400, H = 600;
+  const SPAWN_Y = 75;
+  const DANGER_Y = 120;
+  const DROP_COOLDOWN = 400;
+  const GAMEOVER_GRACE_MS = 1800;
+  const REST_THRESHOLD = 0.45;
+
+  // Las 11 frutas. Radios balanceados, paleta vibrante sobre fondo deep ocean.
+  // light = highlight gradient, color = base, accent = ring + stripes.
+  const FRUITS = [
+    { level: 1,  radius: 14,  color: '#f43f5e', accent: '#881337', light: '#fecdd3', name: 'Cereza' },
+    { level: 2,  radius: 20,  color: '#ef4444', accent: '#7f1d1d', light: '#fca5a5', name: 'Fresa' },
+    { level: 3,  radius: 28,  color: '#a855f7', accent: '#581c87', light: '#e9d5ff', name: 'Uva' },
+    { level: 4,  radius: 36,  color: '#fb923c', accent: '#7c2d12', light: '#fed7aa', name: 'Naranja' },
+    { level: 5,  radius: 44,  color: '#f97316', accent: '#7c2d12', light: '#fdba74', name: 'Durazno' },
+    { level: 6,  radius: 54,  color: '#dc2626', accent: '#7f1d1d', light: '#fecaca', name: 'Manzana' },
+    { level: 7,  radius: 64,  color: '#84cc16', accent: '#365314', light: '#d9f99d', name: 'Pera' },
+    { level: 8,  radius: 76,  color: '#fbbf24', accent: '#78350f', light: '#fef3c7', name: 'Mango' },
+    { level: 9,  radius: 88,  color: '#eab308', accent: '#713f12', light: '#fef08a', name: 'Piña' },
+    { level: 10, radius: 104, color: '#6ee7b7', accent: '#064e3b', light: '#a7f3d0', name: 'Melón' },
+    { level: 11, radius: 122, color: '#16a34a', accent: '#14532d', light: '#86efac', name: 'Sandía' },
+  ];
+
+  // ========== STATE ==========
+  const canvas = document.getElementById('game-canvas');
+  const ctx = canvas.getContext('2d');
+  const nextCanvas = document.getElementById('next-canvas');
+  const nctx = nextCanvas.getContext('2d');
+  const scoreEl = document.getElementById('score');
+  const bestEl = document.getElementById('best');
+
+  let score = 0;
+  let best = parseInt(localStorage.getItem('frutasLocasBest') || '0', 10);
+  let currentLevel = randomSpawnLevel();
+  let nextLevel = randomSpawnLevel();
+  let currentX = W / 2;
+  let canDrop = true;
+  let gameOver = false;
+  let particles = [];
+  let overLines = {};
+  let shakeTime = 0;
+
+  bestEl.textContent = best;
+
+  // ========== PHYSICS ==========
+  const engine = Matter.Engine.create();
+  engine.gravity.y = 1.1;
+  engine.positionIterations = 8;
+  engine.velocityIterations = 6;
+
+  const wallOpt = { isStatic: true, friction: 0.3, restitution: 0, label: 'wall' };
+  Matter.Composite.add(engine.world, [
+    Matter.Bodies.rectangle(-10, H / 2, 20, H * 2, wallOpt),
+    Matter.Bodies.rectangle(W + 10, H / 2, 20, H * 2, wallOpt),
+    Matter.Bodies.rectangle(W / 2, H + 10, W * 2, 20, wallOpt),
+  ]);
+
+  function createFruit(level, x, y) {
+    const cfg = FRUITS[level - 1];
+    const body = Matter.Bodies.circle(x, y, cfg.radius, {
+      restitution: 0.1,
+      friction: 0.35,
+      frictionStatic: 0.5,
+      density: 0.0012,
+      label: 'fruit',
+      slop: 0.02,
+    });
+    body.level = level;
+    body.merged = false;
+    body.spawnTime = performance.now();
+    Matter.Composite.add(engine.world, body);
+    return body;
+  }
+
+  Matter.Events.on(engine, 'collisionStart', (event) => {
+    for (const pair of event.pairs) {
+      const a = pair.bodyA, b = pair.bodyB;
+      if (a.label !== 'fruit' || b.label !== 'fruit') continue;
+      if (a.level !== b.level || a.merged || b.merged) continue;
+
+      a.merged = true;
+      b.merged = true;
+      const mx = (a.position.x + b.position.x) / 2;
+      const my = (a.position.y + b.position.y) / 2;
+      Matter.Composite.remove(engine.world, a);
+      Matter.Composite.remove(engine.world, b);
+
+      if (a.level === 11) {
+        // Sandía + sandía: mega bonus, no nace otra fruta
+        addScore(100, mx, my);
+        spawnParticles(mx, my, '#ffffff', 40, true);
+        shakeTime = 20;
+      } else {
+        const newLevel = a.level + 1;
+        createFruit(newLevel, mx, my);
+        const pts = newLevel * (newLevel + 1) / 2;
+        addScore(pts, mx, my);
+        spawnParticles(mx, my, FRUITS[newLevel - 1].color, 10 + newLevel);
+        if (newLevel >= 9) shakeTime = 8;
+      }
+    }
+  });
+
+  // ========== INPUT ==========
+  function getCanvasX(clientX) {
+    const rect = canvas.getBoundingClientRect();
+    const scale = W / rect.width;
+    let x = (clientX - rect.left) * scale;
+    const cfg = FRUITS[currentLevel - 1];
+    return Math.max(cfg.radius + 6, Math.min(W - cfg.radius - 6, x));
+  }
+
+  function tryDrop() {
+    if (!canDrop || gameOver) return;
+    createFruit(currentLevel, currentX, SPAWN_Y);
+    canDrop = false;
+    setTimeout(() => { canDrop = true; }, DROP_COOLDOWN);
+    currentLevel = nextLevel;
+    nextLevel = randomSpawnLevel();
+    drawNextPreview();
+  }
+
+  canvas.addEventListener('mousemove', (e) => { currentX = getCanvasX(e.clientX); });
+  canvas.addEventListener('click', tryDrop);
+  canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    currentX = getCanvasX(e.touches[0].clientX);
+  }, { passive: false });
+  canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    currentX = getCanvasX(e.touches[0].clientX);
+  }, { passive: false });
+  canvas.addEventListener('touchend', (e) => { e.preventDefault(); tryDrop(); });
+
+  document.getElementById('retry-btn').addEventListener('click', restart);
+
+  // ========== HELPERS ==========
+  function randomSpawnLevel() {
+    // Weighted: frutas pequeñas más comunes. Máx nivel spawn: 5.
+    const r = Math.random();
+    if (r < 0.35) return 1;
+    if (r < 0.65) return 2;
+    if (r < 0.85) return 3;
+    if (r < 0.97) return 4;
+    return 5;
+  }
+
+  function addScore(pts, x, y) {
+    score += pts;
+    scoreEl.textContent = score;
+    if (score > best) {
+      best = score;
+      bestEl.textContent = best;
+      try { localStorage.setItem('frutasLocasBest', String(best)); } catch (e) {}
+    }
+    particles.push({
+      type: 'text', text: '+' + pts,
+      x: x, y: y - 24,
+      vx: 0, vy: -1.5,
+      life: 45, maxLife: 45, alpha: 1,
+      color: '#00ffcc',
+    });
+  }
+
+  function spawnParticles(x, y, color, count, rainbow) {
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.6;
+      const speed = 2 + Math.random() * 4;
+      particles.push({
+        type: 'dot',
+        x: x, y: y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 1,
+        size: 2 + Math.random() * 3,
+        color: rainbow ? `hsl(${Math.random() * 360}, 90%, 65%)` : color,
+        life: 35, maxLife: 35, alpha: 1,
+      });
+    }
+  }
+
+  function checkGameOver() {
+    const now = performance.now();
+    const bodies = Matter.Composite.allBodies(engine.world);
+    for (const body of bodies) {
+      if (body.label !== 'fruit') continue;
+      if (now - body.spawnTime < 1200) continue;
+      const topY = body.position.y - body.circleRadius;
+      const speed = Math.hypot(body.velocity.x, body.velocity.y);
+      if (topY < DANGER_Y && speed < REST_THRESHOLD) {
+        if (!overLines[body.id]) {
+          overLines[body.id] = now;
+        } else if (now - overLines[body.id] > GAMEOVER_GRACE_MS) {
+          triggerGameOver();
+          return;
+        }
+      } else {
+        delete overLines[body.id];
+      }
+    }
+  }
+
+  function triggerGameOver() {
+    if (gameOver) return;
+    gameOver = true;
+    document.getElementById('go-score').textContent = score;
+    document.getElementById('go-best').textContent = best;
+    document.getElementById('overlay').classList.add('visible');
+  }
+
+  function restart() {
+    const bodies = Matter.Composite.allBodies(engine.world);
+    for (const b of bodies) {
+      if (b.label === 'fruit') Matter.Composite.remove(engine.world, b);
+    }
+    score = 0;
+    scoreEl.textContent = '0';
+    currentLevel = randomSpawnLevel();
+    nextLevel = randomSpawnLevel();
+    canDrop = true;
+    gameOver = false;
+    particles = [];
+    overLines = {};
+    shakeTime = 0;
+    document.getElementById('overlay').classList.remove('visible');
+    drawNextPreview();
+  }
+
+  // ========== RENDER ==========
+  function drawFruit(c, x, y, radius, cfg, angle, level) {
+    c.save();
+    c.translate(x, y);
+    c.rotate(angle || 0);
+
+    // Shadow debajo
+    c.beginPath();
+    c.arc(0, radius * 0.12, radius * 0.95, 0, Math.PI * 2);
+    c.fillStyle = 'rgba(0,0,0,0.22)';
+    c.fill();
+
+    // Cuerpo con gradient radial
+    const grad = c.createRadialGradient(
+      -radius * 0.35, -radius * 0.4, radius * 0.05,
+      0, 0, radius * 1.1
+    );
+    grad.addColorStop(0, cfg.light);
+    grad.addColorStop(0.55, cfg.color);
+    grad.addColorStop(1, cfg.accent);
+    c.beginPath();
+    c.arc(0, 0, radius, 0, Math.PI * 2);
+    c.fillStyle = grad;
+    c.fill();
+
+    // Borde
+    c.beginPath();
+    c.arc(0, 0, radius, 0, Math.PI * 2);
+    c.strokeStyle = cfg.accent;
+    c.lineWidth = Math.max(1.2, radius * 0.035);
+    c.stroke();
+
+    // Sandía: rayas arqueadas
+    if (level === 11) {
+      c.strokeStyle = cfg.accent;
+      c.lineWidth = Math.max(3, radius * 0.09);
+      c.lineCap = 'round';
+      for (let i = -2; i <= 2; i++) {
+        c.beginPath();
+        const mid = -Math.PI / 2 + i * 0.32;
+        c.arc(0, radius * 0.1, radius * 0.72, mid - 0.14, mid + 0.14);
+        c.stroke();
+      }
+    }
+
+    // Piña: crosshatch
+    if (level === 9) {
+      c.save();
+      c.globalAlpha = 0.45;
+      c.strokeStyle = cfg.accent;
+      c.lineWidth = 1.5;
+      c.beginPath();
+      for (let i = -3; i <= 3; i++) {
+        c.moveTo(-radius * 0.72, i * radius * 0.22);
+        c.lineTo(radius * 0.72, i * radius * 0.22);
+      }
+      for (let i = -3; i <= 3; i++) {
+        c.moveTo(i * radius * 0.22, -radius * 0.72);
+        c.lineTo(i * radius * 0.22, radius * 0.72);
+      }
+      c.stroke();
+      c.restore();
+    }
+
+    // Fresa: semillitas
+    if (level === 2) {
+      c.fillStyle = '#fde68a';
+      for (let i = 0; i < 7; i++) {
+        const a = (i / 7) * Math.PI * 2 + 0.3;
+        const dx = Math.cos(a) * radius * 0.45;
+        const dy = Math.sin(a) * radius * 0.45;
+        c.beginPath();
+        c.ellipse(dx, dy, radius * 0.09, radius * 0.05, a, 0, Math.PI * 2);
+        c.fill();
+      }
+    }
+
+    // Uva: pequeños reflejos
+    if (level === 3) {
+      c.fillStyle = 'rgba(255,255,255,0.18)';
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * Math.PI * 2 + 0.5;
+        const dx = Math.cos(a) * radius * 0.4;
+        const dy = Math.sin(a) * radius * 0.4;
+        c.beginPath();
+        c.arc(dx, dy, radius * 0.12, 0, Math.PI * 2);
+        c.fill();
+      }
+    }
+
+    // Melón: textura tipo red
+    if (level === 10) {
+      c.save();
+      c.globalAlpha = 0.3;
+      c.strokeStyle = '#14532d';
+      c.lineWidth = 1.5;
+      c.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        c.moveTo(Math.cos(a) * radius * 0.15, Math.sin(a) * radius * 0.15);
+        c.lineTo(Math.cos(a) * radius * 0.85, Math.sin(a) * radius * 0.85);
+      }
+      c.arc(0, 0, radius * 0.5, 0, Math.PI * 2);
+      c.stroke();
+      c.restore();
+    }
+
+    // Highlight grande
+    c.beginPath();
+    c.ellipse(-radius * 0.32, -radius * 0.4, radius * 0.32, radius * 0.22, -Math.PI / 5, 0, Math.PI * 2);
+    c.fillStyle = 'rgba(255,255,255,0.5)';
+    c.fill();
+
+    // Highlight pequeño
+    c.beginPath();
+    c.ellipse(radius * 0.2, -radius * 0.5, radius * 0.1, radius * 0.06, Math.PI / 6, 0, Math.PI * 2);
+    c.fillStyle = 'rgba(255,255,255,0.35)';
+    c.fill();
+
+    // Tallo
+    c.fillStyle = '#4a7c1c';
+    c.fillRect(-radius * 0.06, -radius - radius * 0.14, radius * 0.12, radius * 0.18);
+
+    // Hoja
+    c.fillStyle = '#65a030';
+    c.beginPath();
+    c.ellipse(radius * 0.13, -radius - radius * 0.07, radius * 0.16, radius * 0.08, -Math.PI / 4, 0, Math.PI * 2);
+    c.fill();
+
+    c.restore();
+  }
+
+  function drawNextPreview() {
+    nctx.clearRect(0, 0, 52, 58);
+    const cfg = FRUITS[nextLevel - 1];
+    const r = Math.min(cfg.radius * 0.35, 22);
+    drawFruit(nctx, 26, 32, r, cfg, 0, nextLevel);
+  }
+
+  function render(now) {
+    ctx.save();
+
+    // Shake
+    if (shakeTime > 0) {
+      ctx.translate((Math.random() - 0.5) * shakeTime * 0.6, (Math.random() - 0.5) * shakeTime * 0.6);
+      shakeTime--;
+    }
+
+    // Background
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#0a1a3a');
+    bg.addColorStop(1, '#060d1f');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // Grid sutil
+    ctx.strokeStyle = 'rgba(0, 102, 255, 0.05)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 40; i < W; i += 40) { ctx.moveTo(i, 0); ctx.lineTo(i, H); }
+    for (let i = 40; i < H; i += 40) { ctx.moveTo(0, i); ctx.lineTo(W, i); }
+    ctx.stroke();
+
+    // Bordes visibles
+    ctx.strokeStyle = 'rgba(0, 102, 255, 0.4)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(1, 0); ctx.lineTo(1, H);
+    ctx.moveTo(W - 1, 0); ctx.lineTo(W - 1, H);
+    ctx.moveTo(0, H - 1); ctx.lineTo(W, H - 1);
+    ctx.stroke();
+
+    // Línea de peligro
+    let anyOver = false;
+    for (const id in overLines) {
+      if (now - overLines[id] > 250) { anyOver = true; break; }
+    }
+    ctx.save();
+    ctx.setLineDash([10, 8]);
+    const pulseAlpha = anyOver ? 0.5 + Math.sin(now / 150) * 0.35 : 0.22;
+    ctx.strokeStyle = `rgba(255, 80, 80, ${pulseAlpha})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, DANGER_Y);
+    ctx.lineTo(W, DANGER_Y);
+    ctx.stroke();
+    ctx.restore();
+
+    // Frutas físicas
+    const bodies = Matter.Composite.allBodies(engine.world);
+    for (const body of bodies) {
+      if (body.label === 'fruit') {
+        drawFruit(ctx, body.position.x, body.position.y, body.circleRadius, FRUITS[body.level - 1], body.angle, body.level);
+      }
+    }
+
+    // Apuntado
+    if (!gameOver && canDrop) {
+      const cfg = FRUITS[currentLevel - 1];
+      // Guide line
+      ctx.save();
+      ctx.strokeStyle = 'rgba(0, 255, 204, 0.18)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 8]);
+      ctx.beginPath();
+      ctx.moveTo(currentX, SPAWN_Y + cfg.radius);
+      ctx.lineTo(currentX, H - 5);
+      ctx.stroke();
+      ctx.restore();
+      // Fruta con pulso suave
+      const pulse = 1 + Math.sin(now / 280) * 0.025;
+      drawFruit(ctx, currentX, SPAWN_Y, cfg.radius * pulse, cfg, 0, currentLevel);
+    }
+
+    // Partículas
+    for (const p of particles) {
+      ctx.globalAlpha = p.alpha;
+      if (p.type === 'dot') {
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * p.alpha, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (p.type === 'text') {
+        ctx.fillStyle = p.color;
+        ctx.font = 'bold 16px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(p.text, p.x, p.y);
+      }
+    }
+    ctx.globalAlpha = 1;
+
+    ctx.restore();
+  }
+
+  function updateParticles() {
+    particles = particles.filter(p => p.life > 0);
+    for (const p of particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.type === 'dot') {
+        p.vy += 0.2;
+        p.vx *= 0.98;
+      }
+      p.life--;
+      p.alpha = p.life / p.maxLife;
+    }
+  }
+
+  // ========== MAIN LOOP ==========
+  let lastTime = performance.now();
+  function loop() {
+    const now = performance.now();
+    const dt = Math.min(now - lastTime, 32);
+    lastTime = now;
+
+    if (!gameOver) {
+      Matter.Engine.update(engine, dt);
+      checkGameOver();
+    }
+    updateParticles();
+    render(now);
+    requestAnimationFrame(loop);
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) lastTime = performance.now();
+  });
+
+  // Arranca
+  drawNextPreview();
+  requestAnimationFrame(loop);
+})();
+</script>
+
+</body>
+</html>
