@@ -46,12 +46,31 @@ export default function GamePage({ game }: { game: Game }) {
   }, [game.slug])
   const related = ALL_GAMES.filter(g => g.slug !== game.slug)
 
-  // Calcular valor numérico del aspect ratio para el max-width dinámico
-  const arParts = (game.aspectRatio || '16/9').split('/').map(Number)
+  const arStr = game.aspectRatio || '16/9'
+  const arParts = arStr.split('/').map(Number)
   const arValue = arParts[0] / arParts[1]
+  const isLandscape = arValue > 1
 
   return (
     <div className="min-h-screen bg-[#111120] text-white">
+
+      <style>{`
+        .game-frame {
+          width: 100%;
+          ${isLandscape
+            ? `aspect-ratio: ${arStr}; max-height: calc(100svh - 52px);`
+            : `height: calc(100svh - 52px);`
+          }
+        }
+        @media (min-width: 1280px) {
+          .game-frame {
+            height: auto;
+            aspect-ratio: ${arStr};
+            max-height: calc(100vh - 52px);
+            max-width: min(100%, calc((100vh - 52px) * ${arValue}));
+          }
+        }
+      `}</style>
 
       {/* HEADER */}
       <header className="sticky top-0 z-50 bg-[#111120]/95 backdrop-blur border-b border-white/5 h-[52px]">
@@ -72,24 +91,25 @@ export default function GamePage({ game }: { game: Game }) {
         {/* COLUMNA PRINCIPAL */}
         <div className="flex-1 flex flex-col overflow-y-auto min-w-0">
 
-          {/* IFRAME — contain universal: el juego siempre cabe entero */}
+          {/* IFRAME */}
           <div className="w-full bg-[#111120] flex items-center justify-center">
-            <div style={game.fixedHeight
-              ? { height: game.fixedHeight, width: '100%' }
-              : {
-                  width: '100%',
-                  aspectRatio: game.aspectRatio || '16/9',
-                  maxHeight: '80vh',
-                  maxWidth: `calc(80vh * ${arValue})`,
-                }
-            }>
+            {game.fixedHeight ? (
+              <div style={{ height: game.fixedHeight, width: '100%' }}>
+                <iframe
+                  src={game.iframeSrc}
+                  className="w-full h-full block"
+                  title={`${game.name} gratis online`}
+                  allow="fullscreen"
+                />
+              </div>
+            ) : (
               <iframe
                 src={game.iframeSrc}
-                className="w-full h-full block"
+                className="game-frame block"
                 title={`${game.name} gratis online`}
                 allow="fullscreen"
               />
-            </div>
+            )}
           </div>
 
           {/* BARRA DEBAJO DEL JUEGO */}
