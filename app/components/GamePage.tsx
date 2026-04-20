@@ -68,15 +68,21 @@ export default function GamePage({ game }: { game: Game }) {
         {/* COLUMNA PRINCIPAL */}
         <div className="flex-1 flex flex-col overflow-y-auto min-w-0">
 
-          {/* IFRAME */}
-          <div className="w-full bg-black flex items-center justify-center"
-            style={game.fixedHeight
-              ? { height: game.fixedHeight }
-              : { aspectRatio: game.aspectRatio || '16/9', maxHeight: '80vh' }
-            }>
+          {/* IFRAME — contenedor que centra + iframe que entra entero con cualquier aspect ratio */}
+          <div className="w-full bg-[#111120] flex items-center justify-center py-2">
             <iframe
               src={game.iframeSrc}
-              className="w-full h-full"
+              style={game.fixedHeight
+                ? { height: game.fixedHeight, width: '100%', maxWidth: '100%' }
+                : {
+                    aspectRatio: game.aspectRatio || '16/9',
+                    height: '80vh',
+                    width: 'auto',
+                    maxWidth: '100%',
+                    maxHeight: '80vh',
+                  }
+              }
+              className="block"
               title={`${game.name} gratis online`}
               allow="fullscreen"
             />
