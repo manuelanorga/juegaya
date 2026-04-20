@@ -38,6 +38,17 @@ const AdSlot = ({ size, label }: { size: string; label?: string }) => (
   </div>
 )
 
+const injectResponsiveCSS = (e: React.SyntheticEvent<HTMLIFrameElement>) => {
+  try {
+    const doc = (e.target as HTMLIFrameElement).contentDocument;
+    if (doc) {
+      const s = doc.createElement('style');
+      s.textContent = 'html,body{height:100%!important;min-height:0!important;max-height:100%!important;overflow:hidden!important}';
+      doc.head.appendChild(s);
+    }
+  } catch(_){}
+}
+
 export default function GamePage({ game }: { game: Game }) {
   useEffect(() => {
     const history = JSON.parse(localStorage.getItem("jy_history") || "[]")
@@ -100,6 +111,7 @@ export default function GamePage({ game }: { game: Game }) {
                   className="w-full h-full block"
                   title={`${game.name} gratis online`}
                   allow="fullscreen"
+                  onLoad={injectResponsiveCSS}
                 />
               </div>
             ) : (
@@ -108,6 +120,7 @@ export default function GamePage({ game }: { game: Game }) {
                 className="game-frame block"
                 title={`${game.name} gratis online`}
                 allow="fullscreen"
+                onLoad={injectResponsiveCSS}
               />
             )}
           </div>
