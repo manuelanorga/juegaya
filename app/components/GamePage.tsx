@@ -180,7 +180,12 @@ export default function GamePage({ game }: { game: Game }) {
 
             <p className="text-white/60 text-sm leading-relaxed">{game.description}</p>
 
-            {/* TIPS + AD 300x250 al lado */}
+            {/* AD 300x250 — mobile: arriba de tips */}
+            <div className="xl:hidden">
+              <AdSlot size="300x250" label="Publicidad · 300×250" />
+            </div>
+
+            {/* TIPS + AD 300x250 al lado en desktop */}
             {game.tips.length > 0 && (
               <div className="bg-[#1e1e34] rounded-xl border border-white/10 p-4">
                 <div className="font-black text-sm mb-3">💡 Tips y trucos</div>
@@ -192,7 +197,7 @@ export default function GamePage({ game }: { game: Game }) {
                       </li>
                     ))}
                   </ul>
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 hidden xl:block">
                     <AdSlot size="300x250" label="Publicidad · 300×250" />
                   </div>
                 </div>
