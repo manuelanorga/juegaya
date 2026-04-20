@@ -46,6 +46,10 @@ export default function GamePage({ game }: { game: Game }) {
   }, [game.slug])
   const related = ALL_GAMES.filter(g => g.slug !== game.slug)
 
+  // Calcular valor numérico del aspect ratio para el max-width dinámico
+  const arParts = (game.aspectRatio || '16/9').split('/').map(Number)
+  const arValue = arParts[0] / arParts[1]
+
   return (
     <div className="min-h-screen bg-[#111120] text-white">
 
@@ -68,24 +72,24 @@ export default function GamePage({ game }: { game: Game }) {
         {/* COLUMNA PRINCIPAL */}
         <div className="flex-1 flex flex-col overflow-y-auto min-w-0">
 
-          {/* IFRAME — contenedor que centra + iframe que entra entero con cualquier aspect ratio */}
-          <div className="w-full bg-[#111120] flex items-center justify-center py-2">
-            <iframe
-              src={game.iframeSrc}
-              style={game.fixedHeight
-                ? { height: game.fixedHeight, width: '100%', maxWidth: '100%' }
-                : {
-                    aspectRatio: game.aspectRatio || '16/9',
-                    height: '80vh',
-                    width: 'auto',
-                    maxWidth: '100%',
-                    maxHeight: '80vh',
-                  }
-              }
-              className="block"
-              title={`${game.name} gratis online`}
-              allow="fullscreen"
-            />
+          {/* IFRAME — contain universal: el juego siempre cabe entero */}
+          <div className="w-full bg-[#111120] flex items-center justify-center">
+            <div style={game.fixedHeight
+              ? { height: game.fixedHeight, width: '100%' }
+              : {
+                  width: '100%',
+                  aspectRatio: game.aspectRatio || '16/9',
+                  maxHeight: '80vh',
+                  maxWidth: `calc(80vh * ${arValue})`,
+                }
+            }>
+              <iframe
+                src={game.iframeSrc}
+                className="w-full h-full block"
+                title={`${game.name} gratis online`}
+                allow="fullscreen"
+              />
+            </div>
           </div>
 
           {/* BARRA DEBAJO DEL JUEGO */}
