@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a1a3a"/>
+      <stop offset="1" stop-color="#060d1f"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#22c55e"/>
+      <stop offset="1" stop-color="#16a34a"/>
+    </linearGradient>
+    <linearGradient id="yellowGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eab308"/>
+      <stop offset="1" stop-color="#ca8a04"/>
+    </linearGradient>
+    <linearGradient id="titleGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#00ffcc"/>
+      <stop offset="1" stop-color="#0066ff"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="256" height="256" rx="48" fill="url(#bg)"/>
+
+  <circle cx="128" cy="128" r="95" fill="#0066ff" opacity="0.08"/>
+
+  <!-- Fila 1: muestra intento con Palabro (simulado con letras "Pala.") -->
+  <!-- Posicionamos el grid 5x3 con letras formando "PALABRO" adaptado visualmente -->
+  <!-- Simplificamos: 2 filas de 5 cuadrados con colores -->
+
+  <!-- Fila superior: ejemplo "VERDE" con algunas verdes/amarillas -->
+  <g transform="translate(32, 58)">
+    <!-- V -->
+    <rect x="0" y="0" width="36" height="36" rx="5" fill="#3f3f46" stroke="#52525b" stroke-width="1.5"/>
+    <text x="18" y="26" text-anchor="middle" fill="white" font-family="system-ui, sans-serif" font-size="22" font-weight="700">V</text>
+
+    <!-- E - amarillo -->
+    <rect x="40" y="0" width="36" height="36" rx="5" fill="url(#yellowGrad)"/>
+    <text x="58" y="26" text-anchor="middle" fill="white" font-family="system-ui, sans-serif" font-size="22" font-weight="700">E</text>
+
+    <!-- R -->
+    <rect x="80" y="0" width="36" height="36" rx="5" fill="#3f3f46" stroke="#52525b" stroke-width="1.5"/>
+    <text x="98" y="26" text-anchor="middle" fill="white" font-family="system-ui, sans-serif" font-size="22" font-weight="700">R</text>
+
+    <!-- D -->
+    <rect x="120" y="0" width="36" height="36" rx="5" fill="#3f3f46" stroke="#52525b" stroke-width="1.5"/>
+    <text x="138" y="26" text-anchor="middle" fill="white" font-family="system-ui, sans-serif" font-size="22" font-weight="700">D</text>
+
+    <!-- E - verde -->
+    <rect x="160" y="0" width="36" height="36" rx="5" fill="url(#greenGrad)"/>
+    <text x="178" y="26" text-anchor="middle" fill="white" font-family="system-ui, sans-serif" font-size="22" font-weight="700">E</text>
+  </g>
+
+  <!-- Fila media: palabra ganadora toda verde "PLENO" -->
+  <g transform="translate(32, 104)">
+    <rect x="0" y="0" width="36" height="36" rx="5" fill="url(#greenGrad)"/>
+    <text x="18" y="26" text-anchor="middle" fill="white" font-family="system-ui, sans-serif" font-size="22" font-weight="700">P</text>
+
+    <rect x="40" y="0" width="36" height="36" rx="5" fill="url(#greenGrad)"/>
+    <text x="58" y="26" text-anchor="middle" fill="white" font-family="system-ui, sans-serif" font-size="22" font-weight="700">L</text>
+
+    <rect x="80" y="0" width="36" height="36" rx="5" fill="url(#greenGrad)"/>
+    <text x="98" y="26" text-anchor="middle" fill="white" font-family="system-ui, sans-serif" font-size="22" font-weight="700">E</text>
+
+    <rect x="120" y="0" width="36" height="36" rx="5" fill="url(#greenGrad)"/>
+    <text x="138" y="26" text-anchor="middle" fill="white" font-family="system-ui, sans-serif" font-size="22" font-weight="700">N</text>
+
+    <rect x="160" y="0" width="36" height="36" rx="5" fill="url(#greenGrad)"/>
+    <text x="178" y="26" text-anchor="middle" fill="white" font-family="system-ui, sans-serif" font-size="22" font-weight="700">O</text>
+  </g>
+
+  <!-- Título "PALABRO" en la parte inferior con gradient -->
+  <text x="128" y="192" text-anchor="middle" fill="url(#titleGrad)" font-family="system-ui, -apple-system, sans-serif" font-size="32" font-weight="800" letter-spacing="3">PALABRO</text>
+
+  <!-- Subtítulo -->
+  <text x="128" y="215" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="500" letter-spacing="3">5 LETRAS · 6 INTENTOS</text>
+</svg>
