@@ -58,8 +58,8 @@ export default function GamePage({ game }: { game: Game }) {
         .game-frame {
           width: 100%;
           ${isLandscape
-            ? `aspect-ratio: ${arStr}; max-height: calc(100svh - 100px);`
-            : `height: calc(100svh - 100px);`
+            ? `aspect-ratio: ${arStr}; max-height: calc(100svh - 150px);`
+            : `height: calc(100svh - 150px);`
           }
         }
         @media (min-width: 1280px) {
