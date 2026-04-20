@@ -180,7 +180,7 @@ export default function GamePage({ game }: { game: Game }) {
 
             <p className="text-white/60 text-sm leading-relaxed">{game.description}</p>
 
-            {/* AD 300x250 — mobile: arriba de tips */}
+            {/* AD 300x250 — solo mobile, arriba de tips */}
             <div className="xl:hidden">
               <AdSlot size="300x250" label="Publicidad · 300×250" />
             </div>
