@@ -58,8 +58,8 @@ export default function GamePage({ game }: { game: Game }) {
         .game-frame {
           width: 100%;
           ${isLandscape
-            ? `aspect-ratio: ${arStr}; max-height: calc(100svh);`
-            : `height: calc(100svh);`
+            ? `aspect-ratio: ${arStr}; max-height: calc(100svh - 52px);`
+            : `height: calc(100svh - 52px);`
           }
         }
         @media (min-width: 1280px) {
@@ -126,7 +126,7 @@ export default function GamePage({ game }: { game: Game }) {
               <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white">⛶</button>
             </div>
           </div>
-
+          
           {/* AD 728x90 — justo debajo de la barra */}
           <div className="px-3 py-2">
             <AdSlot size="728x90" />
