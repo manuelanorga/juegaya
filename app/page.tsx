@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
+import { Fragment } from 'react'
 import Link from 'next/link'
 import { GAMES, Game } from '@/lib/games'
 import RecentGames from '@/app/components/RecentGames'
+import AdUnit from '@/app/components/AdUnit'
 import { supabase } from '@/lib/supabase'
 
 export const metadata: Metadata = {
@@ -141,7 +143,17 @@ export default async function Home() {
       <div className="py-2">
         {SECCIONES.map((sec, i) => {
           const games = GAMES.filter(sec.filter)
-          return <Seccion key={i} title={sec.title} slug={sec.slug} games={games} destacadoSlug={destacadosMap[sec.slug] || sec.destacado} />
+          return (
+            <Fragment key={i}>
+              <Seccion title={sec.title} slug={sec.slug} games={games} destacadoSlug={destacadosMap[sec.slug] || sec.destacado} />
+              {/* AD — entre la 1.ª y la 2.ª fila: se ve sin tener que llegar al pie de página */}
+              {i === 0 && (
+                <div className="px-4 md:px-6 mb-8">
+                  <AdUnit format="horizontal" />
+                </div>
+              )}
+            </Fragment>
+          )
         })}
       </div>
 
@@ -153,13 +165,6 @@ export default async function Home() {
             <div className="font-black text-yellow-400">¡Sube de Nivel y Gana Premios! 🚀</div>
             <div className="text-xs text-white/40 mt-0.5">Cada semana recompensamos a los mejores jugadores</div>
           </div>
-        </div>
-      </div>
-
-      {/* AD */}
-      <div className="px-4 md:px-6 mb-8">
-        <div className="rounded-2xl bg-[#1e1e34] border border-dashed border-white/8 h-[90px] flex items-center justify-center gap-3 text-white/25 text-sm font-bold">
-          <span>📢</span><span>Publicidad · Google AdSense</span>
         </div>
       </div>
 

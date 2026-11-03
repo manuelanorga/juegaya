@@ -32,3 +32,8 @@ body {
 
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Si AdSense no tiene anuncio para el hueco, ocultarlo en lugar de dejar la etiqueta sola */
+.ad-slot:has(ins[data-ad-status="unfilled"]) {
+  display: none;
+}

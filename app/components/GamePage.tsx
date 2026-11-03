@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef } from 'react'
 import Link from 'next/link'
+import AdUnit from './AdUnit'
 
 interface Game {
   slug: string
@@ -29,14 +30,6 @@ const ALL_GAMES = [
   { slug: 'test-reflejos',   name: 'Test de Reflejos',      icon: null },
   { slug: 'corre-mi-bro',    name: 'Corre mi Bro',          icon: null },
 ]
-
-const AdSlot = ({ size, label }: { size: string; label?: string }) => (
-  <div className="rounded-xl bg-[#1e1e34] border border-dashed border-white/10 flex flex-col items-center justify-center gap-1 text-white/20 text-xs font-bold"
-    style={{ minHeight: size === '728x90' ? '90px' : '250px', minWidth: size === '300x250' ? '300px' : undefined }}>
-    <span className="text-lg opacity-30">📢</span>
-    <span>{label || `Publicidad · ${size}`}</span>
-  </div>
-)
 
 const injectResponsiveCSS = (e: React.SyntheticEvent<HTMLIFrameElement>) => {
   try {
@@ -153,9 +146,10 @@ export default function GamePage({ game }: { game: Game }) {
             </div>
           </div>
 
-          {/* AD 728x90 — justo debajo de la barra */}
-          <div className="px-3 py-2">
-            <AdSlot size="728x90" />
+          {/* AD horizontal — solo escritorio y separado de los botones del juego.
+              En móvil no hay banner bajo el juego: está pegado a los controles táctiles (clics accidentales). */}
+          <div className="hidden xl:block px-3 pt-6 pb-2">
+            <AdUnit format="horizontal" />
           </div>
 
           {/* INFO */}
@@ -180,9 +174,9 @@ export default function GamePage({ game }: { game: Game }) {
 
             <p className="text-white/60 text-sm leading-relaxed">{game.description}</p>
 
-            {/* AD 300x250 — solo mobile, arriba de tips */}
+            {/* AD 300x250 — solo móvil, tras la descripción y lejos del juego */}
             <div className="xl:hidden">
-              <AdSlot size="300x250" label="Publicidad · 300×250" />
+              <AdUnit format="rectangle" />
             </div>
 
             {/* TIPS + AD 300x250 al lado en desktop */}
@@ -198,7 +192,7 @@ export default function GamePage({ game }: { game: Game }) {
                     ))}
                   </ul>
                   <div className="flex-shrink-0 hidden xl:block">
-                    <AdSlot size="300x250" label="Publicidad · 300×250" />
+                    <AdUnit format="rectangle" />
                   </div>
                 </div>
               </div>
@@ -239,11 +233,13 @@ export default function GamePage({ game }: { game: Game }) {
         </div>
 
         {/* SIDEBAR — desktop */}
-        <div className="hidden xl:flex flex-col w-[300px] flex-shrink-0 border-l border-white/5 overflow-y-auto bg-[#0e0e1a]">
+        <div className="hidden xl:flex flex-col w-[324px] flex-shrink-0 border-l border-white/5 overflow-y-auto bg-[#0e0e1a]">
 
-          {/* AD 300x250 — ARRIBA */}
+          {/* AD lateral — siempre visible: la columna del juego tiene su propio scroll.
+              300×600 solo en pantallas altas, para no tapar "Más juegos" en portátiles. */}
           <div className="p-3 border-b border-white/5">
-            <AdSlot size="300x250" label="Publicidad · 300×250" />
+            <div className="hidden [@media(min-height:900px)]:block"><AdUnit format="vertical" /></div>
+            <div className="[@media(min-height:900px)]:hidden"><AdUnit format="rectangle" /></div>
           </div>
 
           {/* Juegos relacionados */}
