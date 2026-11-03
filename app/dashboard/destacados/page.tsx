@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { GAMES } from '@/lib/games'
-import { supabase } from '@/lib/supabase'
+import { getDestacados, saveDestacado } from '../actions'
 
 const SECCIONES = [
   { slug: 'populares',    title: '🔥 Populares' },
@@ -32,7 +32,7 @@ export default function DestacadosPage() {
   }, [])
 
   async function loadDestacados() {
-    const { data } = await supabase.from('destacados').select('*')
+    const data = await getDestacados()
     if (data) {
       const map: Record<string, string> = {}
       data.forEach(d => { map[d.seccion] = d.game_slug })
@@ -43,11 +43,7 @@ export default function DestacadosPage() {
 
   async function handleSave(seccion: string) {
     setSaving(seccion)
-    await supabase.from('destacados').upsert({
-      seccion,
-      game_slug: destacados[seccion],
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'seccion' })
+    await saveDestacado(seccion, destacados[seccion])
     setSaving(null)
     setSaved(seccion)
     setTimeout(() => setSaved(null), 2000)

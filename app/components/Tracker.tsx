@@ -24,18 +24,13 @@ export default function Tracker() {
     const device = getDevice()
     const gameSlug = pathname.startsWith('/juego/') ? pathname.split('/')[2] : null
 
-    supabase.from('page_views').insert({
-      session_id: sessionId,
-      page: pathname,
-      game_slug: gameSlug,
-      device,
+    // RPC con permisos limitados: el cliente no puede leer ni modificar las tablas directamente
+    supabase.rpc('track_view', {
+      p_session_id: sessionId,
+      p_page: pathname,
+      p_game_slug: gameSlug,
+      p_device: device,
     }).then()
-
-    supabase.from('sessions').upsert({
-      id: sessionId,
-      device,
-      last_seen: new Date().toISOString(),
-    }, { onConflict: 'id' }).then()
 
   }, [pathname])
 

@@ -1,40 +1,29 @@
 'use client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useActionState } from 'react'
+import { login } from './actions'
 
 export default function AdminLogin() {
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState(false)
-  const router = useRouter()
-
-  function handleLogin() {
-    if (password === 'Randallrh100@@@') {
-      document.cookie = 'dashboard_auth=juegaya_admin_Randall2026; path=/; max-age=86400'
-      router.push('/dashboard')
-    } else {
-      setError(true)
-    }
-  }
+  const [state, formAction, pending] = useActionState(login, { error: false })
 
   return (
     <div className="min-h-screen bg-[#0a0a18] flex items-center justify-center">
-      <div className="bg-[#1e1e34] rounded-2xl border border-white/5 p-8 w-full max-w-sm">
+      <form action={formAction} className="bg-[#1e1e34] rounded-2xl border border-white/5 p-8 w-full max-w-sm">
         <img src="/logo.png" alt="JuegaYa" className="h-12 w-auto mx-auto mb-6" />
         <h1 className="text-lg font-black text-white text-center mb-6">Panel de administración</h1>
         <input
           type="password"
+          name="password"
           placeholder="Contraseña"
-          value={password}
-          onChange={e => { setPassword(e.target.value); setError(false) }}
-          onKeyDown={e => e.key === 'Enter' && handleLogin()}
+          autoComplete="current-password"
+          required
           className="w-full bg-[#111120] border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-yellow-400/50 mb-3"
         />
-        {error && <p className="text-red-400 text-xs mb-3">Contraseña incorrecta</p>}
-        <button onClick={handleLogin}
-          className="w-full py-3 rounded-xl font-black text-sm bg-yellow-400 text-black hover:bg-yellow-300 transition-all">
-          Entrar
+        {state.error && <p className="text-red-400 text-xs mb-3">Contraseña incorrecta</p>}
+        <button type="submit" disabled={pending}
+          className="w-full py-3 rounded-xl font-black text-sm bg-yellow-400 text-black hover:bg-yellow-300 transition-all disabled:opacity-50">
+          {pending ? 'Entrando…' : 'Entrar'}
         </button>
-      </div>
+      </form>
     </div>
   )
 }

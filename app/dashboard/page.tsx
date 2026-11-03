@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { getStats } from './actions'
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { format, subDays, eachDayOfInterval } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -18,15 +18,9 @@ export default function Dashboard() {
 
   async function loadData() {
     setLoading(true)
-    const from = subDays(new Date(), range).toISOString()
-
-    const [{ data: viewsData }, { data: sessionsData }] = await Promise.all([
-      supabase.from('page_views').select('*').gte('created_at', from),
-      supabase.from("sessions").select("*").gte("first_seen", from),
-    ])
-
-    setViews(viewsData || [])
-    setSessions(sessionsData || [])
+    const { views, sessions } = await getStats(range)
+    setViews(views)
+    setSessions(sessions)
     setLoading(false)
   }
 

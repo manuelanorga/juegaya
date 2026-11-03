@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { logout } from '@/app/admin-login/actions'
 
 const NAV = [
   { label: 'Dashboard',      href: '/dashboard',                icon: '📊' },
@@ -57,6 +58,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Link href="/" className="flex items-center gap-2 text-xs text-white/30 hover:text-white transition-colors">
             ← Volver al portal
           </Link>
+          <form action={logout} className="mt-3">
+            <button type="submit" className="text-xs text-white/30 hover:text-red-400 transition-colors">
+              Cerrar sesión
+            </button>
+          </form>
         </div>
       </aside>
 
