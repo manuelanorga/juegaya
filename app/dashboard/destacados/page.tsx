@@ -129,7 +129,7 @@ export default function DestacadosPage() {
                         {selectedGame.badge && <span className="text-yellow-400 font-bold">• {selectedGame.badge}</span>}
                       </div>
                     </div>
-                    <div className="text-xs font-black text-white/30">⭐ {selectedGame.rating}</div>
+                    <div className="text-xs font-black text-white/30">{selectedGame.category}</div>
                   </div>
                 )}
 

@@ -2,7 +2,10 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getGame, getAllSlugs, type Game } from '@/lib/games'
 import { SITE_URL, SITE_NAME } from '@/lib/site'
+import { getVisitCounts, formatVisits } from '@/lib/stats'
 import GamePage from '@/app/components/GamePage'
+
+export const revalidate = 3600
 
 export async function generateStaticParams() {
   return getAllSlugs().map(slug => ({ slug }))
@@ -90,13 +93,14 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const { slug } = await params
   const game = getGame(slug)
   if (!game) notFound()
+  const counts = await getVisitCounts([game.slug])
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd(game)).replace(/</g, '\\u003c') }}
       />
-      <GamePage game={game} />
+      <GamePage game={game} visits={formatVisits(counts[game.slug])} />
     </>
   )
 }

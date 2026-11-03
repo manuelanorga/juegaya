@@ -2,7 +2,10 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { GAMES } from '@/lib/games'
 import { CATEGORIAS, gamesForCategoria } from '@/lib/categorias'
+import { getVisitCounts, formatVisits } from '@/lib/stats'
 import CategoriaView from './CategoriaView'
+
+export const revalidate = 3600
 
 export function generateStaticParams() {
   return Object.keys(CATEGORIAS).map(categoria => ({ categoria }))
@@ -34,6 +37,12 @@ export default async function CategoriaPage({ params }: { params: Promise<{ cate
   const propios = gamesForCategoria(categoria, GAMES)
   const juegos = propios.length > 0 ? propios : GAMES
   const { title, description, descriptionFull } = cat
+  const counts = await getVisitCounts(juegos.map(g => g.slug))
+  const visits: Record<string, string> = {}
+  for (const g of juegos) {
+    const label = formatVisits(counts[g.slug])
+    if (label) visits[g.slug] = label
+  }
 
-  return <CategoriaView cat={{ title, description, descriptionFull }} juegos={juegos} />
+  return <CategoriaView cat={{ title, description, descriptionFull }} juegos={juegos} visits={visits} />
 }

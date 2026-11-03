@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Sobre Nosotros | JuegaYa',
-  description: 'Conoce JuegaYa — la plataforma de juegos HTML5 gratis más grande de Latinoamérica.',
+  title: 'Sobre Nosotros',
+  description: 'Conoce JuegaYa, una plataforma de juegos HTML5 gratis en español pensada para Latinoamérica.',
 }
 
 export default function SobreNosotrosPage() {
@@ -20,7 +20,7 @@ export default function SobreNosotrosPage() {
 
         <div className="space-y-8 text-white/70 leading-relaxed">
           <section>
-            <p className="text-lg text-white/80">JuegaYa es la plataforma de juegos HTML5 gratuitos más grande de Latinoamérica. Nacimos con una misión simple: hacer que los mejores juegos online estén disponibles para todos, sin descargas, sin registro y completamente gratis.</p>
+            <p className="text-lg text-white/80">JuegaYa es una plataforma de juegos HTML5 gratuitos en español, pensada para Latinoamérica. Nacimos con una misión simple: hacer que los mejores juegos online estén disponibles para todos, sin descargas, sin registro y completamente gratis.</p>
           </section>
 
           <section>
@@ -35,8 +35,7 @@ export default function SobreNosotrosPage() {
               <li>Juegos arcade, puzzle, acción, inteligencia y más.</li>
               <li>Tests virales de IQ y reflejos diseñados para Latam.</li>
               <li>Contenido 100% en español.</li>
-              <li>Actualizaciones constantes con nuevos juegos cada semana.</li>
-              <li>Ranking semanal para competir con jugadores de toda Latinoamérica.</li>
+              <li>Seguimos agregando juegos nuevos al catálogo.</li>
             </ul>
           </section>
 

@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import ContactForm from './ContactForm'
 
 export const metadata: Metadata = {
-  title: 'Contacto | JuegaYa',
+  title: 'Contacto',
   description: 'Contacta con el equipo de JuegaYa. Estamos aquí para ayudarte.',
 }
 
@@ -31,36 +32,7 @@ export default function ContactoPage() {
 
         <div className="bg-[#1e1e34] rounded-2xl border border-white/5 p-6 mb-6">
           <h2 className="font-black text-base mb-5">Envíanos un mensaje</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs font-bold text-white/40 uppercase tracking-wider mb-1.5 block">Nombre</label>
-              <input type="text" placeholder="Tu nombre"
-                className="w-full bg-[#111120] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50" />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-white/40 uppercase tracking-wider mb-1.5 block">Email</label>
-              <input type="email" placeholder="tu@email.com"
-                className="w-full bg-[#111120] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50" />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-white/40 uppercase tracking-wider mb-1.5 block">Asunto</label>
-              <select className="w-full bg-[#111120] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50">
-                <option>Consulta general</option>
-                <option>Reportar un problema</option>
-                <option>Sugerir un juego</option>
-                <option>Publicidad y partnerships</option>
-                <option>Otro</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-bold text-white/40 uppercase tracking-wider mb-1.5 block">Mensaje</label>
-              <textarea placeholder="Escribe tu mensaje aquí..." rows={5}
-                className="w-full bg-[#111120] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50 resize-none" />
-            </div>
-            <button className="w-full py-3 rounded-xl font-black text-sm bg-yellow-400 text-black hover:bg-yellow-300 transition-all">
-              Enviar mensaje
-            </button>
-          </div>
+          <ContactForm />
         </div>
 
         <p className="text-white/30 text-xs text-center">Respondemos en menos de 48 horas hábiles.</p>

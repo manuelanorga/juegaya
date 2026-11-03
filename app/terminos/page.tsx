@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Términos y Condiciones | JuegaYa',
+  title: 'Términos y Condiciones',
   description: 'Términos y condiciones de uso de JuegaYa — plataforma de juegos HTML5 gratis en español para Latinoamérica.',
 }
 

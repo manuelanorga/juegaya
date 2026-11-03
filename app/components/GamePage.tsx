@@ -10,13 +10,12 @@ interface Game {
   iframeSrc: string
   category: string
   categorySlug: string
-  rating: number
-  votes: string
-  players: string
   tags: string[]
   description: string
   tips: string[]
   faqs: { q: string; a: string }[]
+  /** Guía "Cómo jugar": objetivo, controles y estrategia (texto propio para cada juego) */
+  guide?: { objetivo: string; controles: string; estrategia: string }
   aspectRatio?: string
   fixedHeight?: string
 }
@@ -42,7 +41,17 @@ const injectResponsiveCSS = (e: React.SyntheticEvent<HTMLIFrameElement>) => {
   } catch(_){}
 }
 
-export default function GamePage({ game }: { game: Game }) {
+export default function GamePage({ game, visits }: { game: Game; visits: string | null }) {
+  // Menú nativo de compartir en móvil; en escritorio, WhatsApp Web
+  async function share() {
+    const url = `${window.location.origin}/juego/${game.slug}`
+    const text = `¡Juega ${game.name} gratis en JuegaYa!`
+    if (navigator.share) {
+      try { await navigator.share({ title: game.name, text, url }); return } catch { return }
+    }
+    window.open(`https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`, '_blank', 'noopener')
+  }
+
   useEffect(() => {
     const history = JSON.parse(localStorage.getItem("jy_history") || "[]")
     const filtered = history.filter((s: string) => s !== game.slug)
@@ -96,7 +105,7 @@ export default function GamePage({ game }: { game: Game }) {
           <span className="text-white/20 hidden sm:block">›</span>
           <span className="text-sm text-white/70 truncate hidden sm:block">{game.name}</span>
           <div className="ml-auto">
-            <button className="text-sm bg-[#25D366] text-white font-black px-3 py-1.5 rounded-full">💬 Compartir</button>
+            <button onClick={share} className="text-sm bg-[#25D366] text-white font-black px-3 py-1.5 rounded-full">💬 Compartir</button>
           </div>
         </div>
       </header>
@@ -138,11 +147,7 @@ export default function GamePage({ game }: { game: Game }) {
               <span className="font-black text-sm truncate max-w-[140px]">{game.name}</span>
             </div>
             <div className="flex items-center gap-1 ml-auto">
-              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white">👍</button>
-              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white">🤍</button>
-              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white">💬</button>
-              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white">🎵</button>
-              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white" onClick={toggleFullscreen}>⛶</button>
+              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white" onClick={toggleFullscreen} title="Pantalla completa" aria-label="Pantalla completa">⛶</button>
             </div>
           </div>
 
@@ -157,8 +162,7 @@ export default function GamePage({ game }: { game: Game }) {
             <div>
               <h1 className="text-xl font-black mb-2">{game.name}</h1>
               <div className="flex flex-wrap gap-3 text-sm text-white/50">
-                <span>⭐ {game.rating} ({game.votes} votos)</span>
-                <span>👥 {game.players} jugando</span>
+                {visits && <span>👁 {visits}</span>}
                 <span>🆓 Gratis</span>
                 <span>📱 PC · Móvil</span>
               </div>
@@ -166,13 +170,29 @@ export default function GamePage({ game }: { game: Game }) {
 
             <div className="flex flex-wrap gap-2">
               {game.tags.map(tag => (
-                <span key={tag} className="bg-white/5 border border-white/10 text-white/60 text-xs font-bold px-3 py-1.5 rounded-full cursor-pointer hover:border-yellow-400/30 hover:text-white transition-all">
+                <span key={tag} className="bg-white/5 border border-white/10 text-white/60 text-xs font-bold px-3 py-1.5 rounded-full">
                   {tag}
                 </span>
               ))}
             </div>
 
             <p className="text-white/60 text-sm leading-relaxed">{game.description}</p>
+
+            {game.guide && (
+              <section className="bg-[#1e1e34] rounded-xl border border-white/10 p-4 space-y-4">
+                <h2 className="font-black text-sm">🎮 Cómo jugar {game.name}</h2>
+                {([
+                  ['Objetivo', game.guide.objetivo],
+                  ['Controles', game.guide.controles],
+                  ['Estrategia', game.guide.estrategia],
+                ] as const).map(([titulo, texto]) => (
+                  <div key={titulo}>
+                    <h3 className="text-xs font-black text-yellow-400 uppercase tracking-wider mb-1">{titulo}</h3>
+                    <p className="text-white/55 text-sm leading-relaxed">{texto}</p>
+                  </div>
+                ))}
+              </section>
+            )}
 
             {/* AD 300x250 — solo móvil, tras la descripción y lejos del juego */}
             <div className="xl:hidden">

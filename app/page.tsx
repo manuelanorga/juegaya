@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { GAMES, Game } from '@/lib/games'
 import RecentGames from '@/app/components/RecentGames'
 import AdUnit from '@/app/components/AdUnit'
+import SearchBox from '@/app/components/SearchBox'
+import { getVisitCounts, formatVisits } from '@/lib/stats'
 import { supabase } from '@/lib/supabase'
 
 export const metadata: Metadata = {
@@ -30,7 +32,7 @@ const PREVIEW_VIDEOS: Record<string, string> = {
   'cazador-zombies': '/previews/cazador-zombies.mp4',
 }
 
-function GameCard({ game }: { game: Game }) {
+function GameCard({ game, visits }: { game: Game; visits: string | null }) {
   return (
     <Link href={`/juego/${game.slug}`} className="flex-shrink-0 w-[140px] md:w-[160px] group">
       <div className={`w-full aspect-square rounded-xl overflow-hidden bg-gradient-to-br ${game.color || 'from-blue-900 to-purple-900'} relative`}>
@@ -46,7 +48,7 @@ function GameCard({ game }: { game: Game }) {
       </div>
       <div className="mt-2 px-0.5">
         <div className="font-black text-sm truncate">{game.name}</div>
-        <div className="text-[11px] text-white/35 mt-0.5">⭐ +{game.players}</div>
+        <div className="text-[11px] text-white/35 mt-0.5">{visits ? `👁 ${visits}` : game.category}</div>
       </div>
     </Link>
   )
@@ -85,7 +87,7 @@ function Destacado({ game }: { game: Game }) {
   )
 }
 
-function Seccion({ title, slug, games, destacadoSlug }: { title: string; slug: string; games: Game[]; destacadoSlug: string }) {
+function Seccion({ title, slug, games, destacadoSlug, visits }: { title: string; slug: string; games: Game[]; destacadoSlug: string; visits: Record<string, number> }) {
   const mostrar = games.length > 0 ? games : GAMES
   const destacado = GAMES.find(g => g.slug === destacadoSlug) || mostrar[0]
   const resto = mostrar.filter(g => g.slug !== destacado?.slug)
@@ -103,15 +105,21 @@ function Seccion({ title, slug, games, destacadoSlug }: { title: string; slug: s
       {/* Scroll horizontal */}
       <div className="flex gap-3 overflow-x-auto pb-2 px-4 md:px-6 scrollbar-hide">
         {resto.slice(0, 10).map((game, i) => (
-          <GameCard key={i} game={game} />
+          <GameCard key={i} game={game} visits={formatVisits(visits[game.slug])} />
         ))}
       </div>
     </section>
   )
 }
 
+// Recalcula destacados y visitas reales como máximo una vez por hora
+export const revalidate = 3600
+
 export default async function Home() {
-  const { data: destacadosData } = await supabase.from('destacados').select('*')
+  const [{ data: destacadosData }, visits] = await Promise.all([
+    supabase.from('destacados').select('*'),
+    getVisitCounts(GAMES.map(g => g.slug)),
+  ])
   const destacadosMap: Record<string, string> = {}
   if (destacadosData) destacadosData.forEach((d: any) => { destacadosMap[d.seccion] = d.game_slug })
   return (
@@ -122,10 +130,7 @@ export default async function Home() {
         <div className="px-4 md:px-6 h-full flex items-center gap-4">
           <img src="/logo.png" alt="JuegaYa" className="h-28 w-auto" />
           <div className="flex-1 max-w-md">
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2">
-              <span className="text-white/30 text-sm">🔍</span>
-              <input type="text" placeholder="Buscar juegos..." className="bg-transparent text-sm text-white placeholder-white/30 outline-none w-full" />
-            </div>
+            <SearchBox games={GAMES.map(({ slug, name, category, tags, icon, emoji }) => ({ slug, name, category, tags, icon, emoji }))} />
           </div>
           <div className="ml-auto flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/25 rounded-full px-3 py-1.5">
             <span>🪙</span>
@@ -145,7 +150,7 @@ export default async function Home() {
           const games = GAMES.filter(sec.filter)
           return (
             <Fragment key={i}>
-              <Seccion title={sec.title} slug={sec.slug} games={games} destacadoSlug={destacadosMap[sec.slug] || sec.destacado} />
+              <Seccion title={sec.title} slug={sec.slug} games={games} destacadoSlug={destacadosMap[sec.slug] || sec.destacado} visits={visits} />
               {/* AD — entre la 1.ª y la 2.ª fila: se ve sin tener que llegar al pie de página */}
               {i === 0 && (
                 <div className="px-4 md:px-6 mb-8">
@@ -155,17 +160,6 @@ export default async function Home() {
             </Fragment>
           )
         })}
-      </div>
-
-      {/* PROMO */}
-      <div className="px-4 md:px-6 mb-8">
-        <div className="rounded-2xl bg-gradient-to-r from-[#1a1200] to-[#2a1800] border border-yellow-400/20 p-5 flex items-center gap-4">
-          <span className="text-3xl">🏆</span>
-          <div>
-            <div className="font-black text-yellow-400">¡Sube de Nivel y Gana Premios! 🚀</div>
-            <div className="text-xs text-white/40 mt-0.5">Cada semana recompensamos a los mejores jugadores</div>
-          </div>
-        </div>
       </div>
 
       {/* FOOTER */}

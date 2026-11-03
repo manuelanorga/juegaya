@@ -9,9 +9,11 @@ const PER_PAGE = 30
 interface Props {
   cat: { title: string; description: string; descriptionFull: string }
   juegos: Game[]
+  /** Etiqueta de visitas reales por slug (solo los que superan el mínimo) */
+  visits: Record<string, string>
 }
 
-export default function CategoriaView({ cat, juegos }: Props) {
+export default function CategoriaView({ cat, juegos, visits }: Props) {
   const router = useRouter()
   const [expanded, setExpanded] = useState(false)
   const [page, setPage] = useState(1)
@@ -88,7 +90,7 @@ export default function CategoriaView({ cat, juegos }: Props) {
               </div>
               <div className="p-2.5">
                 <div className="font-black text-sm leading-tight truncate">{game.name}</div>
-                <div className="text-[11px] text-white/35 mt-0.5">⭐ +{game.players}</div>
+                <div className="text-[11px] text-white/35 mt-0.5">{visits[game.slug] ? `👁 ${visits[game.slug]}` : game.category}</div>
               </div>
             </Link>
           ))}

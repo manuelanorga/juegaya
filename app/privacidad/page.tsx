@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Política de Privacidad | JuegaYa',
+  title: 'Política de Privacidad',
   description: 'Política de privacidad de JuegaYa. Conoce cómo recopilamos, usamos y protegemos tu información.',
 }
 

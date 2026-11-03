@@ -4,13 +4,15 @@ import './globals.css'
 import Sidebar from './components/Sidebar'
 import Tracker from './components/Tracker'
 import { SITE_URL } from '@/lib/site'
+import { GAMES } from '@/lib/games'
+import { CATEGORIAS, gamesForCategoria } from '@/lib/categorias'
 
 const nunito = Nunito({ subsets: ['latin'], weight: ['400','600','700','800','900'] })
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: { default: 'JuegaYa — Juegos Gratis Online Sin Descargar', template: '%s | JuegaYa' },
-  description: 'JuegaYa es la plataforma de juegos HTML5 gratis más grande de Latinoamérica.',
+  description: 'Juegos HTML5 gratis online en español, pensados para Latinoamérica. Sin descargas ni registro.',
   keywords: ['juegos gratis online', 'juegos html5', 'juegos sin descargar', 'juegos en español'],
   robots: { index: true, follow: true },
   openGraph: {
@@ -32,7 +34,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className={`${nunito.className} bg-[#111120] text-white flex min-h-screen`}>
-        <Sidebar />
+        {/* Una categoría aparece en el menú en cuanto tiene al menos un juego */}
+        <Sidebar activeCategories={Object.keys(CATEGORIAS).filter(c => gamesForCategoria(c, GAMES).length > 0)} />
         <Tracker />
         <div className="flex-1 min-w-0">{children}</div>
       </body>

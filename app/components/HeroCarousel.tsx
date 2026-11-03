@@ -4,11 +4,11 @@ import Link from 'next/link'
 import { GAMES } from '@/lib/games'
 
 const DESTACADOS = [
-  { slug: 'test-iq',         label: '🔥 Viral',    tagline: 'El 97% falla este test...', sub: '¿Eres del 3% restante?',     cta: '¡Demostrar ahora!' },
+  { slug: 'test-iq',         label: '🔥 Viral',    tagline: '¿Qué tan rápido piensas?', sub: 'Pon a prueba tu lógica',     cta: '¡Demostrar ahora!' },
   { slug: "cazador-zombies", previewVideo: "/previews/cazador-zombies.mp4", label: '💥 Acción',   tagline: 'Sobrevive la horda zombie', sub: '20 niveles. Sin piedad.',     cta: '¡Jugar gratis!' },
   { slug: "gelatinas-locas", previewVideo: "/previews/gelatinas-locas.mp4", label: '🧩 Puzzle',   tagline: 'Combina y supera records',  sub: 'El puzzle más adictivo.',    cta: '¡Empezar!' },
   { slug: 'neon-bird',       label: '⚡ Arcade',   tagline: 'Reflejos de élite',         sub: '¿Cuánto aguantas?',          cta: '¡Volar ahora!' },
-  { slug: 'test-reflejos',   label: '🧠 Test',     tagline: '¿Más rápido que el 95%?',  sub: 'Mide tu tiempo de reacción.', cta: '¡Medir reflejos!' },
+  { slug: 'test-reflejos',   label: '🧠 Test',     tagline: '¿Qué tan rápidos son tus reflejos?', sub: 'Mide tu tiempo de reacción.', cta: '¡Medir reflejos!' },
 ]
 
 const COLORS = [
