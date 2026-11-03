@@ -5,8 +5,9 @@ import RecentGames from '@/app/components/RecentGames'
 import { supabase } from '@/lib/supabase'
 
 export const metadata: Metadata = {
-  title: 'JuegaYa — Juegos Gratis Online Sin Descargar',
+  title: { absolute: 'JuegaYa — Juegos Gratis Online Sin Descargar' },
   description: 'Juega gratis los mejores juegos HTML5 en español. Sin registro, sin descargas.',
+  alternates: { canonical: '/' },
 }
 
 const SECCIONES = [

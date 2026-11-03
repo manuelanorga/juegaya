@@ -3,23 +3,21 @@ import { Nunito } from 'next/font/google'
 import './globals.css'
 import Sidebar from './components/Sidebar'
 import Tracker from './components/Tracker'
+import { SITE_URL } from '@/lib/site'
 
 const nunito = Nunito({ subsets: ['latin'], weight: ['400','600','700','800','900'] })
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://juegaya.app'),
+  metadataBase: new URL(SITE_URL),
   title: { default: 'JuegaYa — Juegos Gratis Online Sin Descargar', template: '%s | JuegaYa' },
   description: 'JuegaYa es la plataforma de juegos HTML5 gratis más grande de Latinoamérica.',
   keywords: ['juegos gratis online', 'juegos html5', 'juegos sin descargar', 'juegos en español'],
   robots: { index: true, follow: true },
-  verification: {
-    google: 'ca-pub-0626686325162895',
-  },
   openGraph: {
-    type: 'website', locale: 'es_MX', url: 'https://juegaya.app', siteName: 'JuegaYa',
+    type: 'website', locale: 'es_MX', url: SITE_URL, siteName: 'JuegaYa',
     title: 'JuegaYa — Juegos Gratis Online Sin Descargar',
     description: 'Juega gratis los mejores juegos HTML5 en español.',
-    images: [{ url: 'https://juegaya.app/og.jpg', width: 1200, height: 630 }],
+    images: [{ url: '/og.jpg', width: 1200, height: 630 }],
   },
 }
 
