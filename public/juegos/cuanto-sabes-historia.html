@@ -104,7 +104,7 @@
   <div class="screen" id="result-screen">
     <div class="iq-label">Tu IQ histórico</div>
     <div class="iq-score" id="iq-score">127</div>
-    <div class="rank-badge" id="rank-badge">Top 12% en Latam</div>
+    <div class="rank-badge" id="rank-badge"></div>
     <div class="verdict" id="verdict">Cerebro de élite</div>
     <div class="verdict-sub" id="verdict-sub"></div>
     <div class="stats-row">
@@ -229,14 +229,14 @@ function calcIQ(){
 
 function showResult(){
   const iq=calcIQ();
-  const pct=Math.min(99,Math.round(((iq-70)/90)*100));
-  let verdict,sub,rank;
-  if(iq>=145){verdict="Einstein reencarnado";sub=`Superaste al ${pct}% de jugadores.`;rank="Top 1% en Latam";}
-  else if(iq>=130){verdict="Genio histórico";sub=`Eres más inteligente que el ${pct}% de jugadores.`;rank="Top 5% en Latam";}
-  else if(iq>=115){verdict="Cerebro de élite";sub=`Tu conocimiento supera al ${pct}% de jugadores.`;rank="Top 20% en Latam";}
-  else if(iq>=100){verdict="Muy por encima del promedio";sub=`Superaste al ${pct}% de jugadores.`;rank="Top 35% en Latam";}
-  else if(iq>=85){verdict="Promedio histórico";sub=`Un resultado decente. ¡Puedes mejorar!`;rank="Promedio en Latam";}
-  else{verdict="Necesitas estudiar más";sub=`No te preocupes, el conocimiento se entrena.`;rank="Sigue practicando";}
+  let verdict,sub;
+  const rank=`${correctCount}/10 correctas`;
+  if(iq>=145){verdict="Einstein reencarnado";sub="Respuestas rápidas y casi perfectas.";}
+  else if(iq>=130){verdict="Genio histórico";sub="Dominas la historia como pocos.";}
+  else if(iq>=115){verdict="Cerebro de élite";sub="Un conocimiento histórico muy sólido.";}
+  else if(iq>=100){verdict="Muy buen resultado";sub="Sabes bastante de historia. ¡Sigue así!";}
+  else if(iq>=85){verdict="Buen intento";sub=`Un resultado decente. ¡Puedes mejorar!`;}
+  else{verdict="Necesitas estudiar más";sub=`No te preocupes, el conocimiento se entrena.`;}
   document.getElementById('iq-score').textContent=iq;
   document.getElementById('rank-badge').textContent=rank;
   document.getElementById('verdict').textContent=verdict;
@@ -249,8 +249,7 @@ function showResult(){
 
 function shareResult(){
   const iq=calcIQ();
-  const pct=Math.min(99,Math.round(((iq-70)/90)*100));
-  const txt=`🧠 Hice el test "¿Cuánto sabes de Historia?" en JuegaYa\n\nMi IQ histórico es: ${iq}\nSoy más listo que el ${pct}% de Latam\n${correctCount}/10 correctas\n\n¿Puedes superarme? 👇\njuegaya.app/juego/cuanto-sabes-historia`;
+  const txt=`🧠 Hice el test "¿Cuánto sabes de Historia?" en JuegaYa\n\nMi IQ histórico es: ${iq}\n${correctCount}/10 correctas · ${score} puntos\n\n¿Puedes superarme? 👇\nhttps://www.juegaya.app/juego/cuanto-sabes-historia`;
   window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
 }
 </script>

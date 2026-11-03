@@ -177,16 +177,17 @@ export const GAMES: Game[] = [
     categorySlug: 'arcade',
     fixedHeight: '620px',
     tags: ['Runner', 'Arcade', 'Latino', 'Lima', 'CDMX', 'Mobile'],
-    description: 'Corre por las calles de Lima, CDMX, Bogotá y Buenos Aires esquivando obstáculos.',
-    tips: ['Desliza a los lados para cambiar carril','Recoge monedas doradas','La velocidad aumenta cada 200m'],
+    description: 'Corre por las calles de Lima, CDMX, Bogotá y Buenos Aires: salta lo que está en el suelo, agáchate bajo los carteles y cambia de carril para esquivar los vehículos.',
+    tips: ['Salta los obstáculos bajos y agáchate bajo los carteles','A los vehículos solo los esquivas cambiando de carril','Siempre queda al menos un carril libre','La velocidad aumenta cada 200 m'],
     faqs: [
       { q: '¿Es gratis?', a: 'Sí, 100% gratis. Sin descargas ni registro.' },
       { q: '¿Puedo elegir ciudad?', a: 'Sí. Lima, CDMX, Bogotá y Buenos Aires.' },
+      { q: '¿Se guarda mi récord?', a: 'Sí, tu mejor distancia se guarda en tu navegador y aparece al terminar cada partida.' },
     ],
     guide: {
-      objetivo: "Elige una de cuatro ciudades (Lima, CDMX, Bogotá o Buenos Aires) y un personaje (El Bro o La Bro) y corre por una calle de tres carriles. Los obstáculos bajan hacia ti y cada choque te quita una de tus tres vidas; al perderlas todas termina la partida. Tu rango final depende de los metros recorridos, y las monedas que recoges suman puntos aparte.",
-      controles: "En PC usa las flechas izquierda y derecha para cambiar de carril, flecha arriba o barra espaciadora para saltar y flecha abajo para deslizarte. En el celular desliza el dedo hacia los lados para cambiar de carril, hacia arriba para saltar y hacia abajo para deslizarte. No hay control con mouse.",
-      estrategia: "La forma más segura de esquivar un obstáculo es cambiar de carril a tiempo. Muévete con anticipación, porque el personaje tarda un instante en llegar al carril nuevo, y fíjate en los obstáculos que vienen más lejos para no quedar encerrado entre dos. La velocidad sube cada 200 metros y los obstáculos aparecen con más frecuencia a medida que avanzas, así que conviene aprovechar los primeros tramos, más tranquilos, para juntar monedas (10 puntos cada una). Las ciudades cambian los colores y los obstáculos decorativos, como mototaxis en Lima o tacos en CDMX, pero no la dificultad: elige la que más te guste.",
+      objetivo: "Elige una de cuatro ciudades (Lima, CDMX, Bogotá o Buenos Aires) y un personaje (El Bro o La Bro) y corre por una calle de tres carriles. Te encontrarás tres tipos de obstáculo: cosas bajas en el suelo, que se saltan; carteles colgantes, bajo los que hay que agacharse; y vehículos, que solo se esquivan cambiando de carril. Cada choque te quita una de tus tres vidas y, al perderlas todas, termina la partida. Tu rango depende de los metros recorridos y tu mejor distancia queda guardada como récord.",
+      controles: "En PC usa las flechas izquierda y derecha (o A y D) para cambiar de carril, la flecha arriba, W o la barra espaciadora para saltar y la flecha abajo o S para agacharte; un clic también salta. En el celular desliza el dedo hacia los lados para cambiar de carril, hacia arriba para saltar y hacia abajo para agacharte; un toque corto también salta. Si cambias de pestaña, el juego se pausa solo.",
+      estrategia: "Mira qué tipo de obstáculo viene antes de reaccionar: saltar no sirve contra un bus y agacharse no sirve contra un obstáculo bajo. Salta un poco antes de llegar, porque el salto dura menos de un segundo, y agáchate cuando el cartel esté cerca. Cada fila de obstáculos deja al menos un carril libre, así que, si dudas, cambiar de carril suele ser la salida más segura. Si te golpean, parpadeas un momento y no puedes perder otra vida: aprovéchalo para reubicarte. Las monedas aparecen en carriles libres; recógelas en los primeros tramos, antes de que la velocidad suba cada 200 metros.",
     },
   },
   {

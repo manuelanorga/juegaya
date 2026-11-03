@@ -74,12 +74,12 @@ let gameState = 'waiting'
 const TOTAL_ATTEMPTS = 3
 
 const RANKS = [
-  { max: 150,  label: '🔥 REFLEJOS DE DIOS',     desc: 'Top 1% de Latam. Eres sobrehumano.', color: '#ffd000' },
-  { max: 200,  label: '⚡ ÉLITE',                 desc: 'Top 5% de Latam. Reflejos increíbles.', color: '#00d4ff' },
-  { max: 250,  label: '😎 CRACK',                 desc: 'Top 15% de Latam. Muy por encima del promedio.', color: '#9b5fff' },
-  { max: 300,  label: '👍 Bueno',                 desc: 'Por encima del promedio latinoamericano.', color: '#00e676' },
+  { max: 150,  label: '🔥 REFLEJOS DE DIOS',     desc: 'Menos de 150 ms. Eres sobrehumano.', color: '#ffd000' },
+  { max: 200,  label: '⚡ ÉLITE',                 desc: 'Menos de 200 ms. Reflejos increíbles.', color: '#00d4ff' },
+  { max: 250,  label: '😎 CRACK',                 desc: 'Menos de 250 ms. Reflejos muy rápidos.', color: '#9b5fff' },
+  { max: 300,  label: '👍 Bueno',                 desc: 'Menos de 300 ms. Un buen tiempo de reacción.', color: '#00e676' },
   { max: 400,  label: '😊 Normal',                desc: 'Reflejos promedio. Puedes mejorar.', color: '#ffd000' },
-  { max: 9999, label: '😅 Necesitas practicar',   desc: 'El 80% de Latam tiene mejores reflejos.', color: '#ff6b35' },
+  { max: 9999, label: '😅 Necesitas practicar',   desc: 'Con práctica puedes bajar tu tiempo. ¡Inténtalo otra vez!', color: '#ff6b35' },
 ]
 
 function startGame() {
@@ -164,14 +164,14 @@ function showResult() {
     ? Math.round(validTimes.reduce((a, b) => a + b, 0) / validTimes.length)
     : 999
   const rank = RANKS.find(r => avg <= r.max) || RANKS[RANKS.length - 1]
-  const shareMsg = `⚡ Mi tiempo de reacción es ${avg}ms\n${rank.label}\n\n${rank.desc}\n\n¿Puedes superarme? 👇\nhttps://juegaya.app/juego/test-reflejos`
+  const shareMsg = `⚡ Mi tiempo de reacción es ${avg}ms\n${rank.label}\n\n${rank.desc}\n\n¿Puedes superarme? 👇\nhttps://www.juegaya.app/juego/test-reflejos`
 
   document.getElementById('result').style.display = 'block'
   document.getElementById('result').innerHTML = `
     <div class="result-label">TU TIEMPO PROMEDIO</div>
     <div class="result-time" style="color:${rank.color}">${avg}ms</div>
     <div style="font-size:20px;font-weight:900;margin:12px 0 4px;">${rank.label}</div>
-    <div class="rank-badge">Top Latam 🌎</div>
+    <div class="rank-badge">${validTimes.length}/3 intentos válidos ⚡</div>
     <div class="times-list">
       ${attempts.map((t, i) => `
         <div class="time-row">

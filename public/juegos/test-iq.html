@@ -47,7 +47,7 @@ body{font-family:'Segoe UI',sans-serif;background:#111120;color:#fff;min-height:
     <div class="intro" id="intro">
       <span class="intro-emoji">🧠</span>
       <div class="intro-title">Test de IQ Latam</div>
-      <div class="intro-sub">10 preguntas · ~3 minutos<br>Descubre si eres más inteligente que el 97% de Latam</div>
+      <div class="intro-sub">10 preguntas · ~3 minutos<br>Pon a prueba tu lógica, tu cálculo mental y tu razonamiento</div>
       <button class="btn btn-start" onclick="startTest()">¡Comenzar test!</button>
     </div>
 
@@ -121,12 +121,12 @@ const QUESTIONS = [
 ]
 
 const IQ_LEVELS = [
-  { min: 0,   max: 39,  iq: 72,  emoji: '😅', title: 'Necesitas practicar más', desc: 'El 92% de Latam lo hace mejor. ¡No te rindas!', color: '#ff4444' },
+  { min: 0,   max: 39,  iq: 72,  emoji: '😅', title: 'Necesitas practicar más', desc: 'Te faltó poco. ¡Inténtalo de nuevo, se mejora con práctica!', color: '#ff4444' },
   { min: 40,  max: 79,  iq: 88,  emoji: '🤔', title: 'Por debajo del promedio', desc: 'Estás en el 60% inferior. Con práctica puedes mejorar.', color: '#ff9500' },
-  { min: 80,  max: 119, iq: 100, emoji: '😊', title: 'Inteligencia normal', desc: 'Estás en el promedio de Latam. Nada mal.', color: '#ffd000' },
-  { min: 120, max: 149, iq: 115, emoji: '😎', title: 'Por encima del promedio', desc: 'Eres más inteligente que el 75% de Latam. ¡Bien!', color: '#00d4ff' },
-  { min: 150, max: 174, iq: 128, emoji: '🧠', title: 'Inteligencia superior', desc: 'Top 10% de Latam. Eres NIVEL CRACK.', color: '#9b5fff' },
-  { min: 175, max: 200, iq: 142, emoji: '🔥', title: '¡GENIO LATAM!', desc: 'Top 3% de Latam. Solo 1 de cada 33 llega aquí.', color: '#ffd000' },
+  { min: 80,  max: 119, iq: 100, emoji: '😊', title: 'Inteligencia normal', desc: 'Un resultado sólido. Nada mal.', color: '#ffd000' },
+  { min: 120, max: 149, iq: 115, emoji: '😎', title: 'Por encima del promedio', desc: 'Muy buen razonamiento. ¡Bien!', color: '#00d4ff' },
+  { min: 150, max: 174, iq: 128, emoji: '🧠', title: 'Inteligencia superior', desc: 'Resolviste casi todo. Eres NIVEL CRACK.', color: '#9b5fff' },
+  { min: 175, max: 200, iq: 142, emoji: '🔥', title: '¡GENIO LATAM!', desc: 'Resultado casi perfecto. ¡Reta a tus amigos!', color: '#ffd000' },
 ]
 
 let current = 0
@@ -205,8 +205,7 @@ function next() {
 function showResult() {
   document.getElementById('quiz').style.display = 'none'
   const level = IQ_LEVELS.find(l => score >= l.min && score <= l.max) || IQ_LEVELS[0]
-  const pct = Math.round((score / 195) * 100)
-  const shareMsg = `🧠 Hice el Test de IQ Latam en JuegaYa\n\nMi IQ estimado: ${level.iq}\n${level.emoji} ${level.title}\n\nTop ${100 - pct}% de Latam\n\n¿Puedes superarme? 👇\nhttps://juegaya.app/juego/test-iq`
+  const shareMsg = `🧠 Hice el Test de IQ Latam en JuegaYa\n\nMi IQ estimado: ${level.iq}\n${level.emoji} ${level.title}\nPuntaje: ${score}/195\n\n¿Puedes superarme? 👇\nhttps://www.juegaya.app/juego/test-iq`
 
   document.getElementById('result').style.display = 'block'
   document.getElementById('result').innerHTML = `
@@ -216,7 +215,7 @@ function showResult() {
     <div style="margin:12px 0 8px;">
       <div class="iq-title">${level.title}</div>
     </div>
-    <div class="rank-badge">Top ${100 - pct}% de Latam 🌎</div>
+    <div class="rank-badge">${score}/195 puntos 🧠</div>
     <div class="iq-desc">${level.desc}</div>
     <button class="btn btn-wa" onclick="share('${encodeURIComponent(shareMsg)}')">
       💬 Compartir en WhatsApp

@@ -7,7 +7,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:#111120;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:'Segoe UI',sans-serif;color:#fff;overflow:hidden;}
-canvas{border-radius:16px;display:block;}
+canvas{border-radius:16px;display:block;touch-action:none;}
 #ui{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;pointer-events:none;}
 .screen{display:none;flex-direction:column;align-items:center;gap:16px;text-align:center;pointer-events:all;padding:20px;max-width:380px;width:100%;}
 .screen.active{display:flex;}
@@ -104,42 +104,45 @@ const ctx = canvas.getContext('2d')
 canvas.width = W
 canvas.height = H
 
-// Game state
-let city = null, cityColor = null, cityBg = null, cityFlag = null, cityName = null
+// Estado de la partida
+let city = null, cityFlag = null, cityName = null
 let charEmoji = null
-let gameRunning = false
-let score = 0, distance = 0, lives = 3
-let speed = 4, frame = 0
+let gameRunning = false, paused = false
+let coinCount = 0, distance = 0, lives = 3   // cada moneda vale 10 puntos en el puntaje final
+let speed = 4, elapsed = 0, lastTime = 0
 let raf
 
-// Lane system — 3 lanes
+// Carriles y jugador. El salto es una altura (z) dibujada encima de la sombra:
+// la vista es cenital, así que saltar no mueve al jugador por la carretera.
 const LANE_COUNT = 3
 const LANE_W = W / LANE_COUNT
-const lanes = [LANE_W*0.5, LANE_W*1.5, LANE_W*2.5]
-let playerLane = 1
-let playerY = H * 0.65
-let playerX = lanes[playerLane]
-let jumping = false, jumpVY = 0
-let sliding = false, slideTimer = 0
+const lanes = [LANE_W * 0.5, LANE_W * 1.5, LANE_W * 2.5]
+const GROUND_Y = H * 0.7
+const HORIZON = H * 0.35
+let playerLane = 1, playerX = lanes[1]
+let z = 0, vz = 0              // altura y velocidad vertical del salto
+let slideT = 0                 // frames que quedan agachado
+let invulnT = 0                // frames de invulnerabilidad tras un golpe
+const JUMP_V = 13, GRAVITY = 0.8, SLIDE_FRAMES = 36, INVULN_FRAMES = 70
+const SPEED_MAX = 13
 
-// Obstacles & coins
-let obstacles = []
-let coins = []
-let particles = []
-let bgOffset = 0
+let obstacles = [], coins = [], particles = []
+let rowTimer = 0, roadOffset = 0
+let best = 0
+try { best = +localStorage.getItem('corremibro_best') || 0 } catch {}
 
-// City themes
+// Tipos de obstáculo: 'low' se salta, 'high' (cartel colgante) se pasa agachado, 'block' solo cambiando de carril
 const CITIES = {
-  lima:    { color:'#e63946', bg:'#1a0a00', sky:'#1a0505', road:'#2d1500', stripe:'#e63946', obstacles:['🛺','🚌','🪣'], coins:'🪙' },
-  cdmx:    { color:'#2d6a4f', bg:'#001a0a', sky:'#001505', road:'#001500', stripe:'#2d6a4f', obstacles:['🌮','🚌','🏗️'], coins:'🪙' },
-  bogota:  { color:'#e9c46a', bg:'#1a1500', sky:'#100f00', road:'#201800', stripe:'#e9c46a', obstacles:['🥐','🚌','⛽'], coins:'🪙' },
-  baires:  { color:'#4361ee', bg:'#00001a', sky:'#000510', road:'#000520', stripe:'#4361ee', obstacles:['🥩','🚌','🏛️'], coins:'🪙' },
+  lima:   { color:'#e63946', bg:'#1a0a00', sky:'#1a0505', road:'#2d1500', block:['🛺','🚌'], low:['🪣','🐕'] },
+  cdmx:   { color:'#2d6a4f', bg:'#001a0a', sky:'#001505', road:'#001500', block:['🚌','🚕'], low:['🌮','🌵'] },
+  bogota: { color:'#e9c46a', bg:'#1a1500', sky:'#100f00', road:'#201800', block:['🚌','🚕'], low:['☕','🥐'] },
+  baires: { color:'#4361ee', bg:'#00001a', sky:'#000510', road:'#000520', block:['🚌','🚕'], low:['🧉','🥩'] },
 }
 
-function selectCity(id, flag, name, color, bg) {
+function selectCity(id, flag, name) {
   city = id; cityFlag = flag; cityName = name
   document.querySelectorAll('.city-btn').forEach(b => b.classList.remove('selected'))
-  document.getElementById('city-'+id).classList.add('selected')
+  document.getElementById('city-' + id).classList.add('selected')
   setTimeout(() => {
     document.getElementById('cityScreen').classList.remove('active')
     document.getElementById('charScreen').classList.add('active')
@@ -149,7 +152,7 @@ function selectCity(id, flag, name, color, bg) {
 function selectChar(id, emoji) {
   charEmoji = emoji
   document.querySelectorAll('.char-btn').forEach(b => b.classList.remove('selected'))
-  document.getElementById('char-'+id).classList.add('selected')
+  document.getElementById('char-' + id).classList.add('selected')
   setTimeout(() => {
     document.getElementById('charScreen').classList.remove('active')
     startGame()
@@ -157,263 +160,317 @@ function selectChar(id, emoji) {
 }
 
 function startGame() {
-  score = 0; distance = 0; lives = 3; speed = 4; frame = 0
-  playerLane = 1; playerX = lanes[1]; jumping = false; sliding = false
-  obstacles = []; coins = []; particles = []
-  gameRunning = true
+  coinCount = 0; distance = 0; lives = 3; speed = 4; elapsed = 0
+  playerLane = 1; playerX = lanes[1]; z = 0; vz = 0; slideT = 0; invulnT = 0
+  obstacles = []; coins = []; particles = []; rowTimer = 40
+  gameRunning = true; paused = false
   document.getElementById('scoreDisplay').style.display = 'block'
   document.getElementById('livesDisplay').style.display = 'block'
   updateLivesDisplay()
-  setupControls()
   if (raf) cancelAnimationFrame(raf)
-  loop()
+  lastTime = performance.now()
+  raf = requestAnimationFrame(loop)
 }
 
-function setupControls() {
-  // Touch swipe
-  let tx = 0, ty = 0
-  canvas.ontouchstart = e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY }
-  canvas.ontouchend = e => {
-    const dx = e.changedTouches[0].clientX - tx
-    const dy = e.changedTouches[0].clientY - ty
-    if (Math.abs(dx) > Math.abs(dy)) {
-      if (dx > 30) moveRight()
-      else if (dx < -30) moveLeft()
-    } else {
-      if (dy < -30) doJump()
-      else if (dy > 30) doSlide()
-    }
-  }
-  // Keyboard
-  document.onkeydown = e => {
-    if (e.key === 'ArrowLeft')  moveLeft()
-    if (e.key === 'ArrowRight') moveRight()
-    if (e.key === 'ArrowUp' || e.key === ' ') doJump()
-    if (e.key === 'ArrowDown') doSlide()
-  }
+// ---------- Controles (se registran una sola vez) ----------
+function act(fn) {
+  if (!gameRunning) return
+  if (paused) { paused = false; lastTime = performance.now(); return }
+  fn()
 }
-
 function moveLeft()  { if (playerLane > 0) playerLane-- }
 function moveRight() { if (playerLane < 2) playerLane++ }
 function doJump() {
-  if (!jumping && !sliding) { jumping = true; jumpVY = -18 }
+  if (z > 0) return
+  slideT = 0
+  vz = JUMP_V
 }
 function doSlide() {
-  if (!jumping) { sliding = true; slideTimer = 40 }
+  if (z > 0) { vz = -12; return }   // agacharse en el aire = caer rápido
+  slideT = SLIDE_FRAMES
 }
+
+const KEYS = {
+  ArrowLeft: moveLeft, a: moveLeft, A: moveLeft,
+  ArrowRight: moveRight, d: moveRight, D: moveRight,
+  ArrowUp: doJump, w: doJump, W: doJump, ' ': doJump,
+  ArrowDown: doSlide, s: doSlide, S: doSlide,
+}
+document.addEventListener('keydown', e => {
+  const fn = KEYS[e.key]
+  if (!fn) return
+  e.preventDefault()               // que las flechas y el espacio no hagan scroll en la página
+  if (!e.repeat) act(fn)
+})
+
+let tx = 0, ty = 0
+canvas.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY }, { passive: true })
+canvas.addEventListener('touchmove', e => e.preventDefault(), { passive: false })
+canvas.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx
+  const dy = e.changedTouches[0].clientY - ty
+  if (Math.abs(dx) < 15 && Math.abs(dy) < 15) return act(doJump)   // toque corto = saltar
+  if (Math.abs(dx) > Math.abs(dy)) act(dx > 0 ? moveRight : moveLeft)
+  else act(dy < 0 ? doJump : doSlide)
+})
+canvas.addEventListener('mousedown', () => act(doJump))
+
+// Si cambias de pestaña o de app, el juego se pausa
+document.addEventListener('visibilitychange', () => { if (document.hidden && gameRunning) paused = true })
 
 function updateLivesDisplay() {
-  document.getElementById('livesDisplay').textContent = '❤️'.repeat(lives) + '🖤'.repeat(3-lives)
+  document.getElementById('livesDisplay').textContent = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives)
 }
 
-function spawnObstacle() {
+// ---------- Generación justa: cada fila deja al menos un carril libre ----------
+function spawnRow() {
   const theme = CITIES[city]
-  const lane = Math.floor(Math.random() * 3)
-  const emoji = theme.obstacles[Math.floor(Math.random() * theme.obstacles.length)]
-  obstacles.push({ x: lanes[lane], y: -60, lane, emoji, w: 44, h: 44 })
-}
-
-function spawnCoin() {
-  const lane = Math.floor(Math.random() * 3)
-  coins.push({ x: lanes[lane], y: -30, lane, collected: false })
+  const twoChance = Math.min(0.5, distance / 1500)
+  const count = Math.random() < twoChance ? 2 : 1
+  const free = [0, 1, 2].sort(() => Math.random() - 0.5)
+  const used = free.slice(0, count)
+  used.forEach(lane => {
+    const r = Math.random()
+    let type = r < 0.45 ? 'block' : r < 0.8 ? 'low' : 'high'
+    if (type === 'high' && distance < 80) type = 'low'   // los carteles aparecen tras el arranque
+    const list = type === 'block' ? theme.block : theme.low
+    obstacles.push({ x: lanes[lane], y: -50, type, emoji: list[Math.floor(Math.random() * list.length)] })
+  })
+  // Monedas en un carril sin obstáculo de esta fila
+  const coinLane = free[count]
+  if (coinLane !== undefined && Math.random() < 0.7) {
+    for (let i = 0; i < 3; i++) coins.push({ x: lanes[coinLane], y: -60 - i * 45 })
+  }
 }
 
 function addParticle(x, y, color) {
   for (let i = 0; i < 8; i++) {
-    const angle = Math.random() * Math.PI * 2
-    particles.push({
-      x, y,
-      vx: Math.cos(angle) * (Math.random() * 4 + 1),
-      vy: Math.sin(angle) * (Math.random() * 4 + 1),
-      life: 1, color, r: Math.random() * 5 + 2
-    })
+    const a = Math.random() * Math.PI * 2
+    particles.push({ x, y, vx: Math.cos(a) * (Math.random() * 4 + 1), vy: Math.sin(a) * (Math.random() * 4 + 1), life: 1, color, r: Math.random() * 5 + 2 })
   }
 }
 
-function loop() {
-  if (!gameRunning) return
-  raf = requestAnimationFrame(loop)
-  frame++
-
-  const theme = CITIES[city]
-
-  // Draw background
+function drawBackground(theme) {
   ctx.fillStyle = theme.sky
   ctx.fillRect(0, 0, W, H)
-
-  // Road
   ctx.fillStyle = theme.road
-  ctx.fillRect(0, H * 0.35, W, H)
+  ctx.fillRect(0, HORIZON, W, H)
 
-  // Lane stripes
-  bgOffset = (bgOffset + speed) % 60
-  ctx.strokeStyle = theme.stripe + '44'
+  // Líneas de carril animadas: dan sensación de avance
+  ctx.strokeStyle = theme.color + '55'
   ctx.lineWidth = 3
   ctx.setLineDash([30, 30])
+  ctx.lineDashOffset = -roadOffset
   for (let l = 1; l < LANE_COUNT; l++) {
     ctx.beginPath()
-    ctx.moveTo(LANE_W * l, H * 0.35)
+    ctx.moveTo(LANE_W * l, HORIZON)
     ctx.lineTo(LANE_W * l, H)
     ctx.stroke()
   }
   ctx.setLineDash([])
+  ctx.lineDashOffset = 0
 
-  // Buildings (simple rects as background)
-  ctx.fillStyle = theme.bg
   const bldgs = [[0,80,60,180],[70,100,80,160],[160,60,70,200],[240,90,90,170],[340,70,60,190],[410,85,70,165]]
-  bldgs.forEach(([x,y,w,h]) => {
-    ctx.fillRect(x, H*0.35 - h, w, h)
-    ctx.fillStyle = theme.color + '33'
-    for (let wy = H*0.35-h+10; wy < H*0.35-10; wy += 20) {
-      for (let wx = x+5; wx < x+w-5; wx += 14) {
-        ctx.fillRect(wx, wy, 8, 10)
-      }
-    }
+  bldgs.forEach(([x, , w, h]) => {
     ctx.fillStyle = theme.bg
+    ctx.fillRect(x, HORIZON - h, w, h)
+    ctx.fillStyle = theme.color + '33'
+    for (let wy = HORIZON - h + 10; wy < HORIZON - 10; wy += 20)
+      for (let wx = x + 5; wx < x + w - 5; wx += 14) ctx.fillRect(wx, wy, 8, 10)
   })
 
-  // City name & flag
   ctx.font = 'bold 14px Segoe UI'
   ctx.fillStyle = 'rgba(255,255,255,0.25)'
   ctx.textAlign = 'left'
   ctx.fillText(cityFlag + ' ' + cityName, 12, 28)
+  ctx.textAlign = 'right'
+  ctx.font = 'bold 11px Segoe UI'
+  ctx.fillText('⚡ ' + speed.toFixed(1) + 'x', W - 12, 28)
+}
 
-  // Speed increases every 200m
-  speed = 4 + Math.floor(distance / 200) * 0.5
-
-  // Spawn
-  if (frame % Math.max(50, 90 - Math.floor(distance/100)*3) === 0) spawnObstacle()
-  if (frame % 60 === 0) spawnCoin()
-
-  // Update player position
-  playerX += (lanes[playerLane] - playerX) * 0.2
-
-  // Jump physics
-  if (jumping) {
-    jumpVY += 1
-    playerY += jumpVY
-    if (playerY >= H * 0.65) { playerY = H * 0.65; jumping = false; jumpVY = 0 }
+function drawObstacle(o, theme) {
+  ctx.textAlign = 'center'
+  if (o.type === 'high') {
+    // Cartel colgante: dos postes y una barra; se pasa agachado
+    const half = LANE_W * 0.4
+    ctx.fillStyle = 'rgba(255,255,255,0.35)'
+    ctx.fillRect(o.x - half, o.y - 40, 4, 44)
+    ctx.fillRect(o.x + half - 4, o.y - 40, 4, 44)
+    ctx.fillStyle = theme.color
+    ctx.fillRect(o.x - half, o.y - 44, half * 2, 16)
+    ctx.fillStyle = '#fff'
+    ctx.font = 'bold 11px Segoe UI'
+    ctx.fillText('⬇ AGÁCHATE', o.x, o.y - 32)
+  } else {
+    ctx.font = o.type === 'block' ? '40px serif' : '30px serif'
+    ctx.fillText(o.emoji, o.x, o.y)
   }
+}
 
-  // Slide timer
-  if (sliding) {
-    slideTimer--
-    if (slideTimer <= 0) sliding = false
-  }
+function drawPlayer() {
+  // Sombra en el suelo: deja claro dónde está el jugador aunque salte
+  ctx.fillStyle = 'rgba(0,0,0,0.35)'
+  ctx.beginPath()
+  ctx.ellipse(playerX, GROUND_Y + 6, 18 - z * 0.06, 6, 0, 0, Math.PI * 2)
+  ctx.fill()
+  if (invulnT > 0 && Math.floor(invulnT / 6) % 2 === 0) return   // parpadeo tras un golpe
+  ctx.textAlign = 'center'
+  ctx.font = slideT > 0 ? '28px serif' : '44px serif'
+  ctx.fillText(charEmoji || '🧑', playerX, GROUND_Y - z + (slideT > 0 ? 6 : 0))
+  if (z > 0) { ctx.font = '18px serif'; ctx.fillText('💨', playerX - 22, GROUND_Y + 2) }
+}
 
-  // Draw coins
-  coins.forEach(coin => {
-    coin.y += speed
-    if (!coin.collected) {
-      ctx.font = '22px serif'
-      ctx.textAlign = 'center'
-      ctx.fillText('🪙', coin.x, coin.y)
-      // Collect
-      if (Math.abs(coin.x - playerX) < 35 && Math.abs(coin.y - playerY) < 35) {
-        coin.collected = true
-        score += 10
-        addParticle(coin.x, coin.y, '#ffd000')
-      }
-    }
-  })
-  coins = coins.filter(c => c.y < H + 40 && !c.collected)
+function drawHint() {
+  // Recordatorio de controles durante los primeros segundos
+  if (elapsed > 300) return
+  ctx.globalAlpha = Math.min(1, (300 - elapsed) / 60)
+  ctx.fillStyle = 'rgba(0,0,0,0.55)'
+  ctx.fillRect(W / 2 - 150, HORIZON + 20, 300, 58)
+  ctx.fillStyle = '#fff'
+  ctx.textAlign = 'center'
+  ctx.font = 'bold 13px Segoe UI'
+  ctx.fillText('← → carril · ↑ saltar · ↓ agacharse', W / 2, HORIZON + 43)
+  ctx.font = '12px Segoe UI'
+  ctx.fillText('Salta lo bajo · agáchate bajo carteles · esquiva vehículos', W / 2, HORIZON + 64)
+  ctx.globalAlpha = 1
+}
 
-  // Draw obstacles
-  obstacles.forEach(obs => {
-    obs.y += speed
-    ctx.font = '36px serif'
+function loop(now) {
+  if (!gameRunning) return
+  raf = requestAnimationFrame(loop)
+  // dt en "frames de 60 Hz": misma velocidad en pantallas de 60, 120 o 144 Hz
+  const dt = Math.min(3, (now - lastTime) / (1000 / 60))
+  lastTime = now
+  const theme = CITIES[city]
+
+  if (paused) {
+    drawBackground(theme)
+    ctx.fillStyle = 'rgba(0,0,0,0.6)'
+    ctx.fillRect(0, 0, W, H)
+    ctx.fillStyle = '#fff'
     ctx.textAlign = 'center'
-    ctx.fillText(obs.emoji, obs.x, obs.y)
+    ctx.font = 'bold 22px Segoe UI'
+    ctx.fillText('⏸ Pausa', W / 2, H / 2 - 10)
+    ctx.font = '14px Segoe UI'
+    ctx.fillText('Toca o pulsa una tecla para seguir', W / 2, H / 2 + 18)
+    return
+  }
 
-    // Collision
-    const hitH = sliding ? 20 : 44
-    const hitOffsetY = sliding ? 20 : 0
-    if (
-      Math.abs(obs.x - playerX) < 34 &&
-      playerY + hitOffsetY - obs.y < hitH &&
-      playerY + hitOffsetY - obs.y > -hitH &&
-      obs.y > H * 0.3
-    ) {
-      obs.y = -200
-      lives--
-      addParticle(playerX, playerY, '#ff4444')
-      updateLivesDisplay()
-      if (lives <= 0) { gameRunning = false; showGameOver(); return }
+  elapsed += dt
+  speed = Math.min(SPEED_MAX, 4 + Math.floor(distance / 200) * 0.5)   // sube cada 200 m
+  roadOffset = (roadOffset + speed * dt) % 60
+
+  // Filas de obstáculos: cada vez más seguidas, pero con tiempo para reaccionar
+  rowTimer -= dt
+  if (rowTimer <= 0) {
+    spawnRow()
+    rowTimer = Math.max(38, 80 - Math.floor(distance / 150) * 4)
+  }
+
+  // Física del jugador
+  playerX += (lanes[playerLane] - playerX) * Math.min(1, 0.25 * dt)
+  if (z > 0 || vz > 0) {
+    z += vz * dt
+    vz -= GRAVITY * dt
+    if (z <= 0) { z = 0; vz = 0 }
+  }
+  if (slideT > 0) slideT -= dt
+  if (invulnT > 0) invulnT -= dt
+
+  drawBackground(theme)
+
+  // Monedas (se recogen en el suelo o saltando bajo)
+  coins.forEach(c => {
+    c.y += speed * dt
+    ctx.font = '22px serif'
+    ctx.textAlign = 'center'
+    ctx.fillText('🪙', c.x, c.y)
+    if (!c.got && Math.abs(c.x - playerX) < 30 && Math.abs(c.y - GROUND_Y) < 30 && z < 60) {
+      c.got = true
+      coinCount++
+      addParticle(c.x, c.y, '#ffd000')
     }
   })
+  coins = coins.filter(c => c.y < H + 40 && !c.got)
+
+  // Obstáculos y colisiones
+  for (const o of obstacles) {
+    const prevY = o.y
+    o.y += speed * dt
+    drawObstacle(o, theme)
+    if (o.done || invulnT > 0) continue
+    const sameLane = Math.abs(o.x - playerX) < LANE_W * 0.38
+    // Cruce entre el frame anterior y este: no se lo salta aunque vaya rápido o bajen los FPS
+    const atPlayer = o.y > GROUND_Y - 28 && prevY < GROUND_Y + 28
+    if (!sameLane || !atPlayer) continue
+    const avoided = (o.type === 'low' && z > 24) || (o.type === 'high' && slideT > 0)
+    if (avoided) continue
+    o.done = true
+    lives--
+    invulnT = INVULN_FRAMES
+    addParticle(playerX, GROUND_Y - z, '#ff4444')
+    updateLivesDisplay()
+    if (lives <= 0) { gameRunning = false; showGameOver(); return }
+  }
   obstacles = obstacles.filter(o => o.y < H + 60)
 
-  // Draw player
-  ctx.font = sliding ? '28px serif' : '44px serif'
-  ctx.textAlign = 'center'
-  ctx.fillText(charEmoji || '🧑', playerX, playerY + (sliding ? 10 : 0))
-  if (jumping) {
-    ctx.font = '18px serif'
-    ctx.fillText('💨', playerX - 20, playerY + 20)
-  }
+  drawPlayer()
 
-  // Particles
   particles.forEach(p => {
-    p.x += p.vx; p.y += p.vy; p.life -= 0.05
+    p.x += p.vx * dt; p.y += p.vy * dt; p.life -= 0.05 * dt
     ctx.beginPath()
-    ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI*2)
+    ctx.arc(p.x, p.y, Math.max(0, p.r * p.life), 0, Math.PI * 2)
     ctx.fillStyle = p.color
-    ctx.globalAlpha = p.life
+    ctx.globalAlpha = Math.max(0, p.life)
     ctx.fill()
     ctx.globalAlpha = 1
   })
   particles = particles.filter(p => p.life > 0)
 
-  // Distance & score
-  distance += speed * 0.1
-  const totalScore = Math.floor(distance) + score
+  drawHint()
 
-  document.getElementById('scoreDisplay').textContent =
-    Math.floor(distance) + 'm · 🪙' + score
-
-  // HUD speed indicator
-  ctx.font = 'bold 11px Segoe UI'
-  ctx.fillStyle = 'rgba(255,255,255,0.3)'
-  ctx.textAlign = 'right'
-  ctx.fillText('⚡ ' + speed.toFixed(1) + 'x', W - 12, 28)
+  distance += speed * 0.1 * dt
+  document.getElementById('scoreDisplay').textContent = Math.floor(distance) + 'm · 🪙' + coinCount
 }
 
 function showGameOver() {
   cancelAnimationFrame(raf)
   document.getElementById('scoreDisplay').style.display = 'none'
   document.getElementById('livesDisplay').style.display = 'none'
-  document.onkeydown = null
-  canvas.ontouchstart = null
-  canvas.ontouchend = null
 
   const dist = Math.floor(distance)
-  const totalScore = dist + score
+  const totalScore = dist + coinCount * 10
+  const isRecord = dist > best
+  if (isRecord) {
+    best = dist
+    try { localStorage.setItem('corremibro_best', String(best)) } catch {}
+  }
 
   const ranks = [
     { min: 1000, label: '🔥 LEYENDA DEL BARRIO', emoji: '👑' },
     { min: 500,  label: '😎 CRACK TOTAL',         emoji: '🔥' },
-    { min: 250,  label: '💪 BUEN CORREDOR',        emoji: '💪' },
-    { min: 100,  label: '😅 TE FALTA CARDIO',      emoji: '😅' },
-    { min: 0,    label: '💀 NI ARRANCASTE',         emoji: '💀' },
+    { min: 250,  label: '💪 BUEN CORREDOR',       emoji: '💪' },
+    { min: 100,  label: '😅 TE FALTA CARDIO',     emoji: '😅' },
+    { min: 0,    label: '💀 NI ARRANCASTE',       emoji: '💀' },
   ]
-  const rank = ranks.find(r => dist >= r.min) || ranks[ranks.length-1]
+  const rank = ranks.find(r => dist >= r.min) || ranks[ranks.length - 1]
 
-  document.getElementById('goEmoji').textContent = rank.emoji
-  document.getElementById('goTitle').textContent = rank.label
+  document.getElementById('goEmoji').textContent = isRecord && dist > 0 ? '🏆' : rank.emoji
+  document.getElementById('goTitle').textContent = isRecord && dist > 0 ? '¡NUEVO RÉCORD!' : rank.label
   document.getElementById('goDist').textContent = cityFlag + ' ' + cityName
   document.getElementById('goScore').textContent = dist
-  document.getElementById('goRank').textContent = '🪙 ' + score + ' monedas recolectadas'
+  document.getElementById('goRank').textContent = '🪙 ' + coinCount + ' monedas · 🏆 Récord: ' + best + ' m'
   document.getElementById('gameoverScreen').classList.add('active')
 
   window.parent.postMessage({
     type: 'GAME_OVER', game_id: 'corre-mi-bro',
-    score: totalScore, seconds_played: Math.floor(dist / speed)
+    score: totalScore, seconds_played: Math.floor(elapsed / 60)
   }, '*')
 }
 
 function shareResult() {
   const dist = Math.floor(distance)
-  const msg = `🏃 Corrí ${dist}m en las calles de ${cityName} ${cityFlag}\n\nJuego: Corre mi Bro en JuegaYa\n\n¿Puedes superarme? 👇\nhttps://juegaya.app/juego/corre-mi-bro`
+  const msg = `🏃 Corrí ${dist}m en las calles de ${cityName} ${cityFlag}\n\nJuego: Corre mi Bro en JuegaYa\n\n¿Puedes superarme? 👇\nhttps://www.juegaya.app/juego/corre-mi-bro`
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
 }
 
