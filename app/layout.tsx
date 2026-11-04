@@ -35,7 +35,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`${nunito.className} bg-[#111120] text-white flex min-h-screen`}>
         {/* Una categoría aparece en el menú en cuanto tiene al menos un juego */}
-        <Sidebar activeCategories={Object.keys(CATEGORIAS).filter(c => gamesForCategoria(c, GAMES).length > 0)} />
+        <Sidebar
+          activeCategories={Object.keys(CATEGORIAS).filter(c => gamesForCategoria(c, GAMES).length > 0)}
+          gameSlugs={GAMES.map(g => g.slug)}
+        />
         <Tracker />
         <div className="flex-1 min-w-0">{children}</div>
       </body>

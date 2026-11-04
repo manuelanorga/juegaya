@@ -124,7 +124,7 @@ export default function GamePage({ game, visits, related }: { game: Game; visits
 
       {/* HEADER */}
       <header className="sticky top-0 z-50 bg-[#111120]/95 backdrop-blur border-b border-white/5 h-[52px]">
-        <div className="px-3 h-full flex items-center gap-2">
+        <div className="pl-14 pr-3 md:px-3 h-full flex items-center gap-2">
           <Link href="/"><img src="/logo.png" alt="JuegaYa" className="h-36 w-auto" /></Link>
           <span className="text-white/20 hidden sm:block">›</span>
           <Link href={`/juegos/${game.categorySlug}`} className="text-sm text-white/40 hidden sm:block hover:text-white transition-colors">{game.category}</Link>

@@ -30,7 +30,7 @@ export default function CategoriaView({ cat, juegos, visits }: Props) {
     <div className="min-h-screen bg-[#111120] text-white">
 
       {/* HEADER */}
-      <div className="px-4 md:px-8 pt-8 pb-6 border-b border-white/5">
+      <div className="px-4 md:px-8 pt-14 md:pt-8 pb-6 border-b border-white/5">
         <div className="flex items-start justify-between gap-4 mb-3">
           <div>
             <div className="text-xs text-white/30 font-semibold mb-1">
