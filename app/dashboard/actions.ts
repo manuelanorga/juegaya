@@ -5,16 +5,59 @@ import { requireAdmin } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { GAMES } from '@/lib/games'
 
-export async function getStats(range: number) {
-  await requireAdmin()
-  const days = z.number().int().min(1).max(365).parse(range)
-  const from = new Date(Date.now() - days * 86_400_000).toISOString()
+const RangeSchema = z.object({ from: z.iso.datetime(), to: z.iso.datetime() })
+  .refine(r => r.from <= r.to, 'Rango de fechas inválido')
 
-  const [{ data: views }, { data: sessions }] = await Promise.all([
-    supabaseAdmin.from('page_views').select('*').gte('created_at', from),
-    supabaseAdmin.from('sessions').select('*').gte('first_seen', from),
+const PAGE_SIZE = 1000
+
+// Supabase devuelve como máximo 1000 filas por consulta: se piden por páginas hasta tenerlas todas
+async function fetchInRange<T>(table: string, columns: string, from: string, to: string) {
+  const rows: T[] = []
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const { data, error } = await supabaseAdmin
+      .from(table)
+      .select(columns)
+      .gte('created_at', from)
+      .lte('created_at', to)
+      .order('id')
+      .range(offset, offset + PAGE_SIZE - 1)
+    if (error) throw new Error(`No se pudo leer ${table}`)
+    rows.push(...(data as T[]))
+    if (!data || data.length < PAGE_SIZE) return rows
+  }
+}
+
+export interface ViewRow {
+  created_at: string
+  session_id: string
+  game_slug: string | null
+  device: string
+  source: string | null
+}
+export interface PlayRow {
+  created_at: string
+  session_id: string
+  game_slug: string
+}
+
+// Primer registro: las métricas nuevas no existen antes de esa fecha y el panel debe avisarlo
+async function firstCreatedAt(table: string, notNull?: string) {
+  let query = supabaseAdmin.from(table).select('created_at').order('created_at').limit(1)
+  if (notNull) query = query.not(notNull, 'is', null)
+  const { data } = await query
+  return (data?.[0]?.created_at as string | undefined) ?? null
+}
+
+export async function getStats(from: string, to: string) {
+  await requireAdmin()
+  const range = RangeSchema.parse({ from, to })
+  const [views, plays, playsSince, sourcesSince] = await Promise.all([
+    fetchInRange<ViewRow>('page_views', 'created_at,session_id,game_slug,device,source', range.from, range.to),
+    fetchInRange<PlayRow>('game_plays', 'created_at,session_id,game_slug', range.from, range.to),
+    firstCreatedAt('game_plays'),
+    firstCreatedAt('page_views', 'source'),
   ])
-  return { views: views ?? [], sessions: sessions ?? [] }
+  return { views, plays, playsSince, sourcesSince }
 }
 
 export async function getDestacados() {

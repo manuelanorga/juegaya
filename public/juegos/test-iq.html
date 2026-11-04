@@ -205,7 +205,7 @@ function next() {
 function showResult() {
   document.getElementById('quiz').style.display = 'none'
   const level = IQ_LEVELS.find(l => score >= l.min && score <= l.max) || IQ_LEVELS[0]
-  const shareMsg = `🧠 Hice el Test de IQ Latam en JuegaYa\n\nMi IQ estimado: ${level.iq}\n${level.emoji} ${level.title}\nPuntaje: ${score}/195\n\n¿Puedes superarme? 👇\nhttps://www.juegaya.app/juego/test-iq`
+  const shareMsg = `🧠 Hice el Test de IQ Latam en JuegaYa\n\nMi IQ estimado: ${level.iq}\n${level.emoji} ${level.title}\nPuntaje: ${score}/195\n\n¿Puedes superarme? 👇\nhttps://www.juegaya.app/juego/test-iq?utm_source=whatsapp`
 
   document.getElementById('result').style.display = 'block'
   document.getElementById('result').innerHTML = `

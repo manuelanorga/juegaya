@@ -249,7 +249,7 @@ function showResult(){
 
 function shareResult(){
   const iq=calcIQ();
-  const txt=`🧠 Hice el test "¿Cuánto sabes de Historia?" en JuegaYa\n\nMi IQ histórico es: ${iq}\n${correctCount}/10 correctas · ${score} puntos\n\n¿Puedes superarme? 👇\nhttps://www.juegaya.app/juego/cuanto-sabes-historia`;
+  const txt=`🧠 Hice el test "¿Cuánto sabes de Historia?" en JuegaYa\n\nMi IQ histórico es: ${iq}\n${correctCount}/10 correctas · ${score} puntos\n\n¿Puedes superarme? 👇\nhttps://www.juegaya.app/juego/cuanto-sabes-historia?utm_source=whatsapp`;
   window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
 }
 </script>

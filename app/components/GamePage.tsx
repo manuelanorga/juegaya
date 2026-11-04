@@ -2,6 +2,7 @@
 import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import AdUnit from './AdUnit'
+import { trackPlay } from '@/lib/tracking'
 
 interface Game {
   slug: string
@@ -47,9 +48,9 @@ export default function GamePage({ game, visits }: { game: Game; visits: string 
     const url = `${window.location.origin}/juego/${game.slug}`
     const text = `¡Juega ${game.name} gratis en JuegaYa!`
     if (navigator.share) {
-      try { await navigator.share({ title: game.name, text, url }); return } catch { return }
+      try { await navigator.share({ title: game.name, text, url: `${url}?utm_source=compartido` }); return } catch { return }
     }
-    window.open(`https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`, '_blank', 'noopener')
+    window.open(`https://wa.me/?text=${encodeURIComponent(`${text} ${url}?utm_source=whatsapp`)}`, '_blank', 'noopener')
   }
 
   useEffect(() => {
@@ -60,6 +61,40 @@ export default function GamePage({ game, visits }: { game: Game; visits: string 
   const related = ALL_GAMES.filter(g => g.slug !== game.slug)
 
   const iframeRef = useRef<HTMLIFrameElement>(null)
+
+  // Partida iniciada: primera interacción dentro del juego. Abrir la página sin jugar no cuenta.
+  useEffect(() => {
+    const iframe = iframeRef.current
+    if (!iframe) return
+    const EVENTS = ['pointerdown', 'touchstart', 'keydown']
+    let played = false
+    let win: Window | null = null
+    const detach = () => EVENTS.forEach(ev => win?.removeEventListener(ev, onPlay, true))
+    function onPlay() {
+      detach()
+      if (played) return
+      played = true
+      trackPlay(game.slug)
+    }
+    function attach() {
+      if (played) return
+      detach()
+      win = iframe!.contentWindow
+      // En captura: el juego no puede ocultarnos el evento aunque detenga su propagación
+      EVENTS.forEach(ev => win?.addEventListener(ev, onPlay, true))
+    }
+    iframe.addEventListener('load', attach)
+    // El iframe pudo terminar de cargar antes de que React se active en la página
+    try {
+      const doc = iframe.contentDocument
+      if (doc?.readyState === 'complete' && doc.location.href !== 'about:blank') attach()
+    } catch {}
+    return () => {
+      iframe.removeEventListener('load', attach)
+      detach()
+    }
+  }, [game.slug])
+
   const toggleFullscreen = () => {
     const el = iframeRef.current
     if (!el) return

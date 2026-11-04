@@ -2,34 +2,27 @@
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { canTrack, getDevice, getEntrySource, getSessionId } from '@/lib/tracking'
 
-function getSessionId() {
-  let id = localStorage.getItem('jy_session')
-  if (!id) {
-    id = Math.random().toString(36).slice(2) + Date.now().toString(36)
-    localStorage.setItem('jy_session', id)
-  }
-  return id
-}
-
-function getDevice() {
-  return /Mobile|Android|iPhone/i.test(navigator.userAgent) ? 'mobile' : 'desktop'
-}
+// El origen solo se guarda en la primera página: al navegar dentro del sitio el referrer ya no cambia
+let isEntry = true
 
 export default function Tracker() {
   const pathname = usePathname()
 
   useEffect(() => {
-    const sessionId = getSessionId()
-    const device = getDevice()
+    if (!canTrack()) return
+    const source = isEntry ? getEntrySource() : null
+    isEntry = false
     const gameSlug = pathname.startsWith('/juego/') ? pathname.split('/')[2] : null
 
     // RPC con permisos limitados: el cliente no puede leer ni modificar las tablas directamente
     supabase.rpc('track_view', {
-      p_session_id: sessionId,
+      p_session_id: getSessionId(),
       p_page: pathname,
       p_game_slug: gameSlug,
-      p_device: device,
+      p_device: getDevice(),
+      p_source: source,
     }).then()
 
   }, [pathname])
