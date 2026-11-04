@@ -729,6 +729,7 @@
     <button class="modal-close" data-close="result-modal">×</button>
     <h2 id="result-title">¡Ganaste!</h2>
     <div class="sub" id="result-sub">Lo sacaste en 3 intentos</div>
+    <div class="sub" id="result-rank" aria-live="polite" style="color:#ffd000;font-weight:700;"></div>
 
     <div class="answer-reveal" id="answer-reveal" style="display:none;">
       <div class="answer-lbl">La palabra era</div>
@@ -893,6 +894,7 @@
 </div>
 
 <script src="palabras.js"></script>
+<script src="../resultado-diario.js"></script>
 <script>
 (() => {
   const MAX_GUESSES = 6;
@@ -1340,8 +1342,23 @@
     document.getElementById('btn-share').style.display = state.mode === 'daily' ? 'block' : 'none';
     document.getElementById('btn-play-free').style.display = state.mode === 'daily' ? 'block' : 'none';
 
+    document.getElementById('result-rank').textContent = '';
     document.getElementById('result-modal').classList.add('visible');
-    if (state.mode === 'daily') startCountdown();
+    if (state.mode === 'daily') {
+      startCountdown();
+      showRank(won ? guessIdx : 7);
+    }
+  }
+
+  // Comparación real con quienes jugaron la misma palabra (7 = no la adivinó)
+  function rankText({ total, beaten }, attempts) {
+    if (total < JuegaYaDiario.MIN_JUGADORES) return '🥇 Estás entre los primeros en jugar el reto de hoy';
+    if (attempts === 7 || beaten === 0) return `👥 Hoy jugaron ${total} jugadores`;
+    return `👥 Hoy jugaron ${total} jugadores. Superaste a ${beaten}`;
+  }
+  async function showRank(attempts) {
+    const result = await JuegaYaDiario.enviar('palabro', attempts);
+    if (result) document.getElementById('result-rank').textContent = rankText(result, attempts);
   }
 
   function showStatsModal() {

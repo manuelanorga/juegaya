@@ -59,6 +59,7 @@
   .btn { display: block; width: 100%; padding: 12px; border-radius: 12px; border: none; font-size: 14px; font-weight: 900; cursor: pointer; margin-top: 8px; text-decoration: none; text-align: center; }
   .btn-gold { background: linear-gradient(135deg,#ffd000,#ffaa00); color: #1a1000; }
   .btn-dark { background: #262640; color: #fff; border: 1px solid rgba(255,255,255,.15); }
+  #win-rank { font-size: 13px; font-weight: 700; color: #ffd000; margin: 2px 0 6px; min-height: 18px; }
   #next-in { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 10px; }
   #toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 20; white-space: nowrap; }
   #toast.show { opacity: 1; }
@@ -113,6 +114,7 @@
     <h2 id="win-title">¡Sopa resuelta!</h2>
     <p id="win-sub"></p>
     <div class="stats" id="win-stats"></div>
+    <p id="win-rank" aria-live="polite"></p>
     <button class="btn btn-gold" id="btn-share">💬 Compartir resultado</button>
     <button class="btn btn-dark" id="btn-to-free">♾️ Seguir en modo libre</button>
     <a class="btn btn-dark" href="/juego/palabro" target="_top">🔤 Jugar Palabro</a>
@@ -122,6 +124,7 @@
 <div id="toast" role="status"></div>
 
 <script src="temas.js"></script>
+<script src="../resultado-diario.js"></script>
 <script>
 // Reloj y fecha: el reto cambia a medianoche de la hora local del jugador
 const LAUNCH_DAY = Date.UTC(2026, 10, 4) / 864e5;   // el reto #1
@@ -487,7 +490,20 @@ function showWin() {
   $('btn-to-free').textContent = mode === 'daily' ? '♾️ Seguir en modo libre' : '🔄 Otra partida';
   $('next-in').style.display = mode === 'daily' ? 'block' : 'none';
   updateCountdown();
+  $('win-rank').textContent = '';
   $('win-modal').classList.add('show');
+  if (mode === 'daily') showRank();
+}
+
+// Comparación real con quienes resolvieron el mismo reto (el primer tiempo de cada jugador)
+function rankText({ total, beaten }) {
+  if (total < JuegaYaDiario.MIN_JUGADORES) return '🥇 Estás entre los primeros en resolver el reto de hoy';
+  if (beaten === 0) return `👥 Hoy lo resolvieron ${total} jugadores`;
+  return `👥 Hoy lo resolvieron ${total} jugadores. Tu tiempo superó al de ${beaten}`;
+}
+async function showRank() {
+  const result = await JuegaYaDiario.enviar('sopa-de-letras', Math.max(3, Math.round(game.elapsed * 10) / 10));
+  if (result) $('win-rank').textContent = rankText(result);
 }
 
 function updateCountdown() {
