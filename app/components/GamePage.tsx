@@ -21,16 +21,6 @@ interface Game {
   fixedHeight?: string
 }
 
-const ALL_GAMES = [
-  { slug: 'escape-vikingo',  name: 'El Escape del Vikingo', icon: '/juegos/escape-vikingo/icons/icon-256.png' },
-  { slug: 'gelatinas-locas', name: 'Gelatinas Locas',       icon: '/juegos/gelatinas-locas/icons/icon-256.png' },
-  { slug: 'cazador-zombies', name: 'Cazador de Zombies',    icon: '/juegos/cazador-zombies/icons/icon-256.png' },
-  { slug: 'test-iq',         name: 'Test de IQ Latam',      icon: null },
-  { slug: 'neon-bird',       name: 'Neon Bird',             icon: null },
-  { slug: 'test-reflejos',   name: 'Test de Reflejos',      icon: null },
-  { slug: 'corre-mi-bro',    name: 'Corre mi Bro',          icon: null },
-]
-
 const injectResponsiveCSS = (e: React.SyntheticEvent<HTMLIFrameElement>) => {
   try {
     const doc = (e.target as HTMLIFrameElement).contentDocument;
@@ -42,7 +32,9 @@ const injectResponsiveCSS = (e: React.SyntheticEvent<HTMLIFrameElement>) => {
   } catch(_){}
 }
 
-export default function GamePage({ game, visits }: { game: Game; visits: string | null }) {
+export interface RelatedGame { slug: string; name: string; icon: string | null; emoji?: string }
+
+export default function GamePage({ game, visits, related }: { game: Game; visits: string | null; related: RelatedGame[] }) {
   // Menú nativo de compartir en móvil; en escritorio, WhatsApp Web
   async function share() {
     const url = `${window.location.origin}/juego/${game.slug}`
@@ -58,7 +50,6 @@ export default function GamePage({ game, visits }: { game: Game; visits: string 
     const filtered = history.filter((s: string) => s !== game.slug)
     localStorage.setItem("jy_history", JSON.stringify([game.slug, ...filtered].slice(0, 5)))
   }, [game.slug])
-  const related = ALL_GAMES.filter(g => g.slug !== game.slug)
 
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
@@ -260,7 +251,7 @@ export default function GamePage({ game, visits }: { game: Game; visits: string 
                 {related.slice(0, 6).map((g, i) => (
                   <Link key={i} href={`/juego/${g.slug}`} className="flex items-center gap-2 bg-[#1e1e34] border border-white/10 rounded-xl p-2.5 hover:border-yellow-400/20 transition-all group">
                     <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#262640] flex-shrink-0 flex items-center justify-center text-xl">
-                      {g.icon ? <img src={g.icon} alt={g.name} className="w-full h-full object-cover" /> : '🎮'}
+                      {g.icon ? <img src={g.icon} alt={g.name} className="w-full h-full object-cover" /> : (g.emoji || '🎮')}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-black text-xs truncate group-hover:text-yellow-400 transition-colors">{g.name}</div>
@@ -303,7 +294,7 @@ export default function GamePage({ game, visits }: { game: Game; visits: string 
             {related.map((g, i) => (
               <Link key={i} href={`/juego/${g.slug}`} className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer">
                 <div className="w-14 h-14 rounded-lg overflow-hidden bg-[#1e1e34] flex-shrink-0 flex items-center justify-center text-2xl">
-                  {g.icon ? <img src={g.icon} alt={g.name} className="w-full h-full object-cover" /> : '🎮'}
+                  {g.icon ? <img src={g.icon} alt={g.name} className="w-full h-full object-cover" /> : (g.emoji || '🎮')}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-black text-sm truncate group-hover:text-yellow-400 transition-colors">{g.name}</div>

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getGame, getAllSlugs, type Game } from '@/lib/games'
+import { GAMES, getGame, getAllSlugs, type Game } from '@/lib/games'
 import { SITE_URL, SITE_NAME } from '@/lib/site'
 import { getVisitCounts, formatVisits } from '@/lib/stats'
 import GamePage from '@/app/components/GamePage'
@@ -94,13 +94,18 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const game = getGame(slug)
   if (!game) notFound()
   const counts = await getVisitCounts([game.slug])
+  // Primero los de su categoría; así cada juego enlaza a todos los demás
+  const related = GAMES
+    .filter(g => g.slug !== game.slug)
+    .sort((a, b) => Number(b.categorySlug === game.categorySlug) - Number(a.categorySlug === game.categorySlug))
+    .map(({ slug, name, icon, emoji }) => ({ slug, name, icon, emoji }))
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd(game)).replace(/</g, '\\u003c') }}
       />
-      <GamePage game={game} visits={formatVisits(counts[game.slug])} />
+      <GamePage game={game} visits={formatVisits(counts[game.slug])} related={related} />
     </>
   )
 }

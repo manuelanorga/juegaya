@@ -5,6 +5,7 @@ import { getDestacados, saveDestacado } from '../actions'
 
 const SECCIONES = [
   { slug: 'populares',    title: '🔥 Populares' },
+  { slug: 'diarios',      title: '📅 Diarios' },
   { slug: 'inteligencia', title: '🧠 Inteligencia' },
   { slug: 'virales',      title: '😂 Virales' },
   { slug: 'dificiles',    title: '🔥 Difíciles' },
