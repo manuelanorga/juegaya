@@ -133,10 +133,6 @@ export default async function Home() {
           <div className="flex-1 max-w-md">
             <SearchBox games={GAMES.map(({ slug, name, category, tags, icon, emoji }) => ({ slug, name, category, tags, icon, emoji }))} />
           </div>
-          <div className="ml-auto flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/25 rounded-full px-3 py-1.5">
-            <span>🪙</span>
-            <span className="text-sm font-black text-yellow-400">0</span>
-          </div>
         </div>
       </header>
 
