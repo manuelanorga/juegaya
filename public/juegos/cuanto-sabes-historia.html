@@ -133,12 +133,12 @@ async function startGame(){
   try {
     const response = await fetch('/api/preguntas');
     const parsed = await response.json();
-    if(!parsed.questions || parsed.questions.length < 10) throw new Error('Preguntas insuficientes');
+    if(!parsed.questions || parsed.questions.length < 10) throw new Error(parsed.error || 'No se pudo generar el test');
     questions = parsed.questions;
     showScreen('quiz-screen');
     loadQuestion();
   } catch(err) {
-    document.getElementById('error-msg').textContent = 'Error: ' + (err.message || 'No se pudo generar el test');
+    document.getElementById('error-msg').textContent = err.message || 'No se pudo generar el test';
     showScreen('error-screen');
   }
 }
