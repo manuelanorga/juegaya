@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Flechas Locas - JuegaYa</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body { background: #111120; color: #fff; font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif; overflow: hidden; user-select: none; -webkit-user-select: none; }
+  button { font-family: inherit; }
+  #app { height: 100%; max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; padding: 10px 12px 12px; gap: 8px; }
+  .tabs { display: flex; gap: 6px; flex-shrink: 0; }
+  .tab { flex: 1; padding: 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,.1); background: #1e1e34; color: rgba(255,255,255,.55); font-size: 13px; font-weight: 800; cursor: pointer; }
+  .tab.active { background: #ffd000; border-color: #ffd000; color: #1a1400; }
+  .icon-btn { width: 38px; flex: none; padding: 0; font-size: 15px; }
+  .status { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0; min-height: 26px; }
+  .label { font-size: 15px; font-weight: 900; white-space: nowrap; }
+  .meta { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 800; color: rgba(255,255,255,.7); font-variant-numeric: tabular-nums; }
+  #board-wrap { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+  #board { background: #1a1a30; border: 1px solid rgba(255,255,255,.08); border-radius: 16px; overflow: hidden; touch-action: manipulation; }
+  #board.shake { animation: shake .25s; }
+  @keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+  svg { display: block; width: 100%; height: 100%; }
+  .slot { fill: rgba(255,255,255,.045); }
+  .arrow { cursor: pointer; outline: none; transition: transform .38s cubic-bezier(.5,0,.9,.4), opacity .38s; }
+  .arrow .hit { fill: transparent; }
+  .arrow:hover .body, .arrow:focus-visible .body { filter: brightness(1.25); }
+  .arrow.gone { pointer-events: none; opacity: 0; }
+  .arrow.blocked .body { animation: nope .35s; }
+  @keyframes nope { 30% { stroke: #ff3b3b; fill: #ff3b3b; } 60% { stroke: #ff3b3b; fill: #ff3b3b; } }
+  .arrow.blocker .body { animation: glow .5s; }
+  @keyframes glow { 50% { filter: brightness(1.8); } }
+  .arrow.hint .body { animation: pulse .7s ease-in-out infinite alternate; }
+  @keyframes pulse { to { filter: brightness(1.7) drop-shadow(0 0 .12px #fff); } }
+  .actions { display: flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; }
+  .mini-btn { background: #262640; color: #fff; border: 1px solid rgba(255,255,255,.15); border-radius: 10px; padding: 8px 14px; font-size: 13px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+  .mini-btn:disabled { opacity: .4; cursor: default; }
+  .modal { position: fixed; inset: 0; background: rgba(5,5,15,.78); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+  .modal.show { display: flex; }
+  .card { background: #1e1e34; border: 1px solid rgba(255,255,255,.12); border-radius: 18px; padding: 22px 20px; width: 100%; max-width: 360px; max-height: 100%; overflow-y: auto; text-align: center; }
+  .card h2 { font-size: 22px; font-weight: 900; color: #ffd000; margin-bottom: 8px; }
+  .card p, .card li { font-size: 14px; line-height: 1.5; color: rgba(255,255,255,.72); }
+  .card ul { text-align: left; padding-left: 18px; margin: 8px 0 14px; }
+  .stats { display: flex; justify-content: center; gap: 18px; margin: 12px 0; }
+  .stat b { display: block; font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 11px; color: rgba(255,255,255,.5); font-weight: 700; }
+  #win-rank { font-size: 13px; font-weight: 700; color: #ffd000; margin: 2px 0 6px; min-height: 18px; }
+  .btn { display: block; width: 100%; padding: 12px; border-radius: 12px; border: none; font-size: 14px; font-weight: 900; cursor: pointer; margin-top: 8px; text-decoration: none; text-align: center; }
+  .btn-gold { background: linear-gradient(135deg,#ffd000,#ffaa00); color: #1a1000; }
+  .btn-dark { background: #262640; color: #fff; border: 1px solid rgba(255,255,255,.15); }
+  #next-in { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 10px; }
+  #toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 20; white-space: nowrap; }
+  #toast.show { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) {
+    .arrow { transition: opacity .1s; }
+    #board.shake, .arrow.blocked .body, .arrow.blocker .body, .arrow.hint .body { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="tabs">
+    <button class="tab active" id="tab-daily">📅 Del día</button>
+    <button class="tab" id="tab-levels">🏹 Niveles</button>
+    <button class="tab icon-btn" id="btn-sound" aria-label="Sonido">🔊</button>
+    <button class="tab icon-btn" id="btn-help" aria-label="Cómo jugar">?</button>
+  </div>
+  <div class="status">
+    <div class="label" id="label"></div>
+    <div class="meta"><span id="left" aria-live="polite"></span><span id="counter"></span></div>
+  </div>
+  <div id="board-wrap"><div id="board" aria-label="Tablero de flechas"></div></div>
+  <div class="actions">
+    <button class="mini-btn" id="btn-hint"></button>
+    <button class="mini-btn" id="btn-restart">🔄 Reiniciar</button>
+  </div>
+</div>
+
+<div class="modal" id="help-modal">
+  <div class="card">
+    <h2>Cómo jugar</h2>
+    <ul>
+      <li><b>Toca una flecha</b> para lanzarla hacia donde apunta.</li>
+      <li>Solo sale si <b>nada le bloquea el camino</b> hasta el borde.</li>
+      <li>Si está bloqueada, cuenta como error: piensa bien el orden.</li>
+      <li>Saca <b>todas las flechas</b> para ganar. Todos los tableros tienen solución.</li>
+    </ul>
+    <button class="btn btn-gold" id="close-help">¡A jugar!</button>
+  </div>
+</div>
+
+<div class="modal" id="win-modal">
+  <div class="card">
+    <h2 id="win-title"></h2>
+    <p id="win-sub"></p>
+    <div class="stats" id="win-stats"></div>
+    <p id="win-rank" aria-live="polite"></p>
+    <button class="btn btn-gold" id="btn-primary"></button>
+    <button class="btn btn-dark" id="btn-share">💬 Compartir resultado</button>
+    <a class="btn btn-dark" href="/juegos/diarios" target="_top">📅 Más juegos diarios</a>
+    <div id="next-in"></div>
+  </div>
+</div>
+<div id="toast" role="status"></div>
+
+<script src="../resultado-diario.js"></script>
+<script>
+// ---------- Generación ----------
+const DIRS = {
+  up:    { dr: -1, dc: 0, name: 'arriba' },
+  down:  { dr: 1, dc: 0, name: 'abajo' },
+  left:  { dr: 0, dc: -1, name: 'a la izquierda' },
+  right: { dr: 0, dc: 1, name: 'a la derecha' },
+};
+const DIR_KEYS = Object.keys(DIRS);
+const COLORS = ['#ffd000', '#ff4d8d', '#22d3ee', '#4ade80', '#a78bfa', '#fb923c'];
+
+function mulberry32(seed) {
+  return () => {
+    seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function shuffled(list, rng) {
+  const a = list.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Celdas de una flecha: la punta está en (r, c) y el cuerpo se extiende hacia atrás
+function cellsOf(a) {
+  const { dr, dc } = DIRS[a.dir];
+  return Array.from({ length: a.len }, (_, i) => [a.r - dr * i, a.c - dc * i]);
+}
+
+// Se construye al revés: cada flecha nueva debe tener libre su camino respecto a las ya puestas.
+// Quitándolas en orden inverso, todas salen, así que el tablero siempre tiene solución.
+// "chain" (0 a 1) prefiere poner flechas delante de otras: crea dependencias y sube la dificultad.
+function buildBoard(n, density, maxLen, chain, rng) {
+  const occ = Array.from({ length: n }, () => Array(n).fill(false));
+  const arrows = [];
+  const target = Math.floor(n * n * density);
+  const noise = (1 - chain) * 6 + .4;
+  let filled = 0;
+
+  // Cuántas flechas quedarían bloqueadas por ocupar cada casilla vacía
+  function blockScores() {
+    const score = Array.from({ length: n }, () => Array(n).fill(0));
+    for (const a of arrows) {
+      const { dr, dc } = DIRS[a.dir];
+      for (let y = a.r + dr, x = a.c + dc; y >= 0 && y < n && x >= 0 && x < n; y += dr, x += dc) {
+        if (occ[y][x]) break;
+        score[y][x]++;
+      }
+    }
+    return score;
+  }
+
+  function tryPlace(r, c) {
+    for (const dir of shuffled(DIR_KEYS, rng)) {
+      const { dr, dc } = DIRS[dir];
+      let free = true;
+      for (let y = r + dr, x = c + dc; y >= 0 && y < n && x >= 0 && x < n; y += dr, x += dc) {
+        if (occ[y][x]) { free = false; break; }
+      }
+      if (!free) continue;
+      const wanted = 1 + Math.floor(rng() * maxLen);
+      let len = 1;
+      while (len < wanted) {
+        const y = r - dr * len, x = c - dc * len;
+        if (y < 0 || y >= n || x < 0 || x >= n || occ[y][x]) break;
+        len++;
+      }
+      const a = { r, c, dir, len };
+      cellsOf(a).forEach(([y, x]) => { occ[y][x] = true; });
+      arrows.push(a);
+      filled += len;
+      return true;
+    }
+    return false;
+  }
+
+  while (filled < target) {
+    const score = blockScores();
+    const empties = [];
+    for (let r = 0; r < n; r++)
+      for (let c = 0; c < n; c++)
+        if (!occ[r][c]) empties.push({ r, c, v: score[r][c] + rng() * noise });
+    empties.sort((a, b) => b.v - a.v);
+    if (!empties.some(({ r, c }) => tryPlace(r, c))) break;
+  }
+  return arrows;
+}
+
+function isFree(arrows, gone, a, n) {
+  const { dr, dc } = DIRS[a.dir];
+  const occupied = new Set();
+  arrows.forEach((o, i) => { if (!gone.has(i)) cellsOf(o).forEach(([y, x]) => occupied.add(y * n + x)); });
+  for (let y = a.r + dr, x = a.c + dc; y >= 0 && y < n && x >= 0 && x < n; y += dr, x += dc) {
+    if (occupied.has(y * n + x)) return false;
+  }
+  return true;
+}
+
+// Primera flecha que tapa el camino de a (para señalarla al equivocarse)
+function blockerOf(arrows, gone, a, n) {
+  const { dr, dc } = DIRS[a.dir];
+  const at = new Map();
+  arrows.forEach((o, i) => { if (!gone.has(i)) cellsOf(o).forEach(([y, x]) => at.set(y * n + x, i)); });
+  for (let y = a.r + dr, x = a.c + dc; y >= 0 && y < n && x >= 0 && x < n; y += dr, x += dc) {
+    if (at.has(y * n + x)) return at.get(y * n + x);
+  }
+  return -1;
+}
+
+// Rondas para vaciar el tablero sacando a la vez todas las libres. Sacar una flecha nunca
+// perjudica, así que si esto termina vacío el tablero tiene solución. Más rondas = más difícil.
+function solveDepth(arrows, n) {
+  const gone = new Set();
+  let rounds = 0;
+  while (gone.size < arrows.length) {
+    const free = arrows.map((a, i) => i).filter(i => !gone.has(i) && isFree(arrows, gone, arrows[i], n));
+    if (!free.length) return -1;
+    free.forEach(i => gone.add(i));
+    rounds++;
+  }
+  return rounds;
+}
+
+// Prueba varios tableros y se queda con el más cercano a la dificultad buscada
+function makePuzzle(seed, { n, density, maxLen, chain, depth }) {
+  const rng = mulberry32(seed);
+  let best = null, bestGap = Infinity;
+  for (let i = 0; i < 12; i++) {
+    const arrows = buildBoard(n, density, maxLen, chain, rng);
+    const d = solveDepth(arrows, n);
+    if (d < 0 || !arrows.length) continue;
+    const gap = Math.abs(d - depth);
+    if (gap < bestGap) { best = { arrows, depth: d }; bestGap = gap; }
+    if (gap === 0) break;
+  }
+  best.arrows.forEach(a => { a.color = Math.floor(rng() * COLORS.length); });
+  return { n, arrows: best.arrows, depth: best.depth };
+}
+
+function levelConfig(level) {
+  const n = Math.min(9, 4 + Math.floor((level + 2) / 3));
+  return {
+    n,
+    density: Math.min(.92, .55 + level * .03),
+    maxLen: level < 3 ? 2 : level < 8 ? 3 : 4,
+    chain: Math.min(1, level / 20),
+    depth: Math.min(n * 3, 2 + Math.floor(level * .9)),
+  };
+}
+const levelPuzzle = level => makePuzzle(level * 104729 + 7, levelConfig(level));
+const DAILY_CONFIG = { n: 8, density: .85, maxLen: 3, chain: .6, depth: 11 };
+const dailyPuzzle = day => makePuzzle(day * 15485863 + 11, DAILY_CONFIG);
+
+// ---------- Fechas y guardado ----------
+const LAUNCH_DAY = Date.UTC(2026, 10, 6) / 864e5;   // el reto #1
+function dayIndex() {
+  const n = new Date();
+  return Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) / 864e5;
+}
+function load(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+}
+function save(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+}
+
+// ---------- Estado ----------
+const $ = id => document.getElementById(id);
+const PENALTY = 10;       // segundos por error o pista en el reto del día
+const HEARTS = 3;
+const LEVEL_HINTS = 3;
+
+let mode = 'daily', day = dayIndex();
+let puzzle, state, nodes = [];
+let started = false, lastTick = 0, hintIndex = -1, busy = false;
+let soundOn = load('flechasSonido', true);
+let stats = load('flechasStats', { played: 0, streak: 0, maxStreak: 0, lastDay: null, bestTime: null, level: 1 });
+
+function freshState() {
+  return { gone: [], mistakes: 0, hints: 0, elapsed: 0, done: false };
+}
+const gone = () => new Set(state.gone);
+const totalTime = () => state.elapsed + (state.mistakes + state.hints) * PENALTY;
+
+function persist() {
+  if (mode === 'daily') save('flechasDaily', { day, ...state });
+  else save('flechasNivel', { level: stats.level, ...state });
+}
+
+function startDaily() {
+  mode = 'daily';
+  day = dayIndex();
+  puzzle = dailyPuzzle(day);
+  const saved = load('flechasDaily', null);
+  state = saved && saved.day === day ? saved : freshState();
+  begin();
+  if (state.done) showWin();
+}
+
+function startLevels(restart) {
+  mode = 'levels';
+  puzzle = levelPuzzle(stats.level);
+  const saved = load('flechasNivel', null);
+  state = !restart && saved && saved.level === stats.level && !saved.done ? saved : freshState();
+  persist();
+  begin();
+}
+
+function begin() {
+  started = false;
+  busy = false;
+  hintIndex = -1;
+  $('win-modal').classList.remove('show');
+  $('tab-daily').classList.toggle('active', mode === 'daily');
+  $('tab-levels').classList.toggle('active', mode === 'levels');
+  // En el reto no se reinicia: solo cuenta el primer intento
+  $('btn-restart').style.display = mode === 'levels' ? 'block' : 'none';
+  $('label').textContent = mode === 'daily' ? `Reto #${day - LAUNCH_DAY + 1}` : `Nivel ${stats.level}`;
+  renderBoard();
+  updateHud();
+}
+
+// ---------- Dibujo ----------
+function arrowPath(a) {
+  const { dr, dc } = DIRS[a.dir];
+  const hx = a.c + .5, hy = a.r + .5;                        // centro de la punta
+  const tx = hx - dc * (a.len - 1), ty = hy - dr * (a.len - 1); // centro de la cola
+  const tipX = hx + dc * .36, tipY = hy + dr * .36;
+  const baseX = hx - dc * .02, baseY = hy - dr * .02;
+  const px = -dr * .27, py = dc * .27;                       // perpendicular para la cabeza
+  return {
+    shaft: `M${(tx - dc * .3).toFixed(3)} ${(ty - dr * .3).toFixed(3)} L${baseX.toFixed(3)} ${baseY.toFixed(3)}`,
+    head: `M${tipX.toFixed(3)} ${tipY.toFixed(3)} L${(baseX + px).toFixed(3)} ${(baseY + py).toFixed(3)} L${(baseX - px).toFixed(3)} ${(baseY - py).toFixed(3)} Z`,
+  };
+}
+
+function renderBoard() {
+  const { n, arrows } = puzzle;
+  const removed = gone();
+  let slots = '';
+  for (let r = 0; r < n; r++)
+    for (let c = 0; c < n; c++)
+      slots += `<rect class="slot" x="${c + .06}" y="${r + .06}" width=".88" height=".88" rx=".14"/>`;
+  $('board').innerHTML = `<svg viewBox="0 0 ${n} ${n}" role="group">${slots}</svg>`;
+  const svg = $('board').firstChild;
+  nodes = arrows.map((a, i) => {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'arrow' + (removed.has(i) ? ' gone' : ''));
+    g.setAttribute('role', 'button');
+    g.setAttribute('tabindex', removed.has(i) ? '-1' : '0');
+    g.setAttribute('aria-label', `Flecha hacia ${DIRS[a.dir].name}, fila ${a.r + 1}, columna ${a.c + 1}`);
+    const cells = cellsOf(a);
+    const minR = Math.min(...cells.map(p => p[0])), minC = Math.min(...cells.map(p => p[1]));
+    const h = Math.max(...cells.map(p => p[0])) - minR + 1, w = Math.max(...cells.map(p => p[1])) - minC + 1;
+    const { shaft, head } = arrowPath(a);
+    const color = COLORS[a.color];
+    g.innerHTML = `<rect class="hit" x="${minC}" y="${minR}" width="${w}" height="${h}"/>`
+      + `<path class="body" d="${shaft}" fill="none" stroke="${color}" stroke-width=".2" stroke-linecap="round"/>`
+      + `<path class="body" d="${head}" fill="${color}" stroke="${color}" stroke-width=".07" stroke-linejoin="round"/>`;
+    g.addEventListener('click', () => tapArrow(i));
+    g.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tapArrow(i); }
+    });
+    svg.appendChild(g);
+    return g;
+  });
+  resizeBoard();
+}
+
+function resizeBoard() {
+  const wrap = $('board-wrap');
+  const size = Math.max(160, Math.floor(Math.min(wrap.clientWidth, wrap.clientHeight)));
+  $('board').style.width = $('board').style.height = size + 'px';
+}
+
+const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+function updateHud() {
+  const left = puzzle.arrows.length - state.gone.length;
+  $('left').textContent = `🏹 ${left}`;
+  if (mode === 'daily') {
+    $('counter').textContent = `⏱ ${fmt(totalTime())}`;
+    $('btn-hint').textContent = `💡 Pista (+${PENALTY} s)`;
+    $('btn-hint').disabled = state.done;
+  } else {
+    const hearts = Math.max(0, HEARTS - state.mistakes);
+    $('counter').textContent = '❤️'.repeat(hearts) + '🖤'.repeat(HEARTS - hearts);
+    const hints = LEVEL_HINTS - state.hints;
+    $('btn-hint').textContent = `💡 Pista (${hints})`;
+    $('btn-hint').disabled = state.done || hints <= 0;
+  }
+}
+
+// El reloj corre desde la primera jugada y se detiene si la pestaña no está visible
+function tick(now) {
+  requestAnimationFrame(tick);
+  if (started && mode === 'daily' && !state.done && !document.hidden) {
+    const delta = (now - lastTick) / 1000;
+    if (delta < 2) {
+      const before = Math.floor(totalTime());
+      state.elapsed += delta;
+      if (Math.floor(totalTime()) !== before) updateHud();
+    }
+  }
+  lastTick = now;
+}
+setInterval(() => { if (started && !state.done) persist(); }, 5000);
+
+// ---------- Jugar ----------
+function clearHint() {
+  if (hintIndex >= 0) nodes[hintIndex].classList.remove('hint');
+  hintIndex = -1;
+}
+
+function tapArrow(i) {
+  if (state.done || busy || state.gone.includes(i)) return;
+  if (!started) { started = true; lastTick = performance.now(); }
+  const a = puzzle.arrows[i];
+  const removed = gone();
+  const node = nodes[i];
+
+  if (isFree(puzzle.arrows, removed, a, puzzle.n)) {
+    const { dr, dc } = DIRS[a.dir];
+    clearHint();
+    state.gone.push(i);
+    node.setAttribute('tabindex', '-1');
+    node.style.transform = `translate(${dc * (puzzle.n + a.len)}px, ${dr * (puzzle.n + a.len)}px)`;
+    node.classList.add('gone');
+    beep(480 + (state.gone.length % 8) * 40, .07);
+    if (navigator.vibrate) navigator.vibrate(10);
+    updateHud();
+    if (state.gone.length === puzzle.arrows.length) finish();
+    persist();
+    return;
+  }
+
+  // Bloqueada: error, y se señala qué la tapa para que se entienda el motivo
+  state.mistakes++;
+  node.classList.remove('blocked');
+  void node.getBoundingClientRect();
+  node.classList.add('blocked');
+  const blocker = blockerOf(puzzle.arrows, removed, a, puzzle.n);
+  if (blocker >= 0) {
+    nodes[blocker].classList.remove('blocker');
+    void nodes[blocker].getBoundingClientRect();
+    nodes[blocker].classList.add('blocker');
+  }
+  $('board').classList.remove('shake');
+  void $('board').offsetWidth;
+  $('board').classList.add('shake');
+  beep(150, .12);
+  if (navigator.vibrate) navigator.vibrate(40);
+  if (mode === 'daily') toast(`Bloqueada: +${PENALTY} segundos`);
+  updateHud();
+  if (mode === 'levels' && state.mistakes >= HEARTS) lose();
+  persist();
+}
+
+$('btn-hint').addEventListener('click', () => {
+  if (state.done) return;
+  if (mode === 'levels' && state.hints >= LEVEL_HINTS) return;
+  const removed = gone();
+  const i = puzzle.arrows.findIndex((a, idx) => !removed.has(idx) && isFree(puzzle.arrows, removed, a, puzzle.n));
+  if (i < 0) return;
+  if (!started) { started = true; lastTick = performance.now(); }
+  clearHint();
+  hintIndex = i;
+  nodes[i].classList.add('hint');
+  state.hints++;
+  updateHud();
+  persist();
+});
+$('btn-restart').addEventListener('click', () => startLevels(true));
+
+function finish() {
+  state.done = true;
+  if (mode === 'daily') {
+    stats.played++;
+    stats.streak = stats.lastDay === day - 1 ? stats.streak + 1 : 1;
+    stats.maxStreak = Math.max(stats.maxStreak, stats.streak);
+    stats.lastDay = day;
+    if (stats.bestTime === null || totalTime() < stats.bestTime) stats.bestTime = totalTime();
+  } else {
+    stats.completedLevel = stats.level;
+    stats.level++;
+  }
+  save('flechasStats', stats);
+  persist();
+  beep(880, .18);
+  setTimeout(showWin, 500);
+}
+
+function lose() {
+  busy = true;
+  setTimeout(() => {
+    $('win-title').textContent = '¡Sin vidas!';
+    $('win-sub').textContent = `Nivel ${stats.level}. Mira bien qué bloquea a cada flecha.`;
+    $('win-stats').innerHTML = statBox(puzzle.arrows.length - state.gone.length, 'Flechas restantes');
+    $('win-rank').textContent = '';
+    $('btn-primary').textContent = '🔄 Intentar de nuevo';
+    $('btn-primary').onclick = () => startLevels(true);
+    $('btn-share').style.display = 'none';
+    $('next-in').style.display = 'none';
+    $('win-modal').classList.add('show');
+  }, 500);
+}
+
+function statBox(value, label) {
+  return `<div class="stat"><b>${value}</b><span>${label}</span></div>`;
+}
+
+function rankText({ total, beaten }) {
+  if (total < JuegaYaDiario.MIN_JUGADORES) return '🥇 Estás entre los primeros en resolver el reto de hoy';
+  if (beaten === 0) return `👥 Hoy lo resolvieron ${total} jugadores`;
+  return `👥 Hoy lo resolvieron ${total} jugadores. Tu tiempo superó al de ${beaten}`;
+}
+async function showRank() {
+  const result = await JuegaYaDiario.enviar('flechas-locas', Math.max(3, Math.round(totalTime() * 10) / 10));
+  if (result) $('win-rank').textContent = rankText(result);
+}
+
+function showWin() {
+  $('btn-share').style.display = 'block';
+  $('win-rank').textContent = '';
+  if (mode === 'daily') {
+    $('win-title').textContent = state.mistakes ? '¡Reto resuelto!' : '¡Sin un solo error!';
+    $('win-sub').textContent = `Reto #${day - LAUNCH_DAY + 1}`;
+    $('win-stats').innerHTML = statBox(fmt(totalTime()), 'Tiempo') + statBox(state.mistakes, 'Errores') + statBox(stats.streak, 'Racha');
+    $('btn-primary').textContent = `🏹 Jugar niveles (vas en el ${stats.level})`;
+    $('btn-primary').onclick = () => startLevels(false);
+    $('next-in').style.display = 'block';
+    updateCountdown();
+    $('win-modal').classList.add('show');
+    showRank();
+  } else {
+    $('win-title').textContent = state.mistakes ? '¡Nivel superado!' : '¡Nivel perfecto!';
+    $('win-sub').textContent = `Nivel ${stats.level - 1}`;
+    $('win-stats').innerHTML = statBox(puzzle.arrows.length, 'Flechas') + statBox(state.mistakes, 'Errores');
+    $('btn-primary').textContent = `➡️ Nivel ${stats.level}`;
+    $('btn-primary').onclick = () => startLevels(true);
+    $('next-in').style.display = 'none';
+    $('win-modal').classList.add('show');
+  }
+}
+
+function updateCountdown() {
+  const now = new Date();
+  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  const s = Math.max(0, Math.floor((next - now) / 1000));
+  const pad = v => String(v).padStart(2, '0');
+  $('next-in').textContent = `Próximo reto en ${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
+}
+setInterval(updateCountdown, 1000);
+
+function shareText() {
+  const url = 'https://www.juegaya.app/juego/flechas-locas?utm_source=compartido';
+  if (mode === 'daily') {
+    return `🏹 Flechas Locas #${day - LAUNCH_DAY + 1}\n⏱ ${fmt(totalTime())} · ❌ ${state.mistakes} · 🔥 Racha: ${stats.streak}\n\n¿Puedes superarme?\n${url}`;
+  }
+  return `🏹 Flechas Locas: ya voy en el nivel ${stats.level}\n\n¿Puedes superarme?\n${url}`;
+}
+$('btn-share').addEventListener('click', async () => {
+  const text = shareText();
+  if (navigator.share) {
+    try { await navigator.share({ text }); return; } catch (err) { if (err.name === 'AbortError') return; }
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('¡Copiado! Pégalo donde quieras');
+  } catch {
+    toast('No se pudo copiar');
+  }
+});
+
+let toastTimer;
+function toast(msg) {
+  $('toast').textContent = msg;
+  $('toast').classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('toast').classList.remove('show'), 1800);
+}
+
+// ---------- Sonido ----------
+let audio;
+function beep(freq, dur) {
+  if (!soundOn) return;
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.type = 'triangle';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(.12, audio.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, audio.currentTime + dur);
+    o.connect(g).connect(audio.destination);
+    o.start();
+    o.stop(audio.currentTime + dur);
+  } catch {}
+}
+
+// ---------- Botones e inicio ----------
+$('tab-daily').addEventListener('click', () => { if (mode !== 'daily') startDaily(); });
+$('tab-levels').addEventListener('click', () => { if (mode !== 'levels') startLevels(false); });
+$('win-modal').addEventListener('click', e => { if (e.target === $('win-modal') && !busy) $('win-modal').classList.remove('show'); });
+$('btn-help').addEventListener('click', () => $('help-modal').classList.add('show'));
+$('close-help').addEventListener('click', () => $('help-modal').classList.remove('show'));
+$('btn-sound').addEventListener('click', () => {
+  soundOn = !soundOn;
+  save('flechasSonido', soundOn);
+  $('btn-sound').textContent = soundOn ? '🔊' : '🔇';
+});
+$('btn-sound').textContent = soundOn ? '🔊' : '🔇';
+
+new ResizeObserver(resizeBoard).observe($('board-wrap'));
+requestAnimationFrame(tick);
+startDaily();
+if (!load('flechasVioAyuda', false)) {
+  $('help-modal').classList.add('show');
+  save('flechasVioAyuda', true);
+}
+</script>
+</body>
+</html>
