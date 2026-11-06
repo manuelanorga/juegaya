@@ -50,7 +50,7 @@
   </div>
   <div class="hud">
     <div class="score-box"><b id="score" aria-live="polite">0</b><span id="sub-score"></span></div>
-    <select id="theme" aria-label="Colores"></select>
+    <select id="theme" aria-label="Estilo de colores"></select>
     <button class="mini-btn" id="btn-new" style="display:none">🔄 Nueva</button>
   </div>
   <div id="stage"><canvas id="c" role="application" aria-label="Tablero de Bloques Locos"></canvas></div>
@@ -178,10 +178,11 @@ function save(key, value) {
 // ---------- Estado ----------
 const THEMES = {
   neon:      { name: '🌈 Neón',      colors: ['#ffd000','#ff4d8d','#22d3ee','#4ade80','#a78bfa','#fb923c'] },
-  peru:      { name: '🇵🇪 Perú',      colors: ['#e63946','#f8f9fa','#f4a261','#c1121f','#ffb4a2','#d4a373'] },
-  mexico:    { name: '🇲🇽 México',    colors: ['#2d9f5f','#f8f9fa','#e63946','#f4a261','#ff4d8d','#22d3ee'] },
-  colombia:  { name: '🇨🇴 Colombia',  colors: ['#ffd000','#2563eb','#e63946','#fb923c','#38bdf8','#4ade80'] },
-  argentina: { name: '🇦🇷 Argentina', colors: ['#7dd3fc','#f8f9fa','#ffd000','#38bdf8','#93c5fd','#fde68a'] },
+  caramelo:  { name: '🍬 Caramelo',  colors: ['#ff8fab','#ffd166','#80ed99','#7bdff2','#cdb4fb','#ffb077'] },
+  oceano:    { name: '🌊 Océano',    colors: ['#00b4d8','#0077e6','#90e0ef','#2dd4bf','#5eead4','#818cf8'] },
+  atardecer: { name: '🌅 Atardecer', colors: ['#ff6b6b','#ff9f43','#feca57','#ee5a9b','#c56cf0','#ffd8a8'] },
+  galaxia:   { name: '🌌 Galaxia',   colors: ['#a78bfa','#7c3aed','#e879f9','#60a5fa','#f0abfc','#38bdf8'] },
+  selva:     { name: '🌴 Selva',     colors: ['#22c55e','#84cc16','#facc15','#14b8a6','#bef264','#f97316'] },
 };
 const $ = id => document.getElementById(id);
 const canvas = $('c'), ctx = canvas.getContext('2d');
