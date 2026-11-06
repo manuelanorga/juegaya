@@ -4,15 +4,9 @@ import { GAMES } from '@/lib/games'
 import { getDestacados, saveDestacado } from '../actions'
 
 const SECCIONES = [
-  { slug: 'populares',    title: '🔥 Populares' },
-  { slug: 'diarios',      title: '📅 Diarios' },
-  { slug: 'inteligencia', title: '🧠 Inteligencia' },
-  { slug: 'virales',      title: '😂 Virales' },
-  { slug: 'dificiles',    title: '🔥 Difíciles' },
-  { slug: 'arcade',       title: '🕹️ Arcade' },
-  { slug: 'puzzle',       title: '🧩 Puzzle' },
-  { slug: 'rapidos',      title: '⚡ Rápidos' },
-  { slug: 'accion',       title: '⚔️ Acción' },
+  { slug: 'populares', title: '🔥 Populares' },
+  { slug: 'puzzle',    title: '🧩 Puzzles e ingenio' },
+  { slug: 'accion',    title: '⚔️ Acción y arcade' },
 ]
 
 const PREVIEW_VIDEOS: Record<string, string> = {

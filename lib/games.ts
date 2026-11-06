@@ -1,6 +1,10 @@
 export interface Game {
   slug: string
   name: string
+  /** Frase corta para tarjetas destacadas */
+  tagline?: string
+  /** Fecha en que se publicó: muestra "Nuevo" durante 30 días */
+  addedAt?: string
   /** Título para buscadores, si conviene distinto del habitual "Nombre — Jugar Gratis Online" */
   seoTitle?: string
   icon: string | null
@@ -25,13 +29,13 @@ export const GAMES: Game[] = [
   {
     slug: 'cuanto-sabes-historia',
     name: '¿Cuánto sabes de Historia?',
-    icon: null,
+    tagline: 'Trivia de historia mundial y latinoamericana.',
+    icon: '/juegos/portadas/cuanto-sabes-historia.png',
     emoji: '🏛️',
     aspectRatio: '3/4',
     iframeSrc: '/juegos/cuanto-sabes-historia.html',
     category: 'Inteligencia',
     categorySlug: 'inteligencia',
-    badge: 'Nuevo',
     difficulty: 80,
     color: 'from-amber-900 to-yellow-900',
     tags: ['IQ', 'Historia', 'Test', 'Viral', 'Mobile'],
@@ -50,6 +54,7 @@ export const GAMES: Game[] = [
   {
     slug: 'escape-vikingo',
     name: 'El Escape del Vikingo',
+    tagline: 'Vuela en dragón y llega a la meta a tiempo.',
     icon: '/juegos/escape-vikingo/icons/icon-256.png',
     iframeSrc: '/juegos/escape-vikingo/index.html',
     category: 'Aventura',
@@ -70,6 +75,7 @@ export const GAMES: Game[] = [
   {
     slug: 'gelatinas-locas',
     name: 'Gelatinas Locas',
+    tagline: 'Combina gelatinas antes de que se acabe el tiempo.',
     icon: '/juegos/gelatinas-locas/icons/icon-256.png',
     iframeSrc: '/juegos/gelatinas-locas/index.html',
     category: 'Puzzle',
@@ -90,6 +96,7 @@ export const GAMES: Game[] = [
   {
     slug: 'cazador-zombies',
     name: 'Cazador de Zombies',
+    tagline: 'Derriba zombis con munición limitada.',
     icon: '/juegos/cazador-zombies/icons/icon-256.png',
     iframeSrc: '/juegos/cazador-zombies/index.html',
     category: 'Acción',
@@ -110,7 +117,8 @@ export const GAMES: Game[] = [
   {
     slug: 'test-iq',
     name: 'Test de IQ Latam',
-    icon: null,
+    tagline: '10 preguntas para poner a prueba tu lógica.',
+    icon: '/juegos/portadas/test-iq.png',
     iframeSrc: '/juegos/test-iq.html',
     category: 'Inteligencia',
     categorySlug: 'inteligencia',
@@ -131,7 +139,8 @@ export const GAMES: Game[] = [
   {
     slug: 'neon-bird',
     name: 'Neon Bird',
-    icon: null,
+    tagline: 'Esquiva los pilares y supera tu récord.',
+    icon: '/juegos/portadas/neon-bird.png',
     iframeSrc: '/juegos/neon-bird.html',
     category: 'Arcade',
     categorySlug: 'arcade',
@@ -152,7 +161,8 @@ export const GAMES: Game[] = [
   {
     slug: 'test-reflejos',
     name: 'Test de Reflejos',
-    icon: null,
+    tagline: 'Mide tu tiempo de reacción en milisegundos.',
+    icon: '/juegos/portadas/test-reflejos.png',
     iframeSrc: '/juegos/test-reflejos.html',
     category: 'Habilidad',
     categorySlug: 'habilidad',
@@ -173,7 +183,8 @@ export const GAMES: Game[] = [
   {
     slug: 'corre-mi-bro',
     name: 'Corre mi Bro',
-    icon: null,
+    tagline: 'Salta, agáchate y esquiva por las calles latinas.',
+    icon: '/juegos/portadas/corre-mi-bro.png',
     iframeSrc: '/juegos/corre-mi-bro.html',
     category: 'Arcade',
     categorySlug: 'arcade',
@@ -195,13 +206,13 @@ export const GAMES: Game[] = [
   {
     slug: 'frutas-locas',
     name: 'Frutas Locas',
+    tagline: 'Fusiona frutas iguales hasta crear la más grande.',
     icon: '/juegos/frutas-locas/icons/icon-256.png',
     emoji: '🍉',
     iframeSrc: '/juegos/frutas-locas/index.html',
     aspectRatio: '2/3',
     category: 'Puzzle',
     categorySlug: 'puzzle',
-    badge: 'Nuevo',
     difficulty: 45,
     color: 'from-rose-900 to-emerald-900',
     tags: ['Puzzle', 'Físicas', 'Viral', 'Mobile', 'Casual', 'Frutas'],
@@ -225,13 +236,13 @@ export const GAMES: Game[] = [
   {
     slug: 'palabro',
     name: 'Palabro',
+    tagline: 'Adivina la palabra del día en 6 intentos.',
     icon: '/juegos/palabro/icons/icon-256.png',
     emoji: '🔤',
     iframeSrc: '/juegos/palabro/index.html',
     aspectRatio: '3/4',
     category: 'Inteligencia',
     categorySlug: 'inteligencia',
-    badge: 'Nuevo',
     difficulty: 60,
     color: 'from-cyan-900 to-blue-900',
     tags: ['Palabras', 'Wordle', 'Diario', 'Español', 'Puzzle', 'Mobile'],
@@ -256,7 +267,9 @@ export const GAMES: Game[] = [
   },
   {
     slug: 'flechas-locas',
+    addedAt: '2026-11-06',
     name: 'Flechas Locas',
+    tagline: 'Saca las flechas en el orden correcto.',
     seoTitle: 'Flechas Locas — Puzzle de Flechas Gratis Online',
     icon: '/juegos/flechas-locas/icons/icon-256.png',
     emoji: '🏹',
@@ -264,7 +277,6 @@ export const GAMES: Game[] = [
     aspectRatio: '3/4',
     category: 'Puzzle',
     categorySlug: 'puzzle',
-    badge: 'Nuevo',
     difficulty: 45,
     color: 'from-cyan-900 to-indigo-900',
     tags: ['Puzzle', 'Flechas', 'Diario', 'Lógica', 'Mobile', 'Casual'],
@@ -294,7 +306,9 @@ export const GAMES: Game[] = [
   },
   {
     slug: 'bloques-locos',
+    addedAt: '2026-11-06',
     name: 'Bloques Locos',
+    tagline: 'Coloca piezas y completa filas y columnas.',
     seoTitle: 'Bloques Locos — Juego de Bloques Gratis Online',
     icon: '/juegos/bloques-locos/icons/icon-256.png',
     emoji: '🧱',
@@ -302,7 +316,6 @@ export const GAMES: Game[] = [
     aspectRatio: '3/4',
     category: 'Puzzle',
     categorySlug: 'puzzle',
-    badge: 'Nuevo',
     difficulty: 50,
     color: 'from-violet-900 to-pink-800',
     tags: ['Puzzle', 'Bloques', 'Diario', 'Casual', 'Mobile', 'Estrategia'],
@@ -332,14 +345,15 @@ export const GAMES: Game[] = [
   },
   {
     slug: 'sopa-de-letras',
+    addedAt: '2026-11-04',
     name: 'Sopa de Letras del Día',
+    tagline: 'Una sopa de letras nueva cada día.',
     icon: '/juegos/sopa-de-letras/icons/icon-256.png',
     emoji: '🔎',
     iframeSrc: '/juegos/sopa-de-letras/index.html',
     aspectRatio: '3/4',
     category: 'Inteligencia',
     categorySlug: 'inteligencia',
-    badge: 'Nuevo',
     difficulty: 40,
     color: 'from-indigo-900 to-amber-800',
     tags: ['Palabras', 'Sopa de letras', 'Diario', 'Español', 'Puzzle', 'Mobile'],
@@ -370,13 +384,13 @@ export const GAMES: Game[] = [
   {
     slug: '2048',
     name: '2048',
+    tagline: 'Fusiona números hasta llegar al 2048.',
     icon: '/juegos/2048/icons/icon-256.png',
     emoji: '🔢',
     iframeSrc: '/juegos/2048/index.html',
     aspectRatio: '1/1',
     category: 'Puzzle',
     categorySlug: 'puzzle',
-    badge: 'Nuevo',
     difficulty: 55,
     color: 'from-blue-900 to-amber-700',
     tags: ['Puzzle', '2048', 'Números', 'Fusión', 'Mobile', 'Estrategia'],
@@ -406,4 +420,12 @@ export function getGame(slug: string): Game | undefined {
 
 export function getAllSlugs(): string[] {
   return GAMES.map(g => g.slug)
+}
+
+const NEW_DAYS = 30
+
+/** Etiqueta de la tarjeta: "Nuevo" solo durante 30 días desde su publicación */
+export function gameBadge(game: Game) {
+  if (game.addedAt && Date.now() - new Date(game.addedAt).getTime() < NEW_DAYS * 86_400_000) return 'Nuevo'
+  return game.badge
 }

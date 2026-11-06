@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import type { Game } from '@/lib/games'
+import { gameBadge, type Game } from '@/lib/games'
 
 const PER_PAGE = 30
 
@@ -79,12 +79,12 @@ export default function CategoriaView({ cat, juegos, visits }: Props) {
             >
               <div className={`w-full aspect-square bg-gradient-to-br ${game.color || 'from-blue-900 to-purple-900'} flex items-center justify-center relative overflow-hidden`}>
                 {game.icon
-                  ? <img src={game.icon} alt={game.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  ? <img src={game.icon} alt={game.name} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   : <span className="text-5xl">{game.emoji || '🎮'}</span>
                 }
-                {game.badge && (
+                {gameBadge(game) && (
                   <span className="absolute top-2 left-2 bg-yellow-400 text-black text-[10px] font-black px-2 py-0.5 rounded z-10">
-                    {game.badge}
+                    {gameBadge(game)}
                   </span>
                 )}
               </div>
