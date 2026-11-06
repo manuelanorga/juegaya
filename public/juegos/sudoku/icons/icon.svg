@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2b1f6b"/><stop offset="1" stop-color="#10122e"/></linearGradient></defs>
+  <rect width="256" height="256" fill="url(#bg)"/>
+  <rect x="24" y="24" width="208" height="208" rx="14" fill="#1a1a38"/>
+  <rect x="93.33" y="93.33" width="69.33" height="69.33" fill="#ffd000" opacity=".22"/>
+  <rect x="93.33" y="93.33" width="69.33" height="69.33" fill="none" stroke="#ffd000" stroke-width="5"/>
+  <rect x="162.67" y="24" width="69.33" height="69.33" fill="#22d3ee" opacity=".2"/>
+  <rect x="24" y="162.67" width="69.33" height="69.33" fill="#ff4d8d" opacity=".22"/>
+  <g stroke="#8d8db8" stroke-width="2" opacity=".55" fill="none">
+    <path d="M58.67 24V232M197.33 24V232M24 58.67H232M24 197.33H232"/>
+  </g>
+  <g stroke="#e6e6ff" stroke-width="5" fill="none">
+    <rect x="24" y="24" width="208" height="208" rx="14"/>
+    <path d="M93.33 24V232M162.67 24V232M24 93.33H232M24 162.67H232"/>
+  </g>
+  <g font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">
+    <text x="128" y="151" font-size="66" fill="#ffd000">9</text>
+    <text x="197.33" y="82" font-size="66" fill="#22d3ee">5</text>
+    <text x="58.67" y="220" font-size="66" fill="#ff4d8d">3</text>
+    <text x="58.67" y="82" font-size="66" fill="#ffffff">7</text>
+    <text x="197.33" y="220" font-size="66" fill="#ffffff">1</text>
+  </g>
+</svg>

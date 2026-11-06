@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0f6b4f"/><stop offset="1" stop-color="#10122e"/></linearGradient>
+    <linearGradient id="dorso" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2d2d78"/><stop offset="1" stop-color="#1a1a48"/></linearGradient>
+  </defs>
+  <rect width="256" height="256" fill="url(#bg)"/>
+  <!-- Las cartas giran alrededor de un punto bajo el borde inferior, como un abanico en la mano -->
+  <g transform="rotate(-24 128 300)">
+    <rect x="78" y="58" width="100" height="144" rx="12" fill="url(#dorso)" stroke="#ffd000" stroke-width="4"/>
+    <path d="M108 90l18 22-18 22-18-22z" fill="#ffd000"/>
+  </g>
+  <g transform="rotate(-8 128 300)">
+    <rect x="78" y="48" width="100" height="144" rx="12" fill="#fdfbf4" stroke="#14142a" stroke-opacity=".35" stroke-width="2"/>
+    <path transform="translate(112 100) scale(.72)" d="M0-34C-8-20-34-6-34 12C-34 24-24 31-14 29C-9 28-5 25-3 21C-4 30-7 36-12 40H12C7 36 4 30 3 21C5 25 9 28 14 29C24 31 34 24 34 12C34-6 8-20 0-34Z" fill="#14142a"/>
+  </g>
+  <g transform="rotate(8 128 300)">
+    <rect x="78" y="48" width="100" height="144" rx="12" fill="#fdfbf4" stroke="#14142a" stroke-opacity=".35" stroke-width="2"/>
+    <path transform="translate(112 102) scale(.8)" d="M0-36L27 0L0 36L-27 0Z" fill="#cf1238"/>
+  </g>
+  <g transform="rotate(24 128 300)">
+    <rect x="78" y="58" width="100" height="144" rx="12" fill="#fdfbf4" stroke="#14142a" stroke-opacity=".35" stroke-width="2"/>
+    <path transform="translate(128 118)" d="M0 34C-44 2-36-30-16-30C-7-30-2-24 0-17C2-24 7-30 16-30C36-30 44 2 0 34Z" fill="#cf1238"/>
+  </g>
+  <path d="M0 256V226C60 206 196 206 256 226V256Z" fill="#ffd000"/>
+</svg>

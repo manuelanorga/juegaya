@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Solitario Clásico - JuegaYa</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body { background: #111120; color: #fff; font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif; overflow: hidden; user-select: none; -webkit-user-select: none; }
+  button { font-family: inherit; }
+  #app { height: 100%; max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; padding: 8px 8px 10px; gap: 7px; }
+  .tabs { display: flex; gap: 6px; flex-shrink: 0; }
+  .tab { flex: 1; padding: 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,.1); background: #1e1e34; color: rgba(255,255,255,.55); font-size: 13px; font-weight: 800; cursor: pointer; }
+  .tab.active { background: #ffd000; border-color: #ffd000; color: #1a1400; }
+  .icon-btn { width: 38px; flex: none; padding: 0; font-size: 15px; }
+  .hud { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0; min-height: 22px; padding: 0 2px; }
+  .label { font-size: 15px; font-weight: 900; white-space: nowrap; }
+  .meta { display: flex; align-items: center; gap: 12px; font-size: 13px; font-weight: 800; color: rgba(255,255,255,.7); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  #table { flex: 1; min-height: 0; position: relative; touch-action: none; overflow: hidden; }
+  .slot { position: absolute; left: 0; top: 0; width: var(--w); height: var(--h); border-radius: calc(var(--w) * .1); background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.1); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,.22); font-size: calc(var(--w) * .5); font-weight: 900; pointer-events: none; }
+  #stock-hit { position: absolute; left: 0; top: 0; width: var(--w); height: var(--h); z-index: 400; border: 0; background: none; border-radius: calc(var(--w) * .1); cursor: pointer; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,.55); font-size: calc(var(--w) * .55); font-weight: 900; touch-action: none; }
+  #stock-hit:focus-visible, .pc:focus-visible { outline: 2px solid #ffd000; outline-offset: 1px; }
+  #stock-count { position: absolute; right: 2px; bottom: 2px; min-width: 18px; padding: 1px 3px; border-radius: 6px; background: rgba(0,0,0,.72); color: #ffd000; font-size: 11px; font-weight: 800; line-height: 14px; font-variant-numeric: tabular-nums; }
+
+  /* Las cartas siempre existen y solo cambian de posición: así todo movimiento se anima solo */
+  .pc { position: absolute; left: 0; top: 0; width: var(--w); height: var(--h); transition: transform .16s ease-out; cursor: pointer; touch-action: none; outline: none; }
+  .pc.drag { transition: none; cursor: grabbing; }
+  .pc.drag > .face { box-shadow: 0 6px 14px rgba(0,0,0,.5); }
+  #table.noanim .pc { transition: none; }
+  .face, .back { position: absolute; inset: 0; border-radius: calc(var(--w) * .1); overflow: hidden; }
+  .face { display: none; background: #fdfbf4; border: 1px solid rgba(0,0,0,.28); box-shadow: 0 1px 2px rgba(0,0,0,.35); font-family: Arial, Helvetica, 'Segoe UI Symbol', 'Apple Symbols', sans-serif; }
+  .pc.up > .face { display: block; }
+  .pc.up > .back { display: none; }
+  .pc.red .face { color: #cf1238; }
+  .pc.black .face { color: #14142a; }
+  /* Rango y palo van en la esquina superior izquierda: es lo que se ve cuando las cartas se solapan */
+  .corner { position: absolute; left: calc(var(--w) * .05); top: 0; display: flex; align-items: center; height: calc(var(--fs) * 1.1); font-size: var(--fs); font-weight: 900; line-height: 1; letter-spacing: -.06em; white-space: nowrap; }
+  .corner i { font-style: normal; font-size: .84em; margin-left: .1em; letter-spacing: 0; }
+  .big { position: absolute; right: calc(var(--w) * .07); bottom: calc(var(--w) * .02); font-size: calc(var(--w) * .66); line-height: 1; }
+  .back { background: #23235c repeating-linear-gradient(45deg, transparent 0 4px, rgba(255,208,0,.16) 4px 5px); border: 1px solid rgba(255,208,0,.55); box-shadow: 0 1px 2px rgba(0,0,0,.35), inset 0 0 0 2px #1a1a48; }
+  .back::after { content: ''; position: absolute; left: 50%; top: 50%; width: 26%; aspect-ratio: 1; transform: translate(-50%, -50%) rotate(45deg); background: #ffd000; border-radius: 2px; opacity: .85; }
+  .pc.nope > * { animation: nope .28s; }
+  @keyframes nope { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
+  .actions { display: flex; align-items: center; justify-content: center; gap: 6px; flex-shrink: 0; }
+  .mini-btn { background: #262640; color: #fff; border: 1px solid rgba(255,255,255,.15); border-radius: 10px; padding: 8px 10px; font-size: 13px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+  .mini-btn:disabled { opacity: .4; cursor: default; }
+  .mini-btn.gold { background: linear-gradient(135deg,#ffd000,#ffaa00); color: #1a1000; border-color: #ffd000; }
+  .modal { position: fixed; inset: 0; background: rgba(5,5,15,.78); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 1500; }
+  .modal.show { display: flex; }
+  .card { background: #1e1e34; border: 1px solid rgba(255,255,255,.12); border-radius: 18px; padding: 22px 20px; width: 100%; max-width: 360px; max-height: 100%; overflow-y: auto; text-align: center; }
+  .card h2 { font-size: 22px; font-weight: 900; color: #ffd000; margin-bottom: 8px; }
+  .card p, .card li { font-size: 14px; line-height: 1.5; color: rgba(255,255,255,.72); }
+  .card ul { text-align: left; padding-left: 18px; margin: 8px 0 14px; }
+  .stats { display: flex; justify-content: center; gap: 18px; margin: 12px 0; }
+  .stat b { display: block; font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 11px; color: rgba(255,255,255,.5); font-weight: 700; }
+  #win-rank { font-size: 13px; font-weight: 700; color: #ffd000; margin: 2px 0 6px; min-height: 18px; }
+  .btn { display: block; width: 100%; padding: 12px; border-radius: 12px; border: none; font-size: 14px; font-weight: 900; cursor: pointer; margin-top: 8px; text-decoration: none; text-align: center; }
+  .btn-gold { background: linear-gradient(135deg,#ffd000,#ffaa00); color: #1a1000; }
+  .btn-dark { background: #262640; color: #fff; border: 1px solid rgba(255,255,255,.15); }
+  #next-in { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 10px; }
+  #toast { position: fixed; bottom: 58px; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 2000; white-space: nowrap; }
+  #toast.show { opacity: 1; }
+  .conf { position: fixed; top: -40px; pointer-events: none; z-index: 1400; font-size: 24px; animation: fall 1.3s ease-in forwards; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(420deg); opacity: .6; } }
+  @media (prefers-reduced-motion: reduce) {
+    .pc { transition: none; }
+    .pc.nope > * { animation: none; }
+    .conf { display: none; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="tabs">
+    <button class="tab active" id="tab-daily">📅 Del día</button>
+    <button class="tab" id="tab-free">♾️ Libre</button>
+    <button class="tab icon-btn" id="btn-sound" aria-label="Sonido">🔊</button>
+    <button class="tab icon-btn" id="btn-help" aria-label="Cómo jugar">?</button>
+  </div>
+  <div class="hud">
+    <div class="label" id="label"></div>
+    <div class="meta"><span id="moves"></span><span id="clock"></span></div>
+  </div>
+  <div id="table" role="group" aria-label="Mesa de solitario"></div>
+  <div class="actions">
+    <button class="mini-btn" id="btn-undo">↩️ Deshacer</button>
+    <button class="mini-btn" id="btn-restart"></button>
+    <button class="mini-btn gold" id="btn-result">🏆 Ver resultado</button>
+    <button class="mini-btn gold" id="btn-auto">⚡ Autocompletar</button>
+  </div>
+</div>
+
+<div class="modal" id="help-modal">
+  <div class="card">
+    <h2>Cómo jugar</h2>
+    <ul>
+      <li>Sube las <b>cuatro pilas</b> de arriba a la derecha, del <b>A a la K</b>, cada una con su palo.</li>
+      <li>En las columnas las cartas <b>bajan de una en una y alternan color</b>. En una columna vacía solo entra una <b>K</b>.</li>
+      <li><b>Toca una carta</b> y va sola al mejor lugar posible, o <b>arrástrala</b> con las que tenga encima.</li>
+      <li>Toca el <b>mazo</b> para sacar una carta. Cuando se acaba, tócalo otra vez para darle la vuelta: no hay límite.</li>
+      <li>El <b>reto del día</b> es el mismo reparto para todos. El reloj arranca con tu primera jugada.</li>
+    </ul>
+    <button class="btn btn-gold" id="close-help">¡A jugar!</button>
+  </div>
+</div>
+
+<div class="modal" id="win-modal">
+  <div class="card">
+    <h2 id="win-title"></h2>
+    <p id="win-sub"></p>
+    <div class="stats" id="win-stats"></div>
+    <p id="win-rank" aria-live="polite"></p>
+    <button class="btn btn-gold" id="btn-primary"></button>
+    <button class="btn btn-dark" id="btn-share">💬 Compartir resultado</button>
+    <a class="btn btn-dark" href="/juegos/diarios" target="_top">📅 Más juegos diarios</a>
+    <div id="next-in"></div>
+  </div>
+</div>
+<div id="toast" role="status"></div>
+
+<script src="../resultado-diario.js"></script>
+<script>
+// ---------- Cartas ----------
+// Una carta es un número de 0 a 51: palo * 13 + rango (A = 0 ... K = 12). Los palos impares son rojos.
+const SUITS = ['♠︎', '♥︎', '♣︎', '♦︎'];
+const SUIT_NAMES = ['picas', 'corazones', 'tréboles', 'diamantes'];
+const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+const rankOf = c => c % 13;
+const suitOf = c => Math.floor(c / 13);
+const isRed = c => suitOf(c) % 2 === 1;
+
+function mulberry32(seed) {
+  return () => {
+    seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// La cima de cada montón es el último elemento. En cada columna, las down[i] primeras están boca abajo.
+function dealFromSeed(seed) {
+  const rng = mulberry32(seed);
+  const deck = Array.from({ length: 52 }, (_, i) => i);
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  const cols = [], down = [];
+  let p = 0;
+  for (let i = 0; i < 7; i++) {
+    cols.push(deck.slice(p, p + i + 1));
+    down.push(i);
+    p += i + 1;
+  }
+  return { cols, down, stock: deck.slice(p), waste: [], found: [0, 0, 0, 0], moves: 0 };
+}
+
+// ---------- Reglas ----------
+const canStack = (card, onto) => isRed(card) !== isRed(onto) && rankOf(onto) === rankOf(card) + 1;
+const canFound = (b, card) => rankOf(card) === b.found[suitOf(card)];
+const isWon = b => b.found.every(n => n === 13);
+const allFaceUp = b => b.down.every(n => n === 0);
+
+// Primera carta del grupo que se mueve, o -1 si el origen no es válido
+function headOf(b, m) {
+  if (m.from === 'col') {
+    const col = b.cols[m.i];
+    if (!col || !(m.n >= 1) || m.n > col.length - b.down[m.i]) return -1;
+    return col[col.length - m.n];
+  }
+  if (m.from === 'waste') return m.n === 1 && b.waste.length ? b.waste[b.waste.length - 1] : -1;
+  if (m.from === 'found') return m.n === 1 && b.found[m.i] > 0 ? m.i * 13 + b.found[m.i] - 1 : -1;
+  return -1;
+}
+
+// m = { from: 'col'|'waste'|'found', i, n, to: 'col'|'found', j }
+function isLegalMove(b, m) {
+  const head = headOf(b, m);
+  if (head < 0) return false;
+  if (m.to === 'found') return m.from !== 'found' && m.n === 1 && canFound(b, head);
+  if (m.to !== 'col' || !b.cols[m.j] || (m.from === 'col' && m.i === m.j)) return false;
+  const dest = b.cols[m.j];
+  return dest.length ? canStack(head, dest[dest.length - 1]) : rankOf(head) === 12;
+}
+
+// Cada función de jugada devuelve el registro necesario para deshacerla, o null si no es válida
+function applyMove(b, m) {
+  if (!isLegalMove(b, m)) return null;
+  let cards, flip = false;
+  if (m.from === 'col') {
+    const col = b.cols[m.i];
+    cards = col.splice(col.length - m.n, m.n);
+    if (col.length && col.length === b.down[m.i]) { b.down[m.i]--; flip = true; }
+  } else if (m.from === 'waste') {
+    cards = [b.waste.pop()];
+  } else {
+    cards = [m.i * 13 + b.found[m.i] - 1];
+    b.found[m.i]--;
+  }
+  if (m.to === 'found') b.found[suitOf(cards[0])]++;
+  else b.cols[m.j].push(...cards);
+  b.moves++;
+  return { k: 'm', from: m.from, i: m.i, n: m.n, to: m.to, j: m.j, flip, head: cards[0] };
+}
+
+function drawCard(b) {
+  if (!b.stock.length) return null;
+  b.waste.push(b.stock.pop());
+  b.moves++;
+  return { k: 'draw' };
+}
+
+function recycleWaste(b) {
+  if (b.stock.length || !b.waste.length) return null;
+  b.stock = b.waste.reverse();
+  b.waste = [];
+  b.moves++;
+  return { k: 'recycle' };
+}
+
+function undoStep(b, r) {
+  b.moves--;
+  if (r.k === 'draw') { b.stock.push(b.waste.pop()); return; }
+  if (r.k === 'recycle') { b.waste = b.stock.reverse(); b.stock = []; return; }
+  let cards;
+  if (r.to === 'found') { b.found[suitOf(r.head)]--; cards = [r.head]; }
+  else { const dest = b.cols[r.j]; cards = dest.splice(dest.length - r.n, r.n); }
+  if (r.from === 'col') {
+    if (r.flip) b.down[r.i]++;
+    b.cols[r.i].push(...cards);
+  } else if (r.from === 'waste') {
+    b.waste.push(cards[0]);
+  } else {
+    b.found[r.i]++;
+  }
+}
+
+function applyStep(b, s) {
+  if (s.k === 'draw') return drawCard(b);
+  if (s.k === 'recycle') return recycleWaste(b);
+  return applyMove(b, s);
+}
+
+// De dónde se tomaría la carta: null si está boca abajo, en el mazo o tapada
+function sourceOf(b, card) {
+  for (let i = 0; i < 7; i++) {
+    const idx = b.cols[i].indexOf(card);
+    if (idx >= 0) return idx >= b.down[i] ? { from: 'col', i, n: b.cols[i].length - idx } : null;
+  }
+  if (b.waste[b.waste.length - 1] === card) return { from: 'waste', i: 0, n: 1 };
+  const s = suitOf(card);
+  if (b.found[s] > 0 && rankOf(card) === b.found[s] - 1) return { from: 'found', i: s, n: 1 };
+  return null;
+}
+
+// Mejor destino al tocar una carta: primero las pilas, luego una columna con cartas y por último una vacía
+function bestDestination(b, src) {
+  if (src.n === 1 && src.from !== 'found') {
+    const m = { ...src, to: 'found', j: 0 };
+    if (isLegalMove(b, m)) return m;
+  }
+  for (let j = 0; j < 7; j++) {
+    if (!b.cols[j].length) continue;
+    const m = { ...src, to: 'col', j };
+    if (isLegalMove(b, m)) return m;
+  }
+  // Una K que ya es la base de su columna no gana nada pasando a otra vacía
+  if (src.from === 'col' && src.n === b.cols[src.i].length) return null;
+  for (let j = 0; j < 7; j++) {
+    if (b.cols[j].length) continue;
+    const m = { ...src, to: 'col', j };
+    if (isLegalMove(b, m)) return m;
+  }
+  return null;
+}
+
+// Siguiente paso de Autocompletar. Con todas las columnas boca arriba, la carta más baja que
+// falta en las pilas nunca está tapada (solo podrían taparla cartas aún más bajas), así que
+// sacando del mazo cuando haga falta siempre se llega al final.
+function nextAutoStep(b) {
+  for (let i = 0; i < 7; i++) {
+    const n = b.cols[i].length;
+    if (n && canFound(b, b.cols[i][n - 1])) return { from: 'col', i, n: 1, to: 'found', j: 0 };
+  }
+  if (b.waste.length && canFound(b, b.waste[b.waste.length - 1])) return { from: 'waste', i: 0, n: 1, to: 'found', j: 0 };
+  if (b.stock.length) return { k: 'draw' };
+  if (b.waste.length) return { k: 'recycle' };
+  return null;
+}
+
+// ---------- Solucionador ----------
+// Con una carta por vez y vueltas ilimitadas, cualquier carta del mazo se puede alcanzar siempre,
+// así que el mazo se trata como un conjunto y robar no cuenta como jugada de la búsqueda.
+// Límite por nodos, no por tiempo: el resultado es idéntico en cualquier navegador.
+const NODE_LIMIT = 6000;
+const MAX_VARIANTS = 30;
+const MAX_DEPTH = 600;   // evita agotar la pila: un corte fijo, igual en todos los navegadores
+
+function solveBoard(start, nodeLimit) {
+  const cols = start.cols.map(c => c.slice());
+  const down = start.down.slice();
+  const found = start.found.slice();
+  const talon = start.stock.concat(start.waste);
+  const seen = new Set();
+  const path = [];
+  let placed = found[0] + found[1] + found[2] + found[3];
+  let best = placed, nodes = 0, aborted = false;
+
+  function keyOf() {
+    let k = String.fromCharCode(found[0], found[1], found[2], found[3]);
+    const loose = [];
+    for (let i = 0; i < 7; i++) {
+      const up = String.fromCharCode.apply(null, down[i] ? cols[i].slice(down[i]) : cols[i]);
+      // Las columnas sin cartas ocultas son intercambiables entre sí
+      if (down[i]) k += String.fromCharCode(100 + i, 120 + down[i]) + up;
+      else loose.push(up);
+    }
+    loose.sort();
+    return k + '|' + loose.join('|');
+  }
+
+  function apply(m) {
+    let cards;
+    if (m.from === 'talon') {
+      m.idx = talon.indexOf(m.card);
+      talon.splice(m.idx, 1);
+      cards = [m.card];
+    } else {
+      const col = cols[m.i];
+      cards = col.splice(col.length - m.n, m.n);
+      m.flip = col.length > 0 && col.length === down[m.i];
+      if (m.flip) down[m.i]--;
+    }
+    if (m.to === 'found') { found[suitOf(cards[0])]++; placed++; if (placed > best) best = placed; }
+    else cols[m.j].push(...cards);
+    path.push(m);
+  }
+
+  function revert(m) {
+    path.pop();
+    let cards;
+    if (m.to === 'found') { found[suitOf(m.card)]--; placed--; cards = [m.card]; }
+    else { const dest = cols[m.j]; cards = dest.splice(dest.length - m.n, m.n); }
+    if (m.from === 'talon') talon.splice(m.idx, 0, cards[0]);
+    else {
+      if (m.flip) down[m.i]++;
+      cols[m.i].push(...cards);
+    }
+  }
+
+  const fits = c => rankOf(c) === found[suitOf(c)];
+
+  // Subir una carta es seguro si ninguna carta pendiente podría necesitarla en las columnas
+  function isSafeUp(c) {
+    const r = rankOf(c);
+    if (r <= 1) return true;
+    const red = isRed(c);
+    const a = red ? found[0] : found[1], b = red ? found[2] : found[3];
+    return Math.min(a, b) >= r;
+  }
+
+  function findSafe() {
+    for (let i = 0; i < 7; i++) {
+      const n = cols[i].length;
+      if (n && fits(cols[i][n - 1]) && isSafeUp(cols[i][n - 1])) {
+        return { from: 'col', i, n: 1, to: 'found', j: 0, card: cols[i][n - 1] };
+      }
+    }
+    for (let t = 0; t < talon.length; t++) {
+      if (fits(talon[t]) && isSafeUp(talon[t])) return { from: 'talon', i: 0, n: 1, to: 'found', j: 0, card: talon[t] };
+    }
+    return null;
+  }
+
+  // Jugadas candidatas con prioridad: destapar cartas ocultas y subir a las pilas van primero
+  function genMoves() {
+    const list = [];
+    let firstEmpty = -1;
+    for (let j = 0; j < 7; j++) if (!cols[j].length) { firstEmpty = j; break; }
+    for (let i = 0; i < 7; i++) {
+      const col = cols[i], n = col.length;
+      if (!n) continue;
+      const d = down[i];
+      if (fits(col[n - 1])) {
+        const reveals = d > 0 && n - d === 1;
+        list.push({ from: 'col', i, n: 1, to: 'found', j: 0, card: col[n - 1], score: reveals ? 120 + d : 80 });
+      }
+      for (let p = d; p < n; p++) {
+        const head = col[p];
+        const whole = p === d;
+        // Partir un grupo solo sirve si deja libre una carta que sube a las pilas
+        if (!whole && !fits(col[p - 1])) continue;
+        for (let j = 0; j < 7; j++) {
+          if (j === i) continue;
+          const dest = cols[j];
+          if (dest.length) {
+            if (!canStack(head, dest[dest.length - 1])) continue;
+          } else if (j !== firstEmpty || rankOf(head) !== 12 || p === 0) continue;
+          const score = !whole ? 60 : d > 0 ? 100 + d : 30;
+          list.push({ from: 'col', i, n: n - p, to: 'col', j, card: head, score });
+        }
+      }
+    }
+    for (let t = 0; t < talon.length; t++) {
+      const c = talon[t];
+      if (fits(c)) list.push({ from: 'talon', i: 0, n: 1, to: 'found', j: 0, card: c, score: 70 });
+      for (let j = 0; j < 7; j++) {
+        const dest = cols[j];
+        if (dest.length) {
+          if (!canStack(c, dest[dest.length - 1])) continue;
+        } else if (j !== firstEmpty || rankOf(c) !== 12) continue;
+        list.push({ from: 'talon', i: 0, n: 1, to: 'col', j, card: c, score: dest.length ? 40 : 50 });
+      }
+    }
+    // Inserción estable: el empate siempre se resuelve igual
+    for (let a = 1; a < list.length; a++) {
+      const m = list[a];
+      let z = a - 1;
+      while (z >= 0 && list[z].score < m.score) { list[z + 1] = list[z]; z--; }
+      list[z + 1] = m;
+    }
+    return list;
+  }
+
+  function search() {
+    if (placed === 52) return true;
+    if (nodes >= nodeLimit) { aborted = true; return false; }
+    if (path.length >= MAX_DEPTH) return false;
+    nodes++;
+    const key = keyOf();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    const safe = findSafe();
+    if (safe) {
+      apply(safe);
+      if (search()) return true;
+      revert(safe);
+      return false;
+    }
+    for (const m of genMoves()) {
+      apply(m);
+      if (search()) return true;
+      revert(m);
+      if (aborted) return false;
+    }
+    return false;
+  }
+
+  const won = search();
+  return { won, nodes, best, solution: won ? path.map(m => ({ from: m.from, i: m.i, n: m.n, to: m.to, j: m.j, card: m.card })) : null };
+}
+
+// Pasa una solución por las jugadas reales del juego, robando del mazo cuando haga falta
+function replaySolution(b, solution) {
+  for (const s of solution) {
+    if (s.from === 'talon') {
+      let guard = 0;
+      while (b.waste[b.waste.length - 1] !== s.card) {
+        if (!(b.stock.length ? drawCard(b) : recycleWaste(b)) || ++guard > 200) return false;
+      }
+      if (!applyMove(b, { from: 'waste', i: 0, n: 1, to: s.to, j: s.j })) return false;
+    } else if (!applyMove(b, { from: 'col', i: s.i, n: s.n, to: s.to, j: s.j })) {
+      return false;
+    }
+  }
+  return isWon(b);
+}
+
+// Prueba variantes en orden y usa la primera con solución comprobada; si ninguna se resuelve
+// dentro del límite, la que más cartas subió.
+function pickVariant(seedOf, maxVariants, nodeLimit) {
+  let top = { variant: 0, seed: seedOf(0), solved: false, best: -1 };
+  for (let v = 0; v < maxVariants; v++) {
+    const seed = seedOf(v);
+    const r = solveBoard(dealFromSeed(seed), nodeLimit);
+    if (r.won) return { variant: v, seed, solved: true, best: 52 };
+    if (r.best > top.best) top = { variant: v, seed, solved: false, best: r.best };
+  }
+  return top;
+}
+
+const dailySeed = (d, v) => (Math.imul(d, 15485863) + Math.imul(v, 104729) + 11) | 0;
+const dailyVariant = d => pickVariant(v => dailySeed(d, v), MAX_VARIANTS, NODE_LIMIT);
+const freeVariant = base => pickVariant(v => (base + Math.imul(v, 7919)) | 0, 8, NODE_LIMIT);
+
+// ---------- Fechas y guardado ----------
+const LAUNCH_DAY = Date.UTC(2026, 10, 6) / 864e5;   // el reto #1
+function dayIndex() {
+  const n = new Date();
+  return Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) / 864e5;
+}
+function load(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+}
+function save(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+}
+
+// La caché solo evita repetir la búsqueda: guarda exactamente lo que la búsqueda devolvería
+function dailyChoice(d) {
+  const cached = load('solitarioVariante', null);
+  if (cached && cached.day === d && Number.isInteger(cached.variant)) {
+    return { variant: cached.variant, seed: dailySeed(d, cached.variant), solved: !!cached.solved };
+  }
+  const pick = dailyVariant(d);
+  save('solitarioVariante', { day: d, variant: pick.variant, solved: pick.solved });
+  return pick;
+}
+
+// ---------- Medidas ----------
+function computeLayout(W, H) {
+  const gap = W < 420 ? 3 : Math.round(W * .012);
+  const w = Math.max(24, Math.min(Math.floor((W - 6 * gap) / 7), Math.floor(H / 4.3), 92));
+  const h = Math.round(w * 1.4);
+  const rowGap = Math.max(6, gap * 2);
+  const fs = Math.max(12, Math.round(Math.min(w * .37, 30)));
+  return {
+    W, H, w, h, gap, rowGap, fs,
+    ox: Math.floor((W - 7 * w - 6 * gap) / 2),
+    tabY: h + rowGap,
+    upStd: Math.max(Math.round(h * .3), Math.round(fs * 1.25)),
+    upMin: Math.ceil(fs * 1.08),
+    downStd: Math.round(h * .14),
+    downMin: Math.max(3, Math.round(h * .06)),
+  };
+}
+
+// Separación de una columna: se aprieta sola para que quepa siempre en la altura disponible.
+// Primero las visibles hasta el mínimo legible, luego las ocultas y, si aún falta, otra vez las visibles.
+function columnSpacing(L, nDown, nUp) {
+  const avail = Math.max(0, L.H - L.tabY - L.h);
+  const gaps = Math.max(0, nUp - 1);
+  let dn = L.downStd, un = L.upStd;
+  const over = () => dn * nDown + un * gaps > avail;
+  if (over() && gaps) un = Math.max(L.upMin, (avail - dn * nDown) / gaps);
+  if (over() && nDown) dn = Math.max(L.downMin, (avail - un * gaps) / nDown);
+  if (over() && gaps) un = Math.max(1, (avail - dn * nDown) / gaps);
+  if (over() && nDown) dn = Math.max(0, (avail - un * gaps) / nDown);
+  return { dn, un };
+}
+
+// ---------- Estado ----------
+const $ = id => document.getElementById(id);
+const REDUCED = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+const tableEl = $('table');
+
+let mode = 'daily', day = dayIndex();
+let state = null, L = null;
+let started = false, lastTick = 0, busy = false, autoRunning = false, confirmTimer = null, confirming = false;
+let drag = null;
+let soundOn = load('solitarioSonido', true);
+let stats = load('solitarioStats', { played: 0, streak: 0, maxStreak: 0, lastDay: null, bestTime: null, freeWins: 0, freeBest: null });
+const cardEls = [];
+const slotEls = { cols: [], found: [] };
+let stockHit, stockCount, stockSlot, wasteSlot, settleTimer;
+
+function persist() {
+  if (!state) return;
+  if (mode === 'daily') save('solitarioDaily', { day, ...state });
+  else save('solitarioLibre', state);
+}
+
+function startDaily() {
+  if (state) persist();
+  mode = 'daily';
+  day = dayIndex();
+  const saved = load('solitarioDaily', null);
+  if (saved && saved.day === day && saved.board) {
+    state = saved;
+  } else {
+    const pick = dailyChoice(day);
+    state = { seed: pick.seed, variant: pick.variant, solved: pick.solved, board: dealFromSeed(pick.seed), undo: [], elapsed: 0, done: false, rank: '' };
+  }
+  begin();
+  persist();
+  if (state.done) showWin();
+}
+
+function newFreeState() {
+  const pick = freeVariant((Math.random() * 4294967296) | 0);
+  return { seed: pick.seed, solved: pick.solved, board: dealFromSeed(pick.seed), undo: [], elapsed: 0, done: false };
+}
+
+function startFree(fresh) {
+  if (state) persist();
+  mode = 'free';
+  const saved = fresh ? null : load('solitarioLibre', null);
+  state = saved && saved.board && !saved.done ? saved : newFreeState();
+  begin();
+  persist();
+}
+
+function begin() {
+  busy = false;
+  autoRunning = false;
+  drag = null;
+  started = !state.done && (state.board.moves > 0 || state.elapsed > 0);
+  lastTick = performance.now();
+  resetConfirm();
+  $('win-modal').classList.remove('show');
+  $('tab-daily').classList.toggle('active', mode === 'daily');
+  $('tab-free').classList.toggle('active', mode === 'free');
+  tableEl.classList.add('noanim');
+  render();
+  setTimeout(() => tableEl.classList.remove('noanim'), 60);
+  updateHud();
+}
+
+// Reiniciar vuelve al reparto inicial; el reloj y las jugadas siguen contando para que sea justo
+function restartDeal() {
+  if (busy || state.done) return;
+  const moves = state.board.moves;
+  state.board = dealFromSeed(state.seed);
+  state.board.moves = moves;
+  state.undo = [];
+  render();
+  updateHud();
+  persist();
+  beep(330, .09);
+}
+
+// ---------- Dibujo ----------
+const colX = (L, i) => L.ox + i * (L.w + L.gap);
+
+function buildTable() {
+  const slot = (cls, text) => {
+    const el = document.createElement('div');
+    el.className = 'slot ' + cls;
+    el.textContent = text;
+    tableEl.appendChild(el);
+    return el;
+  };
+  stockSlot = slot('', '');
+  wasteSlot = slot('', '');
+  for (let s = 0; s < 4; s++) slotEls.found.push(slot('', SUITS[s]));
+  for (let i = 0; i < 7; i++) slotEls.cols.push(slot('', 'K'));
+  for (let c = 0; c < 52; c++) {
+    const el = document.createElement('div');
+    el.className = 'pc ' + (isRed(c) ? 'red' : 'black');
+    el.dataset.c = c;
+    const name = `${RANKS[rankOf(c)]} de ${SUIT_NAMES[suitOf(c)]}`;
+    el.dataset.name = name;
+    el.innerHTML = `<div class="face"><div class="corner">${RANKS[rankOf(c)]}<i>${SUITS[suitOf(c)]}</i></div><div class="big">${SUITS[suitOf(c)]}</div></div><div class="back"></div>`;
+    el._x = el._y = NaN;
+    tableEl.appendChild(el);
+    cardEls.push(el);
+  }
+  stockHit = document.createElement('button');
+  stockHit.id = 'stock-hit';
+  stockCount = document.createElement('span');
+  stockCount.id = 'stock-count';
+  stockHit.appendChild(document.createElement('span'));
+  stockHit.appendChild(stockCount);
+  tableEl.appendChild(stockHit);
+}
+
+function measure() {
+  L = computeLayout(tableEl.clientWidth, tableEl.clientHeight);
+  tableEl.style.setProperty('--w', L.w + 'px');
+  tableEl.style.setProperty('--h', L.h + 'px');
+  tableEl.style.setProperty('--fs', L.fs + 'px');
+  const place = (el, x, y) => { el.style.transform = `translate(${x}px, ${y}px)`; };
+  place(stockSlot, colX(L, 0), 0);
+  place(wasteSlot, colX(L, 1), 0);
+  place(stockHit, colX(L, 0), 0);
+  for (let s = 0; s < 4; s++) place(slotEls.found[s], colX(L, 3 + s), 0);
+  for (let i = 0; i < 7; i++) place(slotEls.cols[i], colX(L, i), L.tabY);
+}
+
+function putCard(c, x, y, z, up, focusable) {
+  const el = cardEls[c];
+  const moved = el._x !== x || el._y !== y;
+  el._x = x;
+  el._y = y;
+  el._z = z;
+  el.classList.toggle('up', up);
+  el.classList.remove('drag');
+  el.style.transform = `translate(${x}px, ${y}px)`;
+  el.style.zIndex = moved ? 500 + z : z;
+  el.setAttribute('aria-label', up ? el.dataset.name : 'Carta boca abajo');
+  if (focusable) el.setAttribute('tabindex', '0');
+  else el.removeAttribute('tabindex');
+}
+
+function render() {
+  if (!L || !L.w) measure();
+  const b = state.board;
+  for (let i = 0; i < 7; i++) {
+    const col = b.cols[i], d = b.down[i];
+    const { dn, un } = columnSpacing(L, d, col.length - d);
+    let y = L.tabY;
+    col.forEach((c, k) => {
+      const up = k >= d;
+      putCard(c, colX(L, i), y, 10 + k, up, up);
+      y += up ? un : dn;
+    });
+  }
+  b.stock.forEach((c, k) => putCard(c, colX(L, 0), 0, k + 1, false, false));
+  b.waste.forEach((c, k) => putCard(c, colX(L, 1), 0, k + 1, true, k === b.waste.length - 1));
+  for (let s = 0; s < 4; s++) {
+    for (let r = 0; r < b.found[s]; r++) putCard(s * 13 + r, colX(L, 3 + s), 0, r + 1, true, r === b.found[s] - 1);
+  }
+  stockHit.firstChild.textContent = !b.stock.length && b.waste.length ? '↻' : '';
+  stockCount.textContent = b.stock.length || '';
+  stockCount.style.display = b.stock.length ? 'block' : 'none';
+  stockHit.setAttribute('aria-label', b.stock.length ? `Mazo: sacar una carta, quedan ${b.stock.length}` : 'Mazo vacío: dar la vuelta a las cartas');
+  clearTimeout(settleTimer);
+  settleTimer = setTimeout(() => cardEls.forEach(el => { if (!el.classList.contains('drag')) el.style.zIndex = el._z; }), 220);
+}
+
+const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+function updateHud() {
+  const b = state.board;
+  $('label').textContent = mode === 'daily' ? `Reto #${day - LAUNCH_DAY + 1}` : `Libre · ${stats.freeWins} ${stats.freeWins === 1 ? 'victoria' : 'victorias'}`;
+  $('moves').textContent = `🔢 ${b.moves}`;
+  $('clock').textContent = `⏱ ${fmt(state.elapsed)}`;
+  $('btn-undo').disabled = !state.undo.length || state.done || busy;
+  if (!confirming) $('btn-restart').textContent = mode === 'daily' ? '🔄 Reiniciar' : '🆕 Nueva';
+  const showResult = state.done && mode === 'daily';
+  $('btn-restart').style.display = showResult ? 'none' : 'block';
+  $('btn-result').style.display = showResult ? 'block' : 'none';
+  $('btn-auto').style.display = !state.done && !busy && allFaceUp(b) ? 'block' : 'none';
+}
+
+// El reloj corre desde la primera jugada y se detiene si la pestaña no está visible
+function tick(now) {
+  requestAnimationFrame(tick);
+  if (started && !state.done && !autoRunning && !document.hidden) {
+    const delta = (now - lastTick) / 1000;
+    if (delta > 0 && delta < 2) {
+      const before = Math.floor(state.elapsed);
+      state.elapsed += delta;
+      if (Math.floor(state.elapsed) !== before) updateHud();
+    }
+  }
+  lastTick = now;
+}
+setInterval(() => { if (started && !state.done) persist(); }, 5000);
+
+// ---------- Jugar ----------
+// Toda jugada real pasa por aquí: guarda cómo deshacerla, anima, suena y comprueba si se ganó
+function commit(rec, tone) {
+  if (!rec) return false;
+  if (!started) { started = true; lastTick = performance.now(); }
+  state.undo.push(rec);
+  render();
+  updateHud();
+  if (tone) beep(tone, .06);
+  if (isWon(state.board)) finish();
+  else persist();
+  return true;
+}
+
+const toneFor = rec => (rec.to === 'found' ? 620 + 30 * rankOf(rec.head) : 420);
+
+function nope(c) {
+  const el = cardEls[c];
+  if (el) {
+    el.classList.remove('nope');
+    void el.offsetWidth;
+    el.classList.add('nope');
+    setTimeout(() => el.classList.remove('nope'), 300);
+  }
+  beep(150, .1);
+  if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function tapCard(c) {
+  if (busy || state.done) return;
+  const src = sourceOf(state.board, c);
+  if (!src) return;
+  const m = bestDestination(state.board, src);
+  if (!m) { nope(c); return; }
+  const rec = applyMove(state.board, m);
+  commit(rec, toneFor(rec));
+}
+
+function tapStock() {
+  if (busy || state.done) return;
+  const b = state.board;
+  if (b.stock.length) commit(drawCard(b), 300);
+  else if (b.waste.length) commit(recycleWaste(b), 240);
+}
+
+function undoLast() {
+  if (busy || state.done || !state.undo.length) return;
+  undoStep(state.board, state.undo.pop());
+  render();
+  updateHud();
+  persist();
+  beep(260, .05);
+}
+
+function resetConfirm() {
+  confirming = false;
+  clearTimeout(confirmTimer);
+}
+
+// Dos toques: un toque perdido no debe borrar la partida
+function pressRestart() {
+  if (busy) return;
+  const dealt = state.board.moves > 0 && !state.done;
+  if (dealt && !confirming) {
+    confirming = true;
+    $('btn-restart').textContent = '¿Seguro? Toca otra vez';
+    confirmTimer = setTimeout(() => { confirming = false; updateHud(); }, 3000);
+    return;
+  }
+  resetConfirm();
+  if (mode === 'daily') restartDeal();
+  else startFree(true);
+  updateHud();
+}
+
+function runAuto() {
+  if (busy || state.done || !allFaceUp(state.board)) return;
+  busy = true;
+  autoRunning = true;
+  updateHud();
+  const run = state;
+  const step = () => {
+    if (state !== run) return false;   // cambió de pestaña a mitad de camino
+    const s = nextAutoStep(state.board);
+    const rec = s && applyStep(state.board, s);
+    if (!rec) { busy = false; autoRunning = false; render(); updateHud(); persist(); return false; }
+    state.undo.push(rec);
+    if (isWon(state.board)) {
+      busy = false;
+      autoRunning = false;
+      render();
+      updateHud();
+      finish();
+      return false;
+    }
+    return true;
+  };
+  if (REDUCED) {
+    while (step());
+    return;
+  }
+  const loop = () => {
+    if (!step()) return;
+    render();
+    $('moves').textContent = `🔢 ${state.board.moves}`;
+    setTimeout(loop, 45);
+  };
+  loop();
+}
+
+// ---------- Arrastre ----------
+tableEl.addEventListener('pointerdown', e => {
+  if (drag || busy || state.done || e.button > 0) return;
+  if (e.target.closest('#stock-hit')) { e.preventDefault(); tapStock(); return; }
+  const el = e.target.closest('.pc');
+  if (!el) return;
+  const card = +el.dataset.c;
+  const src = sourceOf(state.board, card);
+  if (!src) return;
+  e.preventDefault();
+  try { tableEl.setPointerCapture(e.pointerId); } catch {}
+  const b = state.board;
+  const list = src.from === 'col' ? b.cols[src.i].slice(b.cols[src.i].length - src.n) : [card];
+  drag = { id: e.pointerId, card, src, list, sx: e.clientX, sy: e.clientY, dx: 0, dy: 0, moving: false };
+});
+
+tableEl.addEventListener('pointermove', e => {
+  if (!drag || e.pointerId !== drag.id) return;
+  drag.dx = e.clientX - drag.sx;
+  drag.dy = e.clientY - drag.sy;
+  if (!drag.moving) {
+    if (Math.hypot(drag.dx, drag.dy) < 7) return;
+    drag.moving = true;
+    drag.list.forEach((c, k) => {
+      cardEls[c].classList.add('drag');
+      cardEls[c].style.zIndex = 1000 + k;
+    });
+  }
+  drag.list.forEach(c => {
+    const el = cardEls[c];
+    el.style.transform = `translate(${el._x + drag.dx}px, ${el._y + drag.dy}px)`;
+  });
+});
+
+function overlap(ax, ay, bx, by, bw, bh, w, h) {
+  const ox = Math.min(ax + w, bx + bw) - Math.max(ax, bx);
+  const oy = Math.min(ay + h, by + bh) - Math.max(ay, by);
+  return ox > 0 && oy > 0 ? ox * oy : 0;
+}
+
+// Destinos que toca la carta soltada, del que más cubre al que menos
+function dropTargets(x, y) {
+  const out = [];
+  for (let j = 0; j < 7; j++) {
+    const area = overlap(x, y, colX(L, j), L.tabY, L.w, L.H - L.tabY, L.w, L.h);
+    if (area) out.push({ to: 'col', j, area });
+  }
+  for (let s = 0; s < 4; s++) {
+    const area = overlap(x, y, colX(L, 3 + s), 0, L.w, L.h, L.w, L.h);
+    if (area) out.push({ to: 'found', j: 0, area });
+  }
+  return out.sort((a, b) => b.area - a.area);
+}
+
+function endDrag(e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  const d = drag;
+  drag = null;
+  if (!d.moving) { tapCard(d.card); return; }
+  const head = cardEls[d.list[0]];
+  for (const t of dropTargets(head._x + d.dx, head._y + d.dy)) {
+    const rec = applyMove(state.board, { ...d.src, to: t.to, j: t.j });
+    if (rec) { commit(rec, toneFor(rec)); return; }
+  }
+  returnCards(d);
+  nope(d.card);
+}
+
+// Forzar la marca de "movida" para que vuelva por encima de las demás
+function returnCards(d) {
+  d.list.forEach(c => { cardEls[c]._x = NaN; });
+  render();
+}
+
+tableEl.addEventListener('pointerup', endDrag);
+tableEl.addEventListener('pointercancel', e => {
+  if (!drag || e.pointerId !== drag.id) return;
+  const d = drag;
+  drag = null;
+  if (d.moving) returnCards(d);
+});
+
+tableEl.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  e.preventDefault();
+  if (e.target === stockHit) tapStock();
+  else if (e.target.dataset && e.target.dataset.c !== undefined) tapCard(+e.target.dataset.c);
+});
+
+// ---------- Final ----------
+function finish() {
+  state.done = true;
+  busy = false;
+  if (mode === 'daily') {
+    stats.played++;
+    stats.streak = stats.lastDay === day - 1 ? stats.streak + 1 : 1;
+    stats.maxStreak = Math.max(stats.maxStreak, stats.streak);
+    stats.lastDay = day;
+    if (stats.bestTime === null || state.elapsed < stats.bestTime) stats.bestTime = state.elapsed;
+  } else {
+    stats.freeWins++;
+    if (stats.freeBest === null || state.elapsed < stats.freeBest) stats.freeBest = state.elapsed;
+  }
+  save('solitarioStats', stats);
+  persist();
+  updateHud();
+  [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, .16), i * 110));
+  if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
+  celebrate();
+  if (mode === 'daily') sendResult();
+  setTimeout(showWin, REDUCED ? 200 : 900);
+}
+
+function celebrate() {
+  if (REDUCED) return;
+  for (let i = 0; i < 26; i++) {
+    const el = document.createElement('div');
+    el.className = 'conf';
+    const s = i % 4;
+    el.textContent = SUITS[s];
+    el.style.color = s % 2 ? '#ff4d6d' : '#ffd000';
+    el.style.left = `${Math.random() * 100}%`;
+    el.style.animationDelay = `${Math.random() * .5}s`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2000);
+  }
+}
+
+function statBox(value, label) {
+  return `<div class="stat"><b>${value}</b><span>${label}</span></div>`;
+}
+
+function rankText({ total, beaten }) {
+  if (total < JuegaYaDiario.MIN_JUGADORES) return '🥇 Estás entre los primeros en resolver el reto de hoy';
+  if (beaten === 0) return `👥 Hoy lo resolvieron ${total} jugadores`;
+  return `👥 Hoy lo resolvieron ${total} jugadores. Tu tiempo superó al de ${beaten}`;
+}
+
+// Solo se envía al ganar por primera vez: al recargar se muestra el texto guardado
+async function sendResult() {
+  const run = state;
+  const result = await JuegaYaDiario.enviar('solitario', Math.max(3, Math.round(run.elapsed * 10) / 10));
+  if (!result) return;
+  run.rank = rankText(result);
+  if (run === state) {
+    $('win-rank').textContent = run.rank;
+    persist();
+  }
+}
+
+function showWin() {
+  if (!state.done) return;
+  const b = state.board;
+  $('win-title').textContent = '¡Solitario resuelto!';
+  if (mode === 'daily') {
+    $('win-sub').textContent = `Reto #${day - LAUNCH_DAY + 1}`;
+    $('win-stats').innerHTML = statBox(fmt(state.elapsed), 'Tiempo') + statBox(b.moves, 'Jugadas') + statBox(stats.streak, 'Racha');
+    $('win-rank').textContent = state.rank || '';
+    $('btn-primary').textContent = '♾️ Jugar en modo libre';
+    $('btn-primary').onclick = () => startFree(false);
+    $('next-in').style.display = 'block';
+    updateCountdown();
+  } else {
+    $('win-sub').textContent = `Partidas ganadas: ${stats.freeWins}`;
+    $('win-stats').innerHTML = statBox(fmt(state.elapsed), 'Tiempo') + statBox(b.moves, 'Jugadas') + statBox(fmt(stats.freeBest), 'Mejor tiempo');
+    $('win-rank').textContent = '';
+    $('btn-primary').textContent = '🆕 Nueva partida';
+    $('btn-primary').onclick = () => startFree(true);
+    $('next-in').style.display = 'none';
+  }
+  $('win-modal').classList.add('show');
+}
+
+function updateCountdown() {
+  const now = new Date();
+  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  const s = Math.max(0, Math.floor((next - now) / 1000));
+  const pad = v => String(v).padStart(2, '0');
+  $('next-in').textContent = `Próximo reto en ${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
+}
+setInterval(updateCountdown, 1000);
+
+function shareText() {
+  const url = 'https://www.juegaya.app/juego/solitario?utm_source=compartido';
+  const b = state.board;
+  if (mode === 'daily') {
+    return `🃏 Solitario Clásico #${day - LAUNCH_DAY + 1}\n⏱ ${fmt(state.elapsed)} · 🔢 ${b.moves} jugadas · 🔥 Racha: ${stats.streak}\n\n¿Puedes superarme?\n${url}`;
+  }
+  return `🃏 Solitario Clásico: gané en ${fmt(state.elapsed)} con ${b.moves} jugadas\n\n¿Puedes superarme?\n${url}`;
+}
+$('btn-share').addEventListener('click', async () => {
+  const text = shareText();
+  if (navigator.share) {
+    try { await navigator.share({ text }); return; } catch (err) { if (err.name === 'AbortError') return; }
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('¡Copiado! Pégalo donde quieras');
+  } catch {
+    toast('No se pudo copiar');
+  }
+});
+
+let toastTimer;
+function toast(msg) {
+  $('toast').textContent = msg;
+  $('toast').classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('toast').classList.remove('show'), 1800);
+}
+
+// ---------- Sonido ----------
+let audio;
+function beep(freq, dur) {
+  if (!soundOn) return;
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.type = 'triangle';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(.1, audio.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, audio.currentTime + dur);
+    o.connect(g).connect(audio.destination);
+    o.start();
+    o.stop(audio.currentTime + dur);
+  } catch {}
+}
+
+// ---------- Botones e inicio ----------
+$('tab-daily').addEventListener('click', () => { if (mode !== 'daily') startDaily(); });
+$('tab-free').addEventListener('click', () => { if (mode !== 'free') startFree(false); });
+$('btn-undo').addEventListener('click', undoLast);
+$('btn-restart').addEventListener('click', pressRestart);
+$('btn-auto').addEventListener('click', runAuto);
+$('btn-result').addEventListener('click', showWin);
+$('win-modal').addEventListener('click', e => { if (e.target === $('win-modal')) $('win-modal').classList.remove('show'); });
+$('btn-help').addEventListener('click', () => $('help-modal').classList.add('show'));
+$('close-help').addEventListener('click', () => $('help-modal').classList.remove('show'));
+$('btn-sound').addEventListener('click', () => {
+  soundOn = !soundOn;
+  save('solitarioSonido', soundOn);
+  $('btn-sound').textContent = soundOn ? '🔊' : '🔇';
+});
+$('btn-sound').textContent = soundOn ? '🔊' : '🔇';
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) persist();
+  else if (mode === 'daily' && dayIndex() !== day) startDaily();
+  else lastTick = performance.now();
+});
+addEventListener('pagehide', persist);
+
+buildTable();
+measure();
+new ResizeObserver(() => {
+  measure();
+  if (!state) return;
+  tableEl.classList.add('noanim');
+  render();
+  setTimeout(() => tableEl.classList.remove('noanim'), 60);
+}).observe(tableEl);
+requestAnimationFrame(tick);
+startDaily();
+if (!load('solitarioVioAyuda', false)) {
+  $('help-modal').classList.add('show');
+  save('solitarioVioAyuda', true);
+}
+</script>
+</body>
+</html>

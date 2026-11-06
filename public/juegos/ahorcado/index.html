@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Juego del Ahorcado - JuegaYa</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body { background: #111120; color: #fff; font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif; overflow: hidden; user-select: none; -webkit-user-select: none; }
+  button, select { font-family: inherit; }
+  #app { height: 100%; max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; padding: 10px 12px 12px; gap: 8px; }
+  .tabs { display: flex; gap: 6px; flex-shrink: 0; }
+  .tab { flex: 1; min-height: 36px; padding: 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,.1); background: #1e1e34; color: rgba(255,255,255,.55); font-size: 13px; font-weight: 800; cursor: pointer; }
+  .tab.active { background: #ffd000; border-color: #ffd000; color: #1a1400; }
+  .icon-btn { width: 38px; flex: none; padding: 0; font-size: 15px; }
+  .status { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0; min-height: 22px; }
+  .label { font-size: 15px; font-weight: 900; white-space: nowrap; }
+  .meta { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 800; color: rgba(255,255,255,.7); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* Escena */
+  #scene { flex: 1; min-height: 0; position: relative; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,.08); background: linear-gradient(#1a1d4a, #33306e 75%, #4a3f7e); }
+  #scene svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  #rig { transition: transform .5s ease-out; }
+  .mood-fell #rig { transition: transform 1.6s cubic-bezier(.3,.1,.45,1); }
+  #bob { animation: bob 2.6s ease-in-out infinite alternate; }
+  .mood-fell #bob { animation: none; }
+  @keyframes bob { from { transform: translateY(-3px); } to { transform: translateY(3px); } }
+  .string { transition: opacity .2s; }
+  .string.gone { opacity: 0; }
+  .balloon .bb { transform-box: fill-box; transform-origin: center; }
+  .balloon.gone .bb { opacity: 0; }
+  .balloon.pop .bb { animation: pop .28s ease-out; }
+  @keyframes pop { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.4); } }
+  .sparks circle { opacity: 0; }
+  .balloon.pop .sparks circle { animation: spark .42s ease-out; }
+  @keyframes spark { 0% { opacity: 1; transform: translate(0, 0); } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)); } }
+  .only-happy, .only-worried, .only-fell, .only-win { display: none; }
+  .mood-happy .only-happy, .mood-worried .only-worried, .mood-fell .only-fell, .mood-win .only-win { display: inline; }
+  .not-win { display: inline; }
+  .mood-win .not-win { display: none; }
+  #pal { transform-box: fill-box; transform-origin: center bottom; }
+  .mood-win #pal { animation: hop .5s ease-in-out 4 alternate; }
+  @keyframes hop { from { transform: translateY(0); } to { transform: translateY(-9px); } }
+  .mood-worried #pal { animation: tremble .5s ease-in-out infinite alternate; }
+  @keyframes tremble { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
+  #confetti rect { opacity: 0; }
+  .mood-win #confetti rect { animation: confetti 1.5s ease-in both; }
+  @keyframes confetti { 0% { opacity: 1; transform: translateY(0) rotate(0); } 85% { opacity: 1; } 100% { opacity: 0; transform: translateY(250px) rotate(240deg); } }
+
+  /* Palabra */
+  .hint { flex-shrink: 0; display: flex; justify-content: center; gap: 6px; font-size: 13px; font-weight: 700; color: rgba(255,255,255,.72); }
+  .hint b { color: #ffd000; font-weight: 900; }
+  #word { flex-shrink: 0; display: flex; justify-content: center; gap: 4px; }
+  .slot { flex: 0 1 40px; min-width: 0; height: 40px; display: flex; align-items: center; justify-content: center; border-bottom: 3px solid rgba(255,255,255,.35); font-size: min(30px, calc(72vw / var(--n))); font-weight: 900; line-height: 1; }
+  .slot.on { border-color: #ffd000; animation: reveal .22s ease-out; }
+  @keyframes reveal { from { transform: scale(.5); } to { transform: scale(1); } }
+  .slot.won { border-color: #4ade80; color: #4ade80; }
+  .slot.missed { border-color: #ff6b6b; color: #ff6b6b; }
+
+  /* Teclado */
+  #keyboard { flex-shrink: 0; display: grid; grid-template-columns: repeat(20, 1fr); gap: 5px 3px; width: calc(100% + 12px); max-width: 540px; margin: 0 -6px; align-self: center; touch-action: manipulation; }
+  .key { grid-column: span 2; height: 48px; min-width: 0; padding: 0; border: 1px solid rgba(255,255,255,.14); border-radius: 8px; background: #2c2c4c; color: #fff; font-size: 17px; font-weight: 800; cursor: pointer; }
+  .key.row3 { grid-column: 4 / span 2; }
+  .key:hover:not(:disabled) { background: #3a3a60; }
+  .key:focus-visible { outline: 2px solid #ffd000; outline-offset: 1px; }
+  .key:disabled { cursor: default; }
+  .key.hit { background: #4ade80; border-color: #4ade80; color: #06240f; }
+  .key.miss { background: #17172a; border-color: rgba(255,255,255,.05); color: rgba(255,255,255,.3); text-decoration: line-through; }
+
+  /* Acciones */
+  .actions { display: flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; min-height: 36px; }
+  .mini-btn { min-height: 36px; background: #262640; color: #fff; border: 1px solid rgba(255,255,255,.15); border-radius: 10px; padding: 8px 14px; font-size: 13px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+  #theme { flex: 1; min-width: 0; max-width: 240px; min-height: 36px; background: #262640; color: #fff; border: 1px solid rgba(255,255,255,.15); border-radius: 10px; padding: 0 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  #note { font-size: 12px; font-weight: 700; color: rgba(255,255,255,.5); }
+
+  /* Modales */
+  .modal { position: fixed; inset: 0; background: rgba(5,5,15,.78); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+  .modal.show { display: flex; }
+  .card { background: #1e1e34; border: 1px solid rgba(255,255,255,.12); border-radius: 18px; padding: 22px 20px; width: 100%; max-width: 360px; max-height: 100%; overflow-y: auto; text-align: center; }
+  .card h2 { font-size: 22px; font-weight: 900; color: #ffd000; margin-bottom: 8px; }
+  .card p, .card li { font-size: 14px; line-height: 1.5; color: rgba(255,255,255,.72); }
+  .card ul { text-align: left; padding-left: 18px; margin: 8px 0 14px; }
+  #over-word b { color: #fff; font-weight: 900; letter-spacing: 1px; }
+  .stats { display: flex; justify-content: center; gap: 18px; margin: 12px 0; }
+  .stat b { display: block; font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 11px; color: rgba(255,255,255,.5); font-weight: 700; }
+  #over-rank { font-size: 13px; font-weight: 700; color: #ffd000; margin: 2px 0 6px; min-height: 18px; }
+  .btn { display: block; width: 100%; padding: 12px; border-radius: 12px; border: none; font-size: 14px; font-weight: 900; cursor: pointer; margin-top: 8px; text-decoration: none; text-align: center; }
+  .btn-gold { background: linear-gradient(135deg,#ffd000,#ffaa00); color: #1a1000; }
+  .btn-dark { background: #262640; color: #fff; border: 1px solid rgba(255,255,255,.15); }
+  #next-in { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 10px; }
+  #toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 20; white-space: nowrap; }
+  #toast.show { opacity: 1; }
+
+  @media (max-height: 660px) {
+    #app { gap: 6px; padding-top: 8px; padding-bottom: 8px; }
+    .key { height: 40px; }
+    .slot { height: 34px; }
+  }
+  @media (max-height: 540px) {
+    .key { height: 34px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #rig, .mood-fell #rig, .string { transition: none; }
+    #bob, .balloon.pop .bb, .balloon.pop .sparks circle, .mood-win #pal, .mood-worried #pal, .slot.on, .mood-win #confetti rect { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="tabs">
+    <button class="tab active" id="tab-daily">📅 Del día</button>
+    <button class="tab" id="tab-free">♾️ Libre</button>
+    <button class="tab icon-btn" id="btn-sound" aria-label="Sonido">🔊</button>
+    <button class="tab icon-btn" id="btn-help" aria-label="Cómo jugar">?</button>
+  </div>
+  <div class="status">
+    <div class="label" id="label"></div>
+    <div class="meta"><span id="left"></span><span id="counter"></span></div>
+  </div>
+  <div id="scene" class="mood-happy" role="img" aria-label="Personaje flotando bajo globos de colores">
+    <svg viewBox="0 -8 300 268" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+      <g fill="#fff" opacity=".55">
+        <circle cx="26" cy="30" r="1.4"/><circle cx="60" cy="8" r="1"/><circle cx="262" cy="20" r="1.5"/><circle cx="284" cy="70" r="1"/><circle cx="18" cy="110" r="1"/><circle cx="246" cy="128" r="1.2"/><circle cx="-40" cy="60" r="1.3"/><circle cx="340" cy="40" r="1.3"/>
+      </g>
+      <g fill="#fff" opacity=".1">
+        <path d="M14 172a13 13 0 0 1 24-7 16 16 0 0 1 29 7 8 8 0 0 1 0 12H16a8 8 0 0 1-2-12z"/>
+        <path d="M232 92a10 10 0 0 1 19-5 13 13 0 0 1 23 5 6 6 0 0 1 0 10h-40a6 6 0 0 1-2-10z"/>
+      </g>
+      <path d="M-400 262V244q130-14 290-6t260 2 250-6V262z" fill="#2f9e6e"/>
+      <path d="M-400 262V252q150-8 350-4t300 0 150 4V262z" fill="#23805a"/>
+      <g id="rig"><g id="bob">
+        <g id="balloons"></g>
+        <g id="pal">
+          <path class="not-win" d="M126 152q-10 2-14 12M174 152q10 2 14 12" fill="none" stroke="#e9a800" stroke-width="5" stroke-linecap="round"/>
+          <path class="only-win" d="M127 146q-12-6-16-20M173 146q12-6 16-20" fill="none" stroke="#e9a800" stroke-width="5" stroke-linecap="round"/>
+          <ellipse cx="139" cy="178" rx="8" ry="5" fill="#ff7a59"/>
+          <ellipse cx="161" cy="178" rx="8" ry="5" fill="#ff7a59"/>
+          <circle cx="150" cy="150" r="26" fill="#ffc21a"/>
+          <path d="M132 136a24 24 0 0 1 16-10" fill="none" stroke="#ffe27a" stroke-width="4" stroke-linecap="round"/>
+          <path d="M143 122l7 3 7-3v8l-7-3-7 3z" fill="#ff4d8d"/>
+          <circle cx="133" cy="157" r="4.5" fill="#ff8f70" opacity=".65"/>
+          <circle cx="167" cy="157" r="4.5" fill="#ff8f70" opacity=".65"/>
+          <g class="not-win" fill="#2a1a3e">
+            <circle cx="140" cy="148" r="3.6"/><circle cx="160" cy="148" r="3.6"/>
+          </g>
+          <g class="not-win" fill="#fff">
+            <circle cx="141.2" cy="146.8" r="1.2"/><circle cx="161.2" cy="146.8" r="1.2"/>
+          </g>
+          <path class="only-win" d="M135 150q5-7 10 0M155 150q5-7 10 0" fill="none" stroke="#2a1a3e" stroke-width="3" stroke-linecap="round"/>
+          <path class="only-happy" d="M141 157q9 9 18 0" fill="none" stroke="#2a1a3e" stroke-width="3" stroke-linecap="round"/>
+          <ellipse class="only-worried" cx="150" cy="160" rx="4" ry="5" fill="#2a1a3e"/>
+          <path class="only-fell" d="M142 161q4-4 8 0t8 0" fill="none" stroke="#2a1a3e" stroke-width="3" stroke-linecap="round"/>
+          <path class="only-win" d="M139 156h22q-1 13-11 13t-11-13z" fill="#2a1a3e"/>
+        </g>
+      </g></g>
+      <g id="confetti"></g>
+    </svg>
+  </div>
+  <div class="hint"><span>Tema:</span><b id="hint-theme"></b><span id="hint-len"></span></div>
+  <div id="word" role="img"></div>
+  <div id="keyboard" role="group" aria-label="Teclado"></div>
+  <div class="actions">
+    <select id="theme" aria-label="Tema de las palabras"></select>
+    <button class="mini-btn" id="btn-action"></button>
+    <span id="note">Un solo intento al día</span>
+  </div>
+</div>
+
+<div class="modal" id="help-modal">
+  <div class="card">
+    <h2>Cómo jugar</h2>
+    <ul>
+      <li>Adivina la palabra <b>letra por letra</b>. El tema es tu pista.</li>
+      <li>Cada letra que no está <b>revienta un globo</b>. Tienes 6 globos.</li>
+      <li>Si te quedas sin globos, tu personaje baja al suelo y se revela la palabra.</li>
+      <li>La <b>Ñ</b> es una letra aparte y las palabras van sin tildes.</li>
+      <li><b>Del día:</b> una palabra diaria, igual para todos, con un solo intento. <b>Libre:</b> todas las que quieras.</li>
+    </ul>
+    <button class="btn btn-gold" id="close-help">¡A jugar!</button>
+  </div>
+</div>
+
+<div class="modal" id="over-modal">
+  <div class="card">
+    <h2 id="over-title"></h2>
+    <p id="over-sub"></p>
+    <p id="over-word"></p>
+    <div class="stats" id="over-stats"></div>
+    <p id="over-rank" aria-live="polite"></p>
+    <button class="btn btn-gold" id="btn-primary"></button>
+    <button class="btn btn-dark" id="btn-share">💬 Compartir resultado</button>
+    <a class="btn btn-dark" href="/juegos/diarios" target="_top">📅 Más juegos diarios</a>
+    <div id="next-in"></div>
+  </div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="../resultado-diario.js"></script>
+<script src="../sopa-de-letras/temas.js"></script>
+<script>
+// ---------- Palabras ----------
+const MAX_ERRORES = 6;
+const VALOR_PERDIDO = 7;   // lo que se envía al reto del día si no adivinó (menos es mejor)
+const MIN_LETRAS = 4;
+const ALFABETO = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ';
+const FILAS = ['QWERTYUIOP', 'ASDFGHJKLÑ', 'ZXCVBNM'];
+const TEMA_AZAR = 'azar';
+
+function mulberry32(seed) {
+  return () => {
+    seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function shuffled(list, rng) {
+  const a = list.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Lista plana de palabras jugables, sin repetidas: si una está en dos temas, queda en el primero
+function buildPool(temas) {
+  const seen = new Set();
+  const pool = [];
+  for (const t of temas) {
+    for (const palabra of t.palabras) {
+      if (palabra.length < MIN_LETRAS || !/^[A-ZÑ]+$/.test(palabra) || seen.has(palabra)) continue;
+      seen.add(palabra);
+      pool.push({ palabra, tema: t.nombre, emoji: t.emoji });
+    }
+  }
+  return pool;
+}
+const POOL = buildPool(TEMAS);
+const NOMBRES_TEMAS = TEMAS.filter(t => POOL.some(e => e.tema === t.nombre));
+
+// Recorre toda la lista en un orden fijo antes de repetir una palabra; cada vuelta usa otro orden
+function dailyEntry(dayNumber, pool) {
+  const offset = dayNumber - LAUNCH_DAY;
+  const cycle = Math.floor(offset / pool.length);
+  return shuffled(pool, mulberry32(cycle * 7919 + 20261106))[offset - cycle * pool.length];
+}
+
+function pickFree(pool, tema, recent, exclude, rng) {
+  let cand = pool.filter(e => (tema === TEMA_AZAR || e.tema === tema) && e.palabra !== exclude);
+  if (!cand.length) cand = pool;
+  let list = cand.filter(e => !recent.includes(e.palabra));
+  if (!list.length) list = cand.filter(e => e.palabra !== recent[recent.length - 1]);
+  if (!list.length) list = cand;
+  return list[Math.floor(rng() * list.length)];
+}
+
+// ---------- Reglas ----------
+function newGame(entry, guessed) {
+  return { palabra: entry.palabra, tema: entry.tema, emoji: entry.emoji, guessed: guessed || [], gaveUp: false };
+}
+
+// Letra de una tecla física: sin tildes, pero la Ñ se mantiene
+function normalizeKey(key) {
+  if (typeof key !== 'string') return null;
+  const nfc = key.normalize('NFC');
+  if (nfc.length !== 1) return null;
+  const up = nfc.toUpperCase();
+  if (up === 'Ñ') return up;
+  const base = up.normalize('NFD').replace(/[̀-ͯ]/g, '');
+  return base.length === 1 && ALFABETO.includes(base) ? base : null;
+}
+
+function wrongCount(g) {
+  return g.guessed.filter(l => !g.palabra.includes(l)).length;
+}
+function gameStatus(g) {
+  if ([...g.palabra].every(l => g.guessed.includes(l))) return 'won';
+  if (g.gaveUp || wrongCount(g) >= MAX_ERRORES) return 'lost';
+  return 'playing';
+}
+function guess(g, letter) {
+  if (gameStatus(g) !== 'playing' || letter.length !== 1 || !ALFABETO.includes(letter)) return 'invalid';
+  if (g.guessed.includes(letter)) return 'repeat';
+  g.guessed.push(letter);
+  return g.palabra.includes(letter) ? 'hit' : 'miss';
+}
+function dailyValue(g) {
+  return gameStatus(g) === 'won' ? wrongCount(g) : VALOR_PERDIDO;
+}
+// Letras guardadas: se descarta lo que no sea válido por si el dato está dañado
+function cleanGuessed(list) {
+  if (!Array.isArray(list)) return [];
+  return [...new Set(list.filter(l => typeof l === 'string' && l.length === 1 && ALFABETO.includes(l)))];
+}
+
+// ---------- Fechas y guardado ----------
+const LAUNCH_DAY = Date.UTC(2026, 10, 6) / 864e5;   // el reto #1
+function dayIndex() {
+  const n = new Date();
+  return Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) / 864e5;
+}
+function load(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+}
+function save(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+}
+
+// ---------- Estadísticas ----------
+function freshStats() {
+  return { played: 0, wins: 0, streak: 0, maxStreak: 0, lastDay: null, lastWinDay: null, free: { played: 0, wins: 0, streak: 0, best: 0 } };
+}
+function loadStats() {
+  const s = load('ahorcadoStats', null);
+  const base = freshStats();
+  return s && typeof s === 'object' ? { ...base, ...s, free: { ...base.free, ...s.free } } : base;
+}
+// Cuenta una sola vez por día, aunque se recargue la página
+function applyDaily(s, dayNumber, won) {
+  if (s.lastDay === dayNumber) return false;
+  s.played++;
+  s.lastDay = dayNumber;
+  if (won) {
+    s.wins++;
+    s.streak = s.lastWinDay === dayNumber - 1 ? s.streak + 1 : 1;
+    s.maxStreak = Math.max(s.maxStreak, s.streak);
+    s.lastWinDay = dayNumber;
+  } else {
+    s.streak = 0;
+  }
+  return true;
+}
+function applyFree(s, won) {
+  s.free.played++;
+  if (won) {
+    s.free.wins++;
+    s.free.streak++;
+    s.free.best = Math.max(s.free.best, s.free.streak);
+  } else {
+    s.free.streak = 0;
+  }
+}
+// La racha guardada ya no vale si pasó un día sin ganar
+function currentStreak(s, dayNumber) {
+  return s.lastWinDay !== null && s.lastWinDay >= dayNumber - 1 ? s.streak : 0;
+}
+
+// ---------- Estado ----------
+const $ = id => document.getElementById(id);
+const reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+let mode = 'daily', day = dayIndex();
+let game, rankPromise = null, gameId = 0;
+let soundOn = load('ahorcadoSonido', true);
+let stats = loadStats();
+let chosenTheme = load('ahorcadoTema', TEMA_AZAR);
+let recent = load('ahorcadoRecientes', []);
+if (!Array.isArray(recent)) recent = [];
+if (chosenTheme !== TEMA_AZAR && !NOMBRES_TEMAS.some(t => t.nombre === chosenTheme)) chosenTheme = TEMA_AZAR;
+
+function persist() {
+  if (mode === 'daily') save('ahorcadoDaily', { day, guessed: game.guessed });
+  else save('ahorcadoLibre', game);
+}
+
+function startDaily() {
+  mode = 'daily';
+  day = dayIndex();
+  rankPromise = null;
+  const saved = load('ahorcadoDaily', null);
+  const guessed = saved && saved.day === day ? cleanGuessed(saved.guessed) : [];
+  game = newGame(dailyEntry(day, POOL), guessed);
+  begin();
+  if (gameStatus(game) !== 'playing') {
+    if (applyDaily(stats, day, gameStatus(game) === 'won')) save('ahorcadoStats', stats);
+    updateHud();
+    showOver();
+  }
+}
+
+function nextFreeGame() {
+  const entry = pickFree(POOL, chosenTheme, recent, dailyEntry(dayIndex(), POOL).palabra, Math.random);
+  recent = [...recent, entry.palabra].slice(-100);
+  save('ahorcadoRecientes', recent);
+  game = newGame(entry);
+  persist();
+  begin();
+}
+
+function startFree(forceNew) {
+  mode = 'free';
+  const saved = load('ahorcadoLibre', null);
+  if (forceNew || !saved || typeof saved.palabra !== 'string' || !POOL.some(e => e.palabra === saved.palabra)) {
+    nextFreeGame();
+    return;
+  }
+  game = newGame(saved, cleanGuessed(saved.guessed));
+  game.gaveUp = !!saved.gaveUp;
+  if (gameStatus(game) !== 'playing') { nextFreeGame(); return; }   // la anterior ya terminó
+  begin();
+}
+
+function begin() {
+  gameId++;
+  $('over-modal').classList.remove('show');
+  $('tab-daily').classList.toggle('active', mode === 'daily');
+  $('tab-free').classList.toggle('active', mode === 'free');
+  $('theme').style.display = mode === 'free' ? 'block' : 'none';
+  $('label').textContent = mode === 'daily' ? `Reto #${day - LAUNCH_DAY + 1}` : 'Modo libre';
+  $('hint-theme').textContent = `${game.emoji} ${game.tema}`;
+  $('hint-len').textContent = `· ${game.palabra.length} letras`;
+  renderWord();
+  renderKeys();
+  updateScene(false);
+  updateHud();
+  updateActions();
+}
+
+// ---------- Dibujo ----------
+const BALLOONS = [
+  { x: 105, y: 40, color: '#ff4d8d' },
+  { x: 150, y: 28, color: '#ffd000' },
+  { x: 195, y: 40, color: '#22d3ee' },
+  { x: 90, y: 90, color: '#a78bfa' },
+  { x: 150, y: 84, color: '#4ade80' },
+  { x: 210, y: 90, color: '#fb923c' },
+];
+const POP_ORDER = [3, 2, 5, 0, 4, 1];     // el último en reventar es el de arriba, centrado
+const DROP_PER_ERROR = 5;
+const DROP_FELL = 56;                     // hasta tocar el suelo
+
+function buildScene() {
+  let strings = '', shapes = '';
+  BALLOONS.forEach((b, i) => {
+    const bottom = b.y + 27;
+    strings += `<path id="s${i}" class="string" d="M${b.x} ${bottom + 3}Q${(b.x + 150) / 2} ${bottom + 12} 150 124" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.2"/>`;
+    let sparks = '';
+    for (let k = 0; k < 6; k++) {
+      const a = k * Math.PI / 3 + .4;
+      sparks += `<circle cx="${b.x}" cy="${b.y}" r="2.6" fill="${b.color}" style="--dx:${Math.round(Math.cos(a) * 34)}px;--dy:${Math.round(Math.sin(a) * 34)}px"/>`;
+    }
+    shapes += `<g id="b${i}" class="balloon"><g class="bb"><ellipse cx="${b.x}" cy="${b.y}" rx="22" ry="27" fill="${b.color}"/>`
+      + `<path d="M${b.x - 4} ${bottom + 4}L${b.x} ${bottom - 1}L${b.x + 4} ${bottom + 4}z" fill="${b.color}"/>`
+      + `<ellipse cx="${b.x - 8}" cy="${b.y - 10}" rx="4.5" ry="7.5" fill="#fff" opacity=".35" transform="rotate(20 ${b.x - 8} ${b.y - 10})"/></g>`
+      + `<g class="sparks">${sparks}</g></g>`;
+  });
+  $('balloons').innerHTML = strings + shapes;
+
+  const colors = BALLOONS.map(b => b.color);
+  let bits = '';
+  for (let i = 0; i < 22; i++) {
+    bits += `<rect x="${(i * 53 + 7) % 330 - 15}" y="${-8 - (i * 17) % 34}" width="5" height="8" fill="${colors[i % colors.length]}" style="animation-delay:${(i * 89 % 700)}ms"/>`;
+  }
+  $('confetti').innerHTML = bits;
+}
+
+function moodOf(g) {
+  const status = gameStatus(g);
+  if (status === 'won') return 'win';
+  if (status === 'lost') return 'fell';
+  return wrongCount(g) >= 4 ? 'worried' : 'happy';
+}
+
+function updateScene(animate) {
+  const status = gameStatus(game);
+  const wrong = wrongCount(game);
+  const popped = status === 'lost' ? MAX_ERRORES : wrong;
+  POP_ORDER.forEach((b, order) => {
+    const gone = order < popped;
+    const justNow = animate && gone && order === wrong - 1;
+    $(`b${b}`).setAttribute('class', 'balloon' + (gone ? ' gone' : '') + (justNow ? ' pop' : ''));
+    $(`s${b}`).setAttribute('class', 'string' + (gone ? ' gone' : ''));
+  });
+  const drop = status === 'lost' ? DROP_FELL : status === 'won' ? 0 : wrong * DROP_PER_ERROR;
+  $('rig').style.transform = `translateY(${drop}px)`;
+  $('scene').setAttribute('class', `mood-${moodOf(game)}`);
+  $('scene').setAttribute('aria-label', status === 'won' ? 'El personaje celebra'
+    : status === 'lost' ? 'El personaje bajó al suelo sin globos'
+    : `Personaje flotando con ${MAX_ERRORES - wrong} globos`);
+}
+
+function renderWord() {
+  const status = gameStatus(game);
+  const letters = [...game.palabra];
+  const known = l => game.guessed.includes(l);
+  $('word').style.setProperty('--n', letters.length);
+  $('word').innerHTML = letters.map(l => {
+    const shown = known(l) || status === 'lost';
+    const cls = status === 'won' ? ' on won' : !known(l) && status === 'lost' ? ' missed' : known(l) ? ' on' : '';
+    return `<span class="slot${cls}">${shown ? l : ''}</span>`;
+  }).join('');
+  const spoken = letters.map(l => (known(l) || status === 'lost' ? l : 'vacía')).join(', ');
+  $('word').setAttribute('aria-label', `Palabra de ${letters.length} letras: ${spoken}`);
+}
+
+function buildKeyboard() {
+  FILAS.forEach((fila, r) => {
+    [...fila].forEach((letter, i) => {
+      const key = document.createElement('button');
+      key.id = `key-${letter}`;
+      key.className = 'key' + (r === 2 && i === 0 ? ' row3' : '');
+      key.textContent = letter;
+      key.setAttribute('aria-label', `Letra ${letter}`);
+      key.addEventListener('click', () => pressLetter(letter));
+      $('keyboard').appendChild(key);
+    });
+  });
+}
+
+function renderKeys() {
+  const over = gameStatus(game) !== 'playing';
+  for (const fila of FILAS) {
+    for (const letter of fila) {
+      const key = $(`key-${letter}`);
+      const used = game.guessed.includes(letter);
+      const state = !used ? '' : game.palabra.includes(letter) ? ' hit' : ' miss';
+      key.className = 'key' + (letter === 'Z' ? ' row3' : '') + state;
+      key.disabled = used || over;
+    }
+  }
+}
+
+function updateHud() {
+  $('left').textContent = `🎈 ${gameStatus(game) === 'lost' ? 0 : MAX_ERRORES - wrongCount(game)}`;
+  $('counter').textContent = mode === 'daily'
+    ? `🔥 ${currentStreak(stats, day)}`
+    : `🏆 ${stats.free.wins} · 🔥 ${stats.free.streak}`;
+}
+
+function updateActions() {
+  const playing = gameStatus(game) === 'playing';
+  $('note').style.display = mode === 'daily' && playing ? 'inline' : 'none';
+  $('btn-action').style.display = mode === 'daily' && playing ? 'none' : 'block';
+  if (mode === 'daily') $('btn-action').textContent = '📊 Ver resultado';
+  else if (!playing) $('btn-action').textContent = '➡️ Otra palabra';
+  else if (game.guessed.length) $('btn-action').textContent = '🏳️ Rendirse';
+  else $('btn-action').textContent = '🔄 Cambiar palabra';
+}
+
+// ---------- Jugar ----------
+function pressLetter(letter) {
+  const result = guess(game, letter);
+  if (result === 'repeat') { toast(`Ya probaste la ${letter}`); return; }
+  if (result === 'invalid') return;
+  if (result === 'hit') {
+    beep(620, .08);
+    if (navigator.vibrate) navigator.vibrate(10);
+  } else {
+    beep(170, .16);
+    if (navigator.vibrate) navigator.vibrate(40);
+  }
+  persist();
+  renderWord();
+  renderKeys();
+  updateScene(result === 'miss');
+  updateHud();
+  updateActions();
+  if (gameStatus(game) !== 'playing') finish();
+}
+
+function finish() {
+  const won = gameStatus(game) === 'won';
+  if (mode === 'daily') {
+    applyDaily(stats, day, won);
+    sendDaily();
+  } else {
+    applyFree(stats, won);
+  }
+  save('ahorcadoStats', stats);
+  updateHud();
+  if (won) { beep(660, .1); setTimeout(() => beep(880, .18), 110); }
+  else { beep(330, .2); setTimeout(() => beep(220, .28), 180); }
+  // Se deja ver el festejo o la caída antes de mostrar el resultado
+  const token = gameId;
+  setTimeout(() => { if (token === gameId) showOver(); }, reducedMotion ? 300 : won ? 1100 : 1700);
+}
+
+function giveUp() {
+  game.gaveUp = true;
+  persist();
+  renderWord();
+  renderKeys();
+  updateScene(false);
+  updateActions();
+  finish();
+}
+
+// ---------- Fin de partida ----------
+function statBox(value, label) {
+  return `<div class="stat"><b>${value}</b><span>${label}</span></div>`;
+}
+
+function rankText({ total, beaten }, lost) {
+  if (total < JuegaYaDiario.MIN_JUGADORES) return '🥇 Estás entre los primeros en jugar el reto de hoy';
+  if (lost || beaten === 0) return `👥 Hoy jugaron ${total} jugadores`;
+  return `👥 Hoy jugaron ${total} jugadores. Superaste a ${beaten}`;
+}
+function sendDaily() {
+  rankPromise = rankPromise || JuegaYaDiario.enviar('ahorcado', dailyValue(game));
+  return rankPromise;
+}
+async function showRank() {
+  const token = gameId;
+  const lost = gameStatus(game) === 'lost';
+  const result = await sendDaily();
+  if (result && token === gameId) $('over-rank').textContent = rankText(result, lost);
+}
+
+function showOver() {
+  const won = gameStatus(game) === 'won';
+  const wrong = wrongCount(game);
+  $('over-title').textContent = !won ? (game.gaveUp ? 'Te rendiste' : '¡Se acabaron los globos!')
+    : wrong === 0 ? '¡Sin un solo error!' : '¡Adivinaste!';
+  $('over-sub').textContent = mode === 'daily' ? `Reto #${day - LAUNCH_DAY + 1}` : `Modo libre · ${game.emoji} ${game.tema}`;
+  $('over-word').innerHTML = `La palabra era <b>${game.palabra}</b>`;
+  $('over-stats').innerHTML = mode === 'daily'
+    ? statBox(wrong, 'Errores') + statBox(currentStreak(stats, day), 'Racha') + statBox(stats.maxStreak, 'Mejor racha')
+    : statBox(wrong, 'Errores') + statBox(stats.free.wins, 'Ganadas') + statBox(stats.free.best, 'Mejor racha');
+  $('btn-primary').textContent = mode === 'daily' ? '♾️ Seguir en modo libre' : '➡️ Otra palabra';
+  $('next-in').style.display = mode === 'daily' ? 'block' : 'none';
+  $('over-rank').textContent = '';
+  updateCountdown();
+  $('over-modal').classList.add('show');
+  if (mode === 'daily') showRank();
+}
+
+function updateCountdown() {
+  const now = new Date();
+  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  const s = Math.max(0, Math.floor((next - now) / 1000));
+  const pad = v => String(v).padStart(2, '0');
+  $('next-in').textContent = `Próximo reto en ${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
+}
+// A medianoche, el reto del día abierto pasa a ser el nuevo
+setInterval(() => {
+  updateCountdown();
+  if (mode === 'daily' && dayIndex() !== day) startDaily();
+}, 1000);
+
+// El texto para compartir no incluye la palabra ni el tema
+function shareText() {
+  const url = 'https://www.juegaya.app/juego/ahorcado?utm_source=compartido';
+  if (mode === 'daily') {
+    const wrong = wrongCount(game);
+    const balloons = '🎈'.repeat(MAX_ERRORES - wrong) + '💥'.repeat(wrong);
+    const line = gameStatus(game) === 'won'
+      ? `✅ Adiviné la palabra con ${wrong} ${wrong === 1 ? 'error' : 'errores'}`
+      : '💥 Hoy no la adiviné';
+    return `🎈 Juego del Ahorcado #${day - LAUNCH_DAY + 1}\n${balloons}\n${line} · 🔥 Racha: ${currentStreak(stats, day)}\n\n¿Puedes superarme?\n${url}`;
+  }
+  const { wins, best } = stats.free;
+  return `🎈 Juego del Ahorcado, modo libre\n✅ ${wins} ${wins === 1 ? 'palabra adivinada' : 'palabras adivinadas'} · 🏆 Mejor racha: ${best}\n\n¿Puedes superarme?\n${url}`;
+}
+$('btn-share').addEventListener('click', async () => {
+  const text = shareText();
+  if (navigator.share) {
+    try { await navigator.share({ text }); return; } catch (err) { if (err.name === 'AbortError') return; }
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('¡Copiado! Pégalo donde quieras');
+  } catch {
+    toast('No se pudo copiar');
+  }
+});
+
+let toastTimer;
+function toast(msg) {
+  $('toast').textContent = msg;
+  $('toast').classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('toast').classList.remove('show'), 1800);
+}
+
+// ---------- Sonido ----------
+let audio;
+function beep(freq, dur) {
+  if (!soundOn) return;
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.type = 'triangle';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(.12, audio.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, audio.currentTime + dur);
+    o.connect(g).connect(audio.destination);
+    o.start();
+    o.stop(audio.currentTime + dur);
+  } catch {}
+}
+
+// ---------- Botones y teclado ----------
+function closeHelp() { $('help-modal').classList.remove('show'); }
+
+function onActionButton() {
+  if (mode === 'daily') { showOver(); return; }
+  if (gameStatus(game) === 'playing' && game.guessed.length) { giveUp(); return; }
+  nextFreeGame();
+}
+function onPrimary() {
+  startFree(mode === 'free');
+}
+function onThemeChange(value) {
+  chosenTheme = value;
+  save('ahorcadoTema', chosenTheme);
+  // Una partida empezada no se cambia: así no se puede esquivar una palabra sin perder la racha
+  if (gameStatus(game) === 'playing' && game.guessed.length) toast('El tema cambia en la próxima palabra');
+  else nextFreeGame();
+}
+
+$('tab-daily').addEventListener('click', () => { if (mode !== 'daily') startDaily(); });
+$('tab-free').addEventListener('click', () => { if (mode !== 'free') startFree(false); });
+$('btn-action').addEventListener('click', onActionButton);
+$('btn-primary').addEventListener('click', onPrimary);
+$('over-modal').addEventListener('click', e => { if (e.target === $('over-modal')) $('over-modal').classList.remove('show'); });
+$('btn-help').addEventListener('click', () => $('help-modal').classList.add('show'));
+$('close-help').addEventListener('click', closeHelp);
+$('btn-sound').addEventListener('click', () => {
+  soundOn = !soundOn;
+  save('ahorcadoSonido', soundOn);
+  $('btn-sound').textContent = soundOn ? '🔊' : '🔇';
+});
+$('btn-sound').textContent = soundOn ? '🔊' : '🔇';
+$('theme').innerHTML = `<option value="${TEMA_AZAR}">🎲 Tema al azar</option>`
+  + NOMBRES_TEMAS.map(t => `<option value="${t.nombre}">${t.emoji} ${t.nombre}</option>`).join('');
+$('theme').value = chosenTheme;
+$('theme').addEventListener('change', e => onThemeChange(e.target.value));
+
+function onKeyDown(e) {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const onControl = e.target && e.target.closest && e.target.closest('select, a, .btn, .tab, .mini-btn');
+  if ($('help-modal').classList.contains('show')) {
+    if (e.key === 'Escape' || (e.key === 'Enter' && !onControl)) closeHelp();
+    return;
+  }
+  if ($('over-modal').classList.contains('show')) {
+    if (e.key === 'Escape') $('over-modal').classList.remove('show');
+    else if (e.key === 'Enter' && !onControl) $('btn-primary').click();
+    return;
+  }
+  if (e.target && e.target.tagName === 'SELECT') return;
+  const letter = normalizeKey(e.key);
+  if (letter) {
+    e.preventDefault();
+    pressLetter(letter);
+  }
+}
+document.addEventListener('keydown', onKeyDown);
+
+// ---------- Inicio ----------
+buildScene();
+buildKeyboard();
+startDaily();
+if (!load('ahorcadoVioAyuda', false)) {
+  $('help-modal').classList.add('show');
+  save('ahorcadoVioAyuda', true);
+}
+window.focus();
+</script>
+</body>
+</html>

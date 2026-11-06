@@ -18,6 +18,8 @@ const NAV: NavGroup[] = [
     { label: 'Sociales',     href: '/juegos/sociales',      emoji: '👯', color: '#c084fc' },
   ] },
   { title: 'Categorías', items: [
+    { label: 'Palabras',     href: '/juegos/palabras',      emoji: '📝', color: '#fbbf24' },
+    { label: 'Cartas',       href: '/juegos/cartas',        emoji: '🃏', color: '#f87171' },
     { label: 'Inteligencia', href: '/juegos/inteligencia',  emoji: '🧠', color: '#f9a8d4' },
     { label: 'Arcade',       href: '/juegos/arcade',        emoji: '🕹️', color: '#a78bfa' },
     { label: 'Puzzle',       href: '/juegos/puzzle',        emoji: '🧩', color: '#34d399' },

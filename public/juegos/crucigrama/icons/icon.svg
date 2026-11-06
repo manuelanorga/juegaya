@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#23236a"/><stop offset="1" stop-color="#10122e"/></linearGradient></defs>
+  <rect width="256" height="256" fill="url(#bg)"/>
+  <g fill="#34346e">
+    <rect x="12" y="12" width="52" height="52" rx="7"/><rect x="132" y="12" width="52" height="52" rx="7"/><rect x="192" y="12" width="52" height="52" rx="7"/>
+    <rect x="12" y="132" width="52" height="52" rx="7"/><rect x="132" y="132" width="52" height="52" rx="7"/><rect x="192" y="132" width="52" height="52" rx="7"/>
+    <rect x="12" y="192" width="52" height="52" rx="7"/><rect x="132" y="192" width="52" height="52" rx="7"/><rect x="192" y="192" width="52" height="52" rx="7"/>
+  </g>
+  <g fill="#ffd000">
+    <rect x="12" y="72" width="52" height="52" rx="7"/><rect x="72" y="72" width="52" height="52" rx="7"/>
+    <rect x="132" y="72" width="52" height="52" rx="7"/><rect x="192" y="72" width="52" height="52" rx="7"/>
+  </g>
+  <g fill="#22d3ee">
+    <rect x="72" y="12" width="52" height="52" rx="7"/><rect x="72" y="132" width="52" height="52" rx="7"/><rect x="72" y="192" width="52" height="52" rx="7"/>
+  </g>
+  <g font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="700" text-anchor="middle" fill="#10122e">
+    <text x="98" y="52">P</text>
+    <text x="38" y="112">C</text><text x="98" y="112">A</text><text x="158" y="112">S</text><text x="218" y="112">A</text>
+    <text x="98" y="172">T</text>
+    <text x="98" y="232">O</text>
+  </g>
+</svg>

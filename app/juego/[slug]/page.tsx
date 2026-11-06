@@ -34,7 +34,7 @@ export async function generateMetadata(
   return {
     title,
     description,
-    keywords: game.tags.map(t => t.toLowerCase()),
+    keywords: game.keywords ?? game.tags.map(t => t.toLowerCase()),
     alternates: { canonical: url },
     openGraph: {
       type: 'website',

@@ -56,8 +56,8 @@ function GameCard({ game, visits, fluid }: { game: Game; visits: string | null; 
 
 function RetoCard({ game }: { game: Game }) {
   return (
-    <Link href={`/juego/${game.slug}`} className="group flex items-center gap-3 p-2.5 rounded-2xl bg-[#1e1e34] border border-white/5 hover:border-yellow-400/40 transition-colors min-w-0">
-      <div className="w-14 h-14 md:w-16 md:h-16 flex-shrink-0 rounded-xl overflow-hidden relative bg-[#262640]">
+    <Link href={`/juego/${game.slug}`} className="group flex items-center gap-2 md:gap-3 p-2 md:p-2.5 rounded-2xl bg-[#1e1e34] border border-white/5 hover:border-yellow-400/40 transition-colors min-w-0">
+      <div className="w-12 h-12 md:w-16 md:h-16 flex-shrink-0 rounded-xl overflow-hidden relative bg-[#262640]">
         {game.icon && <img src={game.icon} alt={game.name} width={256} height={256} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />}
       </div>
       <div className="min-w-0">
@@ -186,10 +186,11 @@ export default async function Home() {
         <p className="text-sm text-white/50 leading-relaxed">
           JuegaYa reúne juegos gratis para jugar directo en el navegador, desde el celular o la computadora, sin instalar nada ni crear una cuenta.
           Cada día puedes resolver un reto nuevo en los <Link href="/juegos/diarios" className="text-yellow-400 hover:underline">juegos diarios</Link>,
-          como Palabro o la Sopa de Letras del Día, y comparar tu resultado con el de otros jugadores.
-          También encontrarás <Link href="/juegos/puzzle" className="text-yellow-400 hover:underline">juegos de puzzle</Link> como Bloques Locos y Flechas Locas,
-          {' '}<Link href="/juegos/inteligencia" className="text-yellow-400 hover:underline">juegos de inteligencia</Link> y{' '}
-          <Link href="/juegos/accion" className="text-yellow-400 hover:underline">juegos de acción</Link>, con partidas cortas para cualquier momento.
+          como Palabro, el crucigrama, el sudoku o la sopa de letras, y comparar tu resultado con el de otros jugadores.
+          También encontrarás <Link href="/juegos/palabras" className="text-yellow-400 hover:underline">juegos de palabras</Link> como el ahorcado,
+          {' '}<Link href="/juegos/cartas" className="text-yellow-400 hover:underline">juegos de cartas</Link> como el solitario clásico,
+          {' '}<Link href="/juegos/puzzle" className="text-yellow-400 hover:underline">juegos de puzzle</Link> como Bloques Locos y Flechas Locas,
+          y <Link href="/juegos/accion" className="text-yellow-400 hover:underline">juegos de acción</Link>, con partidas cortas para cualquier momento.
         </p>
       </section>
 
