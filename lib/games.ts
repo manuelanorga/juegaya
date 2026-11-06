@@ -1,6 +1,8 @@
 export interface Game {
   slug: string
   name: string
+  /** Título para buscadores, si conviene distinto del habitual "Nombre — Jugar Gratis Online" */
+  seoTitle?: string
   icon: string | null
   iframeSrc: string
   category: string
@@ -251,6 +253,44 @@ export const GAMES: Game[] = [
       { q: '¿Se guarda mi progreso?', a: 'Tus estadísticas, racha de victorias y el estado de la partida diaria se guardan en tu navegador, así que podés volver cuando quieras. Si cambiás de dispositivo o limpiás caché, empezás de cero.' },
       { q: '¿Puedo compartir mi resultado?', a: 'Sí, hay un botón de compartir que genera el resultado con cuadraditos de colores sin revelar la palabra, para que puedas pegarlo en WhatsApp, Twitter o donde quieras sin hacerle spoiler a tus amigos.' },
     ],
+  },
+  {
+    slug: 'bloques-locos',
+    name: 'Bloques Locos',
+    seoTitle: 'Bloques Locos — Juego de Bloques Gratis Online',
+    icon: '/juegos/bloques-locos/icons/icon-256.png',
+    emoji: '🧱',
+    iframeSrc: '/juegos/bloques-locos/index.html',
+    aspectRatio: '3/4',
+    category: 'Puzzle',
+    categorySlug: 'puzzle',
+    badge: 'Nuevo',
+    difficulty: 50,
+    color: 'from-violet-900 to-pink-800',
+    tags: ['Puzzle', 'Bloques', 'Diario', 'Casual', 'Mobile', 'Estrategia'],
+    description: 'Bloques Locos es un juego de bloques gratis online: arrastra las piezas al tablero, completa filas y columnas para borrarlas y encadena combos para sumar más puntos. Este puzzle de bloques no tiene límite de tiempo, se juega en el navegador sin descargar nada y funciona en el celular y en la computadora. Cada día hay un reto con las mismas piezas para todos, para que compares tu puntaje y mantengas tu racha. Además, el modo libre te deja jugar todas las partidas que quieras para batir tu récord.',
+    tips: [
+      'Mantén el centro del tablero lo más libre posible: es donde caben las piezas grandes.',
+      'Deja espacio para el cuadrado de 3×3 y las líneas de 5: son las piezas que suelen terminar la partida.',
+      'Antes de soltar una pieza, mira las otras dos: colocarlas en mal orden puede dejarte sin lugar.',
+      'Prepara varias líneas casi completas y bórralas de una vez: dos líneas juntas valen más que dos por separado.',
+      'Sigue borrando en jugadas seguidas para mantener el combo y multiplicar los puntos.',
+      'Si una pieza se ve apagada en la bandeja es porque no cabe por ahora: libera espacio con otra pieza.',
+    ],
+    faqs: [
+      { q: '¿Cómo se juega a Bloques Locos?', a: 'Arrastra las tres piezas de abajo hasta el tablero de 8×8. Cuando completas una fila o una columna, se borra y ganas puntos. Al colocar las tres piezas recibes otras tres. La partida termina cuando ninguna de las piezas disponibles cabe en el tablero.' },
+      { q: '¿Tiene límite de tiempo?', a: 'No. Puedes pensar cada jugada todo lo que quieras. Lo único que termina la partida es quedarte sin espacio para las piezas que tienes.' },
+      { q: '¿Cómo se consiguen más puntos?', a: 'Cada casilla colocada da 1 punto. Borrar una línea da 10, dos a la vez dan 30, tres dan 60, y así sucesivamente. Si borras en jugadas seguidas, el combo multiplica esos puntos. Dejar el tablero completamente vacío suma 50 más.' },
+      { q: '¿Qué es el reto del día?', a: 'Cada día todos los jugadores reciben las mismas piezas en el mismo orden. Solo cuenta tu primer intento, y al terminar puedes ver con cuántos jugadores te comparas ese día y compartir tu resultado. Cambia a la medianoche de tu hora local.' },
+      { q: '¿En qué se diferencia el modo libre?', a: 'En el modo libre las piezas son aleatorias, puedes jugar todas las partidas que quieras y compites contra tu propio récord. No cuenta para la racha diaria.' },
+      { q: '¿Se guarda mi partida?', a: 'Sí. Tu partida, tu racha y tu récord se guardan en tu navegador, así que puedes cerrar la página y continuar después. Si cambias de dispositivo o borras los datos del navegador, empiezas de cero.' },
+      { q: '¿Es gratis y funciona en el celular?', a: 'Sí. Es gratis, no necesitas registrarte ni descargar nada, y se juega con un dedo en cualquier celular, tablet o computadora.' },
+    ],
+    guide: {
+      objetivo: "Consigue la mayor cantidad de puntos colocando piezas en un tablero de 8 por 8. Cuando una fila o una columna queda completa, se borra y deja espacio libre. Recibes tres piezas a la vez y, cuando las colocas todas, llegan otras tres. No hay límite de tiempo: la partida termina solo cuando ninguna de las piezas que te quedan cabe en el tablero. En el reto del día todos reciben las mismas piezas, así que puedes comparar tu resultado con el de los demás.",
+      controles: "En el celular arrastra una pieza con el dedo desde la bandeja de abajo hasta el tablero; se muestra un poco por encima del dedo para que veas dónde cae, y una sombra marca su lugar exacto. En la computadora haz lo mismo con el mouse. Si la sueltas donde no cabe, vuelve a la bandeja sin penalización. Las piezas no se pueden girar. Arriba puedes cambiar entre el reto del día y el modo libre, elegir los colores y apagar el sonido.",
+      estrategia: "Piensa en las tres piezas como un solo turno: decide el orden antes de soltar la primera, porque una mala colocación puede dejar sin lugar a las siguientes. Procura tener siempre libre una zona de 3 por 3 y una fila o columna larga, ya que el cuadrado grande y las líneas de cinco son las piezas que más partidas terminan. Evita dejar huecos sueltos de una casilla, que son difíciles de rellenar. Para sumar mucho, prepara varias líneas a la vez y bórralas juntas con una sola pieza, y encadena borrados en jugadas seguidas para mantener el combo activo.",
+    },
   },
   {
     slug: 'sopa-de-letras',

@@ -28,7 +28,7 @@ export async function generateMetadata(
   const { slug } = await params
   const game = getGame(slug)
   if (!game) return {}
-  const title = `${game.name} — Jugar Gratis Online`
+  const title = game.seoTitle ?? `${game.name} — Jugar Gratis Online`
   const description = metaDescription(game.description)
   const url = `/juego/${game.slug}`
   return {
