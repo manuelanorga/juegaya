@@ -1,18 +1,36 @@
 import type { Game } from './games'
+import { CONTENIDO_CATEGORIAS } from './categorias-contenido'
 
-export interface Categoria { title: string; description: string; descriptionFull: string; filter: (g: Game) => boolean }
+/** Texto propio que se muestra debajo de los juegos de la categoría */
+export interface ContenidoCategoria {
+  titulo: string
+  parrafos: string[]
+  /** Recomendaciones con enlace a cada juego */
+  eleccion?: { titulo: string; items: { slug: string; texto: string }[] }
+}
+
+export interface Categoria {
+  title: string
+  description: string
+  descriptionFull: string
+  filter: (g: Game) => boolean
+  /** Listados útiles para navegar pero sin texto propio: no se indexan */
+  noindex?: boolean
+}
+
+/** Mínimo de juegos para que una categoría tenga valor propio en Google */
+export const MIN_JUEGOS_INDEXABLE = 3
 
 export const CATEGORIAS: Record<string, Categoria> = {
-  'populares':           { title: 'Juegos Populares', description: 'Los juegos más jugados de JuegaYa.', descriptionFull: 'Los juegos más jugados de JuegaYa por los jugadores de Latinoamérica. Juega gratis directo en el navegador, sin descargar nada.', filter: () => true },
-  'nuevos':              { title: 'Juegos Nuevos', description: 'Los últimos juegos agregados a JuegaYa.', descriptionFull: 'Los últimos juegos agregados a JuegaYa. Siempre hay algo nuevo para descubrir. Sin descargar, sin registro, 100% gratis.', filter: () => true },
+  'populares':           { title: 'Juegos Populares', description: 'Los juegos más jugados de JuegaYa.', descriptionFull: 'Los juegos más jugados de JuegaYa por los jugadores de Latinoamérica. Juega gratis directo en el navegador, sin descargar nada.', filter: () => true, noindex: true },
+  'nuevos':              { title: 'Juegos Nuevos', description: 'Los últimos juegos agregados a JuegaYa.', descriptionFull: 'Los últimos juegos agregados a JuegaYa. Siempre hay algo nuevo para descubrir. Sin descargar, sin registro, 100% gratis.', filter: () => true, noindex: true },
   'inteligencia':        { title: 'Juegos de Inteligencia', description: 'Tests de IQ, lógica y memoria.', descriptionFull: 'Tests de IQ, lógica y memoria para poner a prueba tu mente. ¿Qué tan rápido piensas? Descúbrelo gratis online.', filter: g => g.categorySlug === 'inteligencia' || g.tags?.includes('IQ') },
-  'virales':             { title: 'Juegos Virales', description: 'Los más compartidos por WhatsApp en Latam.', descriptionFull: 'Los juegos más compartidos por WhatsApp, TikTok e Instagram en Latinoamérica. Reta a tus amigos y presume tu puntaje.', filter: g => g.tags?.includes('Viral') },
-  'dificiles':           { title: 'Juegos Difíciles', description: 'Solo para valientes: pon a prueba tu paciencia.', descriptionFull: 'Solo para valientes. Juegos con dificultad extrema que pondrán a prueba tus reflejos y paciencia. ¿Puedes completarlos?', filter: g => (g.difficulty || 0) >= 68 },
+  'virales':             { title: 'Juegos Virales', description: 'Los más compartidos por WhatsApp en Latam.', descriptionFull: 'Los juegos más compartidos por WhatsApp, TikTok e Instagram en Latinoamérica. Reta a tus amigos y presume tu puntaje.', filter: g => g.tags?.includes('Viral'), noindex: true },
+  'dificiles':           { title: 'Juegos Difíciles', description: 'Solo para valientes: pon a prueba tu paciencia.', descriptionFull: 'Solo para valientes. Juegos con dificultad extrema que pondrán a prueba tus reflejos y paciencia. ¿Puedes completarlos?', filter: g => (g.difficulty || 0) >= 68, noindex: true },
   'sociales':            { title: 'Juegos Sociales', description: 'Para jugar con amigos o en pareja.', descriptionFull: 'Juegos para jugar con amigos, en pareja o retar a quien sea. Comparte tu resultado y demuestra quién es el mejor.', filter: g => g.tags?.includes('Sociales') },
   'diarios':             { title: 'Juegos Diarios', description: 'Un reto nuevo cada día, igual para todos.', descriptionFull: 'Juegos con un reto nuevo cada día, el mismo para todos los jugadores. Mantén tu racha, compara tu resultado con tus amigos y vuelve mañana por otro. Gratis, en español y sin descargar nada.', filter: g => g.tags?.includes('Diario') },
   'palabras':            { title: 'Juegos de Palabras', description: 'Ahorcado, crucigramas, sopas de letras y más.', descriptionFull: 'Juegos de palabras gratis online en español: ahorcado, crucigramas, sopas de letras y adivinar la palabra del día. Pon a prueba tu vocabulario sin descargar nada, en el celular o la computadora.', filter: g => g.tags?.includes('Palabras') },
   'cartas':              { title: 'Juegos de Cartas', description: 'Clásicos de cartas para jugar en el navegador.', descriptionFull: 'Juegos de cartas gratis online para jugar en el navegador, como el solitario clásico. Sin descargar y sin registro, en el celular o la computadora.', filter: g => g.categorySlug === 'cartas' },
-  'rapidos':             { title: 'Juegos Rápidos', description: 'Partidas de 30 a 60 segundos. Perfectos para móvil.', descriptionFull: 'Partidas de 30 a 60 segundos. Perfectos para móvil, para el recreo o cuando tienes 1 minuto libre. Sin complicaciones.', filter: g => g.tags?.includes('Mobile') },
   'arcade':              { title: 'Juegos Arcade', description: 'Clásicos del arcade gratis online. Sin descargar.', descriptionFull: 'Los mejores juegos arcade gratis online. Clásicos renovados y nuevos títulos que puedes jugar directo en el navegador sin descargar nada.', filter: g => g.categorySlug === 'arcade' },
   'puzzle':              { title: 'Juegos de Puzzle', description: 'Desafía tu mente con los mejores puzzles online.', descriptionFull: 'Desafía tu mente con los mejores puzzles online gratis. Desde match-3 hasta rompecabezas lógicos. Sin descargar, 100% gratis.', filter: g => g.categorySlug === 'puzzle' },
   'carreras':            { title: 'Juegos de Carreras', description: 'Velocidad pura. Los mejores juegos de carreras gratis.', descriptionFull: 'Velocidad pura. Los mejores juegos de carreras gratis online. Coches, motos y más. Sin descargar, juega directo en el navegador.', filter: g => g.categorySlug === 'carreras' },
@@ -24,9 +42,14 @@ export const CATEGORIAS: Record<string, Categoria> = {
   'simulacion':          { title: 'Juegos de Simulación', description: 'Simula mundos, ciudades y vidas completas.', descriptionFull: 'Simula mundos, ciudades y vidas completas. Los mejores juegos de simulación gratis online sin descargar en español.', filter: g => g.categorySlug === 'simulacion' },
   'estrategia':          { title: 'Juegos de Estrategia', description: 'Piensa antes de actuar.', descriptionFull: 'Piensa antes de actuar. Los mejores juegos de estrategia gratis online. Torre de defensa, conquista y más. Sin descargar.', filter: g => g.categorySlug === 'estrategia' },
   'juegos-gratis-online':{ title: 'Juegos Gratis Online', description: 'Todos los juegos gratis online en un solo lugar.', descriptionFull: 'Todos los juegos gratis online de JuegaYa en un solo lugar. Sin descargar, sin registro, 100% gratis y en español para Latinoamérica.', filter: () => true },
-  'juegos-sin-descargar':{ title: 'Juegos Sin Descargar', description: 'Juega directo en el navegador. Sin instalaciones.', descriptionFull: 'Juega directo en el navegador sin descargar nada. Todos nuestros juegos funcionan en PC, móvil y tablet sin instalaciones.', filter: () => true },
   'juegos-multijugador': { title: 'Juegos Multijugador', description: 'Compite contra otros jugadores en tiempo real.', descriptionFull: 'Compite contra otros jugadores en tiempo real. Los mejores juegos multijugador gratis online para Latinoamérica.', filter: g => g.tags?.includes('Multijugador') },
   'juegos-para-celular': { title: 'Juegos para Celular', description: 'Optimizados para Android e iOS.', descriptionFull: 'Juegos optimizados para Android e iOS. Juega desde tu celular sin descargar nada. 100% gratis, 100% en español.', filter: g => g.tags?.includes('Mobile') },
+}
+
+/** Solo las categorías con juegos suficientes y texto propio van a Google y al sitemap */
+export function esIndexable(slug: string, games: Game[]) {
+  const cat = CATEGORIAS[slug]
+  return !!cat && !cat.noindex && !!CONTENIDO_CATEGORIAS[slug] && gamesForCategoria(slug, games).length >= MIN_JUEGOS_INDEXABLE
 }
 
 export function gamesForCategoria(slug: string, games: Game[]) {

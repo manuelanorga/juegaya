@@ -1,3 +1,4 @@
+import { guiaDeJuego } from '@/lib/guias'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { GAMES, getGame, getAllSlugs, type Game } from '@/lib/games'
@@ -105,7 +106,8 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd(game)).replace(/</g, '\\u003c') }}
       />
-      <GamePage game={game} visits={formatVisits(counts[game.slug])} related={related} />
+      <GamePage game={game} visits={formatVisits(counts[game.slug])} related={related}
+        guia={guiaDeJuego(game.slug)} />
     </>
   )
 }

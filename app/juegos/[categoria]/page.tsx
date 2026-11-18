@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { GAMES } from '@/lib/games'
-import { CATEGORIAS, gamesForCategoria } from '@/lib/categorias'
+import { CATEGORIAS, gamesForCategoria, esIndexable } from '@/lib/categorias'
+import { CONTENIDO_CATEGORIAS } from '@/lib/categorias-contenido'
 import { getVisitCounts, formatVisits } from '@/lib/stats'
 import CategoriaView from './CategoriaView'
 
@@ -17,15 +18,14 @@ export async function generateMetadata(
   const { categoria } = await params
   const cat = CATEGORIAS[categoria]
   if (!cat) return {}
-  const vacia = gamesForCategoria(categoria, GAMES).length === 0
   const title = /^Juegos/.test(cat.title) && !/Gratis/.test(cat.title) ? `${cat.title} Gratis Online` : cat.title
   return {
     title,
     description: cat.descriptionFull,
     alternates: { canonical: `/juegos/${categoria}` },
     openGraph: { title: `${title} | JuegaYa`, description: cat.description, url: `/juegos/${categoria}`, images: ['/og.jpg'] },
-    // Sin juegos propios mostraría el catálogo completo: contenido duplicado
-    ...(vacia && { robots: { index: false, follow: true } }),
+    // Pocos juegos, catálogo repetido o sin texto propio: útil para navegar, pero no para Google
+    ...(!esIndexable(categoria, GAMES) && { robots: { index: false, follow: true } }),
   }
 }
 
@@ -44,5 +44,5 @@ export default async function CategoriaPage({ params }: { params: Promise<{ cate
     if (label) visits[g.slug] = label
   }
 
-  return <CategoriaView cat={{ title, description, descriptionFull }} juegos={juegos} visits={visits} />
+  return <CategoriaView cat={{ title, description, descriptionFull }} juegos={juegos} visits={visits} contenido={CONTENIDO_CATEGORIAS[categoria]} />
 }

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { gameBadge, type Game } from '@/lib/games'
+import type { ContenidoCategoria } from '@/lib/categorias'
 
 const PER_PAGE = 30
 
@@ -11,11 +12,12 @@ interface Props {
   juegos: Game[]
   /** Etiqueta de visitas reales por slug (solo los que superan el mínimo) */
   visits: Record<string, string>
+  /** Texto propio de la categoría, debajo de los juegos */
+  contenido?: ContenidoCategoria
 }
 
-export default function CategoriaView({ cat, juegos, visits }: Props) {
+export default function CategoriaView({ cat, juegos, visits, contenido }: Props) {
   const router = useRouter()
-  const [expanded, setExpanded] = useState(false)
   const [page, setPage] = useState(1)
 
   const totalPages = Math.ceil(juegos.length / PER_PAGE)
@@ -48,18 +50,8 @@ export default function CategoriaView({ cat, juegos, visits }: Props) {
           </button>
         </div>
 
-        {/* Descripción expandible */}
         <div className="max-w-3xl">
-          <p className="text-white/40 text-sm leading-relaxed">
-            {expanded ? cat.descriptionFull : cat.description}
-            {' '}
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="text-yellow-400 font-semibold hover:underline text-sm"
-            >
-              {expanded ? 'Ver menos' : 'Ver más'}
-            </button>
-          </p>
+          <p className="text-white/50 text-sm leading-relaxed">{cat.descriptionFull}</p>
         </div>
 
         {/* Contador */}
@@ -129,6 +121,44 @@ export default function CategoriaView({ cat, juegos, visits }: Props) {
           </div>
         )}
       </div>
+
+      {contenido && <Contenido contenido={contenido} juegos={juegos} />}
     </div>
+  )
+}
+
+function Contenido({ contenido, juegos }: { contenido: ContenidoCategoria; juegos: Game[] }) {
+  const bySlug = new Map(juegos.map(g => [g.slug, g]))
+  const items = contenido.eleccion?.items.filter(i => bySlug.has(i.slug)) ?? []
+  return (
+    <section className="px-4 md:px-8 pb-12 max-w-3xl">
+      <h2 className="text-lg font-black mb-3">{contenido.titulo}</h2>
+      {contenido.parrafos.map((p, i) => (
+        <p key={i} className="text-sm text-white/60 leading-relaxed mb-3">{p}</p>
+      ))}
+      {items.length > 0 && (
+        <>
+          <h2 className="text-lg font-black mt-8 mb-3">{contenido.eleccion!.titulo}</h2>
+          <ul className="space-y-2">
+            {items.map(({ slug, texto }) => {
+              const g = bySlug.get(slug)!
+              return (
+                <li key={slug}>
+                  <Link href={`/juego/${slug}`} className="flex items-center gap-3 p-2.5 rounded-xl bg-[#1e1e34] border border-white/5 hover:border-yellow-400/40 transition-colors">
+                    {g.icon
+                      ? <img src={g.icon} alt="" width={48} height={48} loading="lazy" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+                      : <span className="w-12 h-12 flex items-center justify-center text-2xl flex-shrink-0">{g.emoji || '🎮'}</span>}
+                    <span className="text-sm leading-snug">
+                      <span className="font-black text-white">{g.name}.</span>{' '}
+                      <span className="text-white/60">{texto}</span>
+                    </span>
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </>
+      )}
+    </section>
   )
 }

@@ -188,15 +188,17 @@ export default async function Home() {
           Cada día puedes resolver un reto nuevo en los <Link href="/juegos/diarios" className="text-yellow-400 hover:underline">juegos diarios</Link>,
           como Palabro, el crucigrama, el sudoku o la sopa de letras, y comparar tu resultado con el de otros jugadores.
           También encontrarás <Link href="/juegos/palabras" className="text-yellow-400 hover:underline">juegos de palabras</Link> como el ahorcado,
-          {' '}<Link href="/juegos/cartas" className="text-yellow-400 hover:underline">juegos de cartas</Link> como el solitario clásico,
+          {' '}juegos de cartas como el <Link href="/juego/solitario" className="text-yellow-400 hover:underline">solitario clásico</Link>,
           {' '}<Link href="/juegos/puzzle" className="text-yellow-400 hover:underline">juegos de puzzle</Link> como Bloques Locos y Flechas Locas,
-          y <Link href="/juegos/accion" className="text-yellow-400 hover:underline">juegos de acción</Link>, con partidas cortas para cualquier momento.
+          y juegos de acción como <Link href="/juego/cazador-zombies" className="text-yellow-400 hover:underline">Cazador de Zombies</Link>, con partidas cortas para cualquier momento.
+          Si quieres mejorar, en las <Link href="/guias" className="text-yellow-400 hover:underline">guías</Link> explicamos técnicas y trucos para cada juego.
         </p>
       </section>
 
       {/* FOOTER */}
       <footer className="border-t border-white/5 bg-[#0e0e1a] py-6 px-4 md:px-6">
         <div className="flex flex-wrap gap-4 text-xs text-white/30 font-semibold">
+          <Link href="/guias" className="hover:text-white transition-colors">Guías</Link>
           <Link href="/sobre-nosotros" className="hover:text-white transition-colors">Sobre nosotros</Link>
           <Link href="/contacto" className="hover:text-white transition-colors">Contacto</Link>
           <Link href="/terminos" className="hover:text-white transition-colors">Términos</Link>

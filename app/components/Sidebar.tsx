@@ -12,8 +12,8 @@ const NAV: NavGroup[] = [
     { label: 'Populares',    href: '/juegos/populares',     emoji: '🔥', color: '#fb923c' },
     { label: 'Nuevos',       href: '/juegos/nuevos',        emoji: '✨', color: '#facc15' },
     { label: 'Diarios',      href: '/juegos/diarios',       emoji: '📅', color: '#22c55e' },
+    { label: 'Guías',        href: '/guias',                emoji: '📖', color: '#5eead4' },
     { label: 'Virales',      href: '/juegos/virales',       emoji: '😂', color: '#f472b6' },
-    { label: 'Rápidos',      href: '/juegos/rapidos',       emoji: '⚡', color: '#fde047' },
     { label: 'Difíciles',    href: '/juegos/dificiles',     emoji: '💀', color: '#f87171' },
     { label: 'Sociales',     href: '/juegos/sociales',      emoji: '👯', color: '#c084fc' },
   ] },
@@ -34,7 +34,6 @@ const NAV: NavGroup[] = [
   ] },
   { title: 'Más formas de jugar', items: [
     { label: 'Juegos gratis online', href: '/juegos/juegos-gratis-online', emoji: '🎁', color: '#fb7185' },
-    { label: 'Sin descargar',        href: '/juegos/juegos-sin-descargar', emoji: '🚀', color: '#818cf8' },
     { label: 'Multijugador',         href: '/juegos/juegos-multijugador',  emoji: '🎮', color: '#a3e635' },
     { label: 'Para celular',         href: '/juegos/juegos-para-celular',  emoji: '📱', color: '#38bdf8' },
   ] },

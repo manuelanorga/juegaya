@@ -34,7 +34,7 @@ const injectResponsiveCSS = (e: React.SyntheticEvent<HTMLIFrameElement>) => {
 
 export interface RelatedGame { slug: string; name: string; icon: string | null; emoji?: string }
 
-export default function GamePage({ game, visits, related }: { game: Game; visits: string | null; related: RelatedGame[] }) {
+export default function GamePage({ game, visits, related, guia }: { game: Game; visits: string | null; related: RelatedGame[]; guia?: { slug: string; title: string } }) {
   // Menú nativo de compartir en móvil; en escritorio, WhatsApp Web
   async function share() {
     const url = `${window.location.origin}/juego/${game.slug}`
@@ -218,6 +218,17 @@ export default function GamePage({ game, visits, related }: { game: Game; visits
                   </div>
                 ))}
               </section>
+            )}
+
+            {guia && (
+              <Link href={`/guias/${guia.slug}`} className="flex items-center gap-3 bg-[#1e1e34] rounded-xl border border-yellow-400/20 hover:border-yellow-400/50 transition-colors p-4">
+                <span className="text-2xl" aria-hidden>📖</span>
+                <span className="min-w-0">
+                  <span className="block text-xs font-black text-yellow-400 uppercase tracking-wider">Guía completa</span>
+                  <span className="block font-black text-sm">{guia.title}</span>
+                </span>
+                <span className="ml-auto text-yellow-400 font-black">→</span>
+              </Link>
             )}
 
             {/* AD 300x250 — solo móvil, tras la descripción y lejos del juego */}

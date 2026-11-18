@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Categorías fusionadas: mostraban los mismos juegos que otra página
+  async redirects() {
+    return [
+      { source: "/juegos/juegos-sin-descargar", destination: "/juegos/juegos-gratis-online", permanent: true },
+      { source: "/juegos/rapidos", destination: "/juegos/juegos-para-celular", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {
