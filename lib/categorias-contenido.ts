@@ -111,7 +111,7 @@ export const CONTENIDO_CATEGORIAS: Record<string, ContenidoCategoria> = {
   },
 
   puzzle: {
-    titulo: 'Seis tipos de puzzle distintos',
+    titulo: 'Siete tipos de puzzle distintos',
     parrafos: [
       'Aunque todos son puzzles, cada juego de esta categoría pide una forma distinta de pensar. Algunos tienen reloj y te obligan a decidir rápido; otros no tienen límite de tiempo y premian planear varias jugadas por adelantado.',
       'Si te gusta jugar con calma, empieza por Bloques Locos o 2048: no hay prisa y cada partida es más larga cuanto mejor planeas. Si prefieres algo con tensión, Gelatinas Locas tiene una barra de tiempo que se vacía. Y si buscas un reto que se resuelva, como un acertijo, Flechas Locas tiene una solución exacta en cada tablero.',
@@ -125,6 +125,7 @@ export const CONTENIDO_CATEGORIAS: Record<string, ContenidoCategoria> = {
         { slug: '2048', texto: 'Fusionar números: desliza el tablero y une iguales hasta llegar al 2048.' },
         { slug: 'flechas-locas', texto: 'Ordenar: encuentra en qué orden sacar las flechas para que ninguna choque.' },
         { slug: 'frutas-locas', texto: 'Físicas: une frutas iguales para crear otras más grandes, hasta llegar a la sandía.' },
+        { slug: 'mahjong', texto: 'Emparejar fichas: retira pares iguales que estén libres hasta vaciar el tablero.' },
         { slug: 'buscaminas', texto: 'Deducir: cada número te dice cuántas minas tiene alrededor; abre todo sin pisar ninguna.' },
         { slug: 'gelatinas-locas', texto: 'Combinar contra el reloj: junta tres o más gelatinas iguales antes de que se acabe el tiempo.' },
       ],

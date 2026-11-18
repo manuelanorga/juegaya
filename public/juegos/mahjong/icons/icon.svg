@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2b1f6b"/><stop offset="1" stop-color="#10122e"/></linearGradient>
+    <linearGradient id="face" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffdf6"/><stop offset="1" stop-color="#f1e7cf"/></linearGradient>
+  </defs>
+  <rect width="256" height="256" fill="url(#bg)"/>
+  <rect x="40.04" y="121.03999999999999" width="92" height="119.60000000000001" rx="11.96" fill="#000" opacity=".45"/>
+  <rect x="37.04" y="115.03999999999999" width="92" height="119.60000000000001" rx="11.96" fill="#0f4d44"/>
+  <rect x="34.832" y="112.832" width="92" height="119.60000000000001" rx="11.96" fill="#1f8a7a"/>
+  <rect x="30.416" y="108.416" width="92" height="119.60000000000001" rx="11.96" fill="#ddd0ad"/>
+  <rect x="26" y="104" width="92" height="119.60000000000001" rx="11.96" fill="url(#face)"/><svg x="26" y="104" width="92" height="119.60000000000001" viewBox="0 0 60 78"><text x="4.5" y="19.5" font-size="19" font-weight="900" fill="#1560c0" font-family="Arial Black,Arial,Helvetica,sans-serif">1</text><circle cx="33" cy="49" r="15" fill="#1560c0"/><circle cx="33" cy="49" r="8.7" fill="#fffdf6"/><circle cx="33" cy="49" r="4.5" fill="#e0453a"/></svg>
+  <rect x="148.04" y="121.03999999999999" width="92" height="119.60000000000001" rx="11.96" fill="#000" opacity=".45"/>
+  <rect x="145.04" y="115.03999999999999" width="92" height="119.60000000000001" rx="11.96" fill="#0f4d44"/>
+  <rect x="142.832" y="112.832" width="92" height="119.60000000000001" rx="11.96" fill="#1f8a7a"/>
+  <rect x="138.416" y="108.416" width="92" height="119.60000000000001" rx="11.96" fill="#ddd0ad"/>
+  <rect x="134" y="104" width="92" height="119.60000000000001" rx="11.96" fill="url(#face)"/><svg x="134" y="104" width="92" height="119.60000000000001" viewBox="0 0 60 78"><text x="4.5" y="19.5" font-size="19" font-weight="900" fill="#1560c0" font-family="Arial Black,Arial,Helvetica,sans-serif">1</text><circle cx="33" cy="49" r="15" fill="#1560c0"/><circle cx="33" cy="49" r="8.7" fill="#fffdf6"/><circle cx="33" cy="49" r="4.5" fill="#e0453a"/></svg>
+  <rect x="85" y="48" width="100" height="130" rx="13" fill="#000" opacity=".45"/>
+  <rect x="82" y="42" width="100" height="130" rx="13" fill="#0f4d44"/>
+  <rect x="79.6" y="39.6" width="100" height="130" rx="13" fill="#1f8a7a"/>
+  <rect x="74.8" y="34.8" width="100" height="130" rx="13" fill="#ddd0ad"/>
+  <rect x="70" y="30" width="100" height="130" rx="13" fill="url(#face)"/><svg x="70" y="30" width="100" height="130" viewBox="0 0 60 78"><text x="4.5" y="19.5" font-size="19" font-weight="900" fill="#d11f2a" font-family="Arial Black,Arial,Helvetica,sans-serif">R</text><path d="M33 25 C41 34 49 41 47 54 C45.5 64 39 70 33 70 C25 70 18 64 18 55 C18 47 24 44 26 37 C29 43 32 45 33 49 C36 42 36 34 33 25Z" fill="#d11f2a"/><path d="M33 51 C38 55 39 60 37 64 C35 67 31 67 29 64 C27 60 30 57 33 51Z" fill="#ffc23d"/></svg>
+</svg>

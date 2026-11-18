@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Mahjong Solitario - JuegaYa</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body { background: #111120; color: #fff; font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif; overflow: hidden; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  button { font-family: inherit; }
+  #app { height: 100%; height: 100dvh; max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; padding: 8px 8px 10px; gap: 6px; }
+  .tabs, .hud, .chips, .actions { max-width: 640px; width: 100%; margin: 0 auto; flex-shrink: 0; }
+  .tabs { display: flex; gap: 6px; }
+  .tab { flex: 1; min-height: 36px; padding: 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,.1); background: #1e1e34; color: rgba(255,255,255,.55); font-size: 13px; font-weight: 800; cursor: pointer; }
+  .tab.active { background: #ffd000; border-color: #ffd000; color: #1a1400; }
+  .icon-btn { width: 38px; flex: none; padding: 0; font-size: 15px; }
+  .hud { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 22px; padding: 0 2px; }
+  .label { font-size: 15px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #clock { font-size: 14px; font-weight: 800; color: rgba(255,255,255,.8); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  #clock.pen { animation: pen .6s; }
+  @keyframes pen { 30% { color: #ff7a6b; transform: scale(1.15); } }
+  .chips { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .chip { background: #1e1e34; border: 1px solid rgba(255,255,255,.1); border-radius: 9px; padding: 4px 8px; color: rgba(255,255,255,.8); white-space: nowrap; }
+  .chip.zero { color: #ff8a7a; border-color: rgba(255,122,107,.5); }
+  #btn-hl { margin-left: auto; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 800; }
+  #btn-hl.on { background: #ffd000; color: #1a1400; border-color: #ffd000; }
+
+  #board { flex: 1; min-height: 0; display: flex; overflow: hidden; touch-action: manipulation; border-radius: 12px; }
+  #board.scroll { overflow: auto; overscroll-behavior: contain; touch-action: pan-x pan-y; }
+  #tiles { position: relative; margin: auto; flex: none; }
+  /* Cada ficha: cara de marfil, canto de dos capas (marfil y verde) y sombra. Las de capas altas se corren arriba a la izquierda */
+  .t { position: absolute; width: var(--w); height: var(--h); border-radius: calc(var(--w) * .13); background: linear-gradient(155deg, #fffdf6 0%, #f4ecd8 100%);
+       box-shadow: calc(var(--e) * .5) calc(var(--e) * .5) 0 #ddd0ad, var(--e) var(--e) 0 #1f8a7a, calc(var(--e) + 1px) calc(var(--e) + 1px) 0 #0f4d44, calc(var(--e) + 2px) calc(var(--e) + 3px) 5px rgba(0,0,0,.5);
+       cursor: pointer; transition: transform .12s ease-out; }
+  .t svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+  .t::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: rgba(20,20,48,.17); opacity: 0; transition: opacity .15s; pointer-events: none; }
+  .t.blk { cursor: default; }
+  .t.blk::after { opacity: 1; }
+  #board.hl .t.blk::after { background: rgba(8,8,26,.56); }
+  .t.sel { background: linear-gradient(155deg, #fff6c2 0%, #ffd23f 100%); transform: translateY(-2px); outline: 2px solid #ff9d00; outline-offset: 0; }
+  .t.hint { outline: 3px solid #39d98a; outline-offset: 0; animation: hint .7s ease-in-out 3; }
+  @keyframes hint { 50% { transform: translateY(-3px); } }
+  .t.out { animation: out .22s ease-in forwards; pointer-events: none; }
+  @keyframes out { to { transform: scale(.55) rotate(8deg); opacity: 0; } }
+  .t.back { animation: back .2s ease-out; }
+  @keyframes back { from { transform: scale(.7); opacity: 0; } }
+  .t.nope { animation: nope .28s; }
+  @keyframes nope { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+  #tiles.mix .t { animation: mix .35s ease-out; }
+  @keyframes mix { 40% { transform: scale(.82) rotate(-6deg); } }
+
+  .actions { display: flex; align-items: center; justify-content: center; gap: 5px; }
+  .mini-btn { background: #262640; color: #fff; border: 1px solid rgba(255,255,255,.15); border-radius: 10px; padding: 9px 9px; font-size: 13px; font-weight: 800; cursor: pointer; white-space: nowrap; touch-action: manipulation; }
+  .mini-btn:disabled { opacity: .4; cursor: default; }
+  .mini-btn.gold { background: linear-gradient(135deg,#ffd000,#ffaa00); color: #1a1000; border-color: #ffd000; }
+  .mini-btn.pulse { animation: pulse 1s ease-in-out infinite; border-color: #ffd000; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 3px rgba(255,208,0,.55); } }
+  .actions .mini-btn { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  @media (max-width: 420px) { .mini-btn { padding: 9px 6px; font-size: 12px; } .chips { gap: 5px; } .chip { padding: 4px 7px; } }
+
+  .modal { position: fixed; inset: 0; background: rgba(5,5,15,.78); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 1500; }
+  .modal.show { display: flex; }
+  .card { background: #1e1e34; border: 1px solid rgba(255,255,255,.12); border-radius: 18px; padding: 22px 20px; width: 100%; max-width: 360px; max-height: 100%; overflow-y: auto; text-align: center; }
+  .card h2 { font-size: 22px; font-weight: 900; color: #ffd000; margin-bottom: 8px; }
+  .card p, .card li { font-size: 14px; line-height: 1.5; color: rgba(255,255,255,.72); }
+  .card ul { text-align: left; padding-left: 18px; margin: 8px 0 14px; }
+  .card li + li { margin-top: 4px; }
+  .stats { display: flex; justify-content: center; gap: 16px; margin: 12px 0; }
+  .stat b { display: block; font-size: 22px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 11px; color: rgba(255,255,255,.5); font-weight: 700; }
+  #win-rank { font-size: 13px; font-weight: 700; color: #ffd000; margin: 2px 0 6px; min-height: 18px; }
+  .btn { display: block; width: 100%; padding: 12px; border-radius: 12px; border: none; font-size: 14px; font-weight: 900; cursor: pointer; margin-top: 8px; text-decoration: none; text-align: center; }
+  .btn-gold { background: linear-gradient(135deg,#ffd000,#ffaa00); color: #1a1000; }
+  .btn-dark { background: #262640; color: #fff; border: 1px solid rgba(255,255,255,.15); }
+  .lay-btn { display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left; }
+  .lay-btn small { font-size: 12px; font-weight: 700; opacity: .65; }
+  .lay-btn.current { outline: 2px solid #ffd000; outline-offset: -2px; }
+  .help-tiles { display: flex; justify-content: center; gap: 6px; margin: 4px 0 6px; }
+  .help-tiles span { width: 30px; height: 39px; border-radius: 4px; background: linear-gradient(155deg, #fffdf6, #f4ecd8); box-shadow: 2px 2px 0 #1f8a7a; display: inline-block; }
+  .help-tiles svg { width: 100%; height: 100%; display: block; }
+  #next-in { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 10px; }
+  #toast { position: fixed; bottom: 62px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 24px); width: max-content; background: #000; color: #fff; padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 2000; text-align: center; }
+  #toast.show { opacity: 1; }
+  .conf { position: fixed; top: -40px; pointer-events: none; z-index: 1400; font-size: 24px; animation: fall 1.3s ease-in forwards; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(420deg); opacity: .6; } }
+  @media (prefers-reduced-motion: reduce) {
+    .t, .t::after { transition: none; }
+    .t.hint, .t.out, .t.back, .t.nope, #tiles.mix .t, .mini-btn.pulse, #clock.pen { animation: none; }
+    .t.out { opacity: 0; }
+    .conf { display: none; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="tabs">
+    <button class="tab active" id="tab-daily">📅 Del día</button>
+    <button class="tab" id="tab-free">♾️ Libre</button>
+    <button class="tab icon-btn" id="btn-sound" aria-label="Sonido">🔊</button>
+    <button class="tab icon-btn" id="btn-help" aria-label="Cómo jugar">?</button>
+  </div>
+  <div class="hud">
+    <div class="label" id="label"></div>
+    <div id="clock">⏱ 0:00</div>
+  </div>
+  <div class="chips">
+    <span class="chip" id="pairs-left"></span>
+    <span class="chip" id="moves-left" title="Parejas libres que puedes quitar ahora"></span>
+    <button class="chip" id="btn-hl" aria-pressed="false">Resaltar libres</button>
+  </div>
+  <div id="board"><div id="tiles" role="group" aria-label="Tablero de mahjong"></div></div>
+  <div class="actions">
+    <button class="mini-btn" id="btn-undo">↩️ Deshacer</button>
+    <button class="mini-btn" id="btn-hint">💡 Pista</button>
+    <button class="mini-btn" id="btn-shuffle">🔀 Mezclar</button>
+    <button class="mini-btn" id="btn-restart"></button>
+    <button class="mini-btn gold" id="btn-result">🏆 Resultado</button>
+  </div>
+</div>
+
+<div class="modal" id="help-modal">
+  <div class="card">
+    <h2>Cómo jugar</h2>
+    <div class="help-tiles" id="help-tiles"></div>
+    <ul>
+      <li>Quita <b>todas las fichas</b> del tablero, de a <b>dos iguales</b>. Toca una ficha y luego su pareja.</li>
+      <li>Solo se pueden tomar fichas <b>libres</b>: sin nada encima (ni siquiera en parte) y con el <b>lado izquierdo o el derecho</b> despejado. Las bloqueadas se ven más oscuras.</li>
+      <li>Las <b>flores</b> (fondo rosado) combinan con cualquier flor y las <b>estaciones</b> (fondo celeste) con cualquier estación.</li>
+      <li>Cada ficha tiene una marca para leerla rápido: el <b>número en la esquina</b> en círculos, bambúes y caracteres; una letra grande <b>E S O N</b> en los vientos; <b>R V B</b> en los dragones rojo, verde y blanco.</li>
+      <li>Si no quedan parejas libres, <b>🔀 Mezclar</b> reacomoda las fichas que quedan de forma que la partida se pueda terminar. <b>Deshacer</b> no tiene límite.</li>
+      <li>Con teclado: <b>U</b> o <b>Ctrl+Z</b> deshace, <b>P</b> da una pista y <b>M</b> mezcla.</li>
+      <li>Todas las partidas tienen solución. En el <b>reto del día</b> ganas con el menor tiempo: cada <b>💡 Pista suma 15 s</b> y cada <b>mezcla, 30 s</b>.</li>
+    </ul>
+    <button class="btn btn-gold" id="close-help">¡A jugar!</button>
+  </div>
+</div>
+
+<div class="modal" id="new-modal">
+  <div class="card">
+    <h2>Nueva partida</h2>
+    <p>Elige el tablero:</p>
+    <div id="lay-list"></div>
+    <button class="btn btn-dark" id="close-new" style="opacity:.75">Seguir con esta partida</button>
+  </div>
+</div>
+
+<div class="modal" id="stuck-modal">
+  <div class="card">
+    <h2>No quedan parejas libres</h2>
+    <p id="stuck-sub"></p>
+    <button class="btn btn-gold" id="stuck-shuffle"></button>
+    <button class="btn btn-dark" id="stuck-undo">↩️ Deshacer la última jugada</button>
+    <button class="btn btn-dark" id="stuck-close" style="opacity:.75">Mirar el tablero</button>
+  </div>
+</div>
+
+<div class="modal" id="win-modal">
+  <div class="card">
+    <h2 id="win-title"></h2>
+    <p id="win-sub"></p>
+    <div class="stats" id="win-stats"></div>
+    <p id="win-rank" aria-live="polite"></p>
+    <button class="btn btn-gold" id="btn-primary"></button>
+    <button class="btn btn-dark" id="btn-share">💬 Compartir resultado</button>
+    <a class="btn btn-dark" href="/juegos/diarios" target="_top">📅 Más juegos diarios</a>
+    <div id="next-in"></div>
+  </div>
+</div>
+<div id="toast" role="status"></div>
+
+<script src="../resultado-diario.js"></script>
+<script>
+// ---------- Fichas ----------
+// Una cara es un número de 0 a 41: 0-8 círculos, 9-17 bambúes, 18-26 caracteres (del 1 al 9),
+// 27-30 vientos (este, sur, oeste, norte), 31-33 dragones (rojo, verde, blanco), 34-37 flores y 38-41 estaciones.
+// Dos fichas forman pareja si son del mismo grupo: la misma cara, o dos flores cualesquiera, o dos estaciones.
+const FLOWER = 34, SEASON = 38;
+const groupOf = f => (f < FLOWER ? f : f < SEASON ? 34 : 35);
+const sameGroup = (a, b) => groupOf(a) === groupOf(b);
+const WIND_LETTERS = ['E', 'S', 'O', 'N'];
+const WIND_NAMES = ['este', 'sur', 'oeste', 'norte'];
+const SEASON_NAMES = ['primavera', 'verano', 'otoño', 'invierno'];
+
+function faceName(f) {
+  if (f < 27) return `${f % 9 + 1} de ${['círculos', 'bambúes', 'caracteres'][Math.floor(f / 9)]}`;
+  if (f < 31) return `Viento ${WIND_NAMES[f - 27]}`;
+  if (f < 34) return `Dragón ${['rojo', 'verde', 'blanco'][f - 31]}`;
+  if (f < SEASON) return `Flor ${f - FLOWER + 1}`;
+  return `Estación: ${SEASON_NAMES[f - SEASON]}`;
+}
+
+function mulberry32(seed) {
+  return () => {
+    seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function shuffleArr(a, rng) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ---------- Dibujo de las caras (SVG propio, viewBox 60×78) ----------
+const COL = { dot: '#1560c0', bam: '#16883c', chr: '#c8202f', wind: '#2b2f86', red: '#d11f2a', green: '#13804a', white: '#1f56b0' };
+const idxText = (t, c) => `<text x="4.5" y="19.5" font-size="19" font-weight="900" fill="${c}" font-family="Arial Black,Arial,Helvetica,sans-serif">${t}</text>`;
+// Posiciones en una cuadrícula de 3×3 para los palos de círculos y bambúes
+const GRID = {
+  1: [[1, 1]], 2: [[1, 0], [1, 2]], 3: [[0, 0], [1, 1], [2, 2]], 4: [[0, 0], [2, 0], [0, 2], [2, 2]],
+  5: [[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]], 6: [[0, 0], [2, 0], [0, 1], [2, 1], [0, 2], [2, 2]],
+  7: [[0, 0], [2, 0], [0, 1], [1, 1], [2, 1], [0, 2], [2, 2]], 8: [[0, 0], [1, 0], [2, 0], [0, 1], [2, 1], [0, 2], [1, 2], [2, 2]],
+  9: [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1], [0, 2], [1, 2], [2, 2]],
+};
+const GX = [18, 33, 48], GY = [32, 49, 66];
+// Trazos de los números del 1 al 9 al estilo tradicional, en una caja de 0 a 10
+const STROKES = [
+  [[[1, 5], [9, 5]]],
+  [[[2.5, 3], [7.5, 3]], [[1, 7.5], [9, 7.5]]],
+  [[[2, 1.8], [8, 1.8]], [[2.8, 5], [7.2, 5]], [[1, 8.4], [9, 8.4]]],
+  [[[1.5, 1.8], [1.5, 8.6]], [[1.5, 1.8], [8.5, 1.8], [8.5, 8.6]], [[1.5, 8.6], [8.5, 8.6]], [[4, 1.8], [4, 5], [2.8, 6.6]], [[6, 1.8], [6, 5.8], [7.2, 6.2]]],
+  [[[1.5, 1.4], [8.5, 1.4]], [[4.6, 1.4], [3.4, 8.6]], [[2.4, 4.9], [7, 4.9], [6.6, 8.6]], [[1, 8.6], [9, 8.6]]],
+  [[[4.6, .6], [5.6, 1.9]], [[1, 3.6], [9, 3.6]], [[4, 5.3], [2, 8.9]], [[6, 5.3], [8, 8.9]]],
+  [[[1, 4.6], [9, 3.2]], [[4, .8], [4, 7.6], [5, 8.6], [9, 8.6], [9, 7.2]]],
+  [[[4, 2], [3.2, 6], [1, 9]], [[6, 2], [7.4, 6.4], [9.2, 8.8]]],
+  [[[3.6, .8], [3.6, 4], [1, 9]], [[1.8, 3.5], [7, 3.5], [6.6, 7.8], [7.6, 8.8], [9.2, 8.8], [9.2, 7.4]]],
+];
+const r1 = v => Math.round(v * 10) / 10;
+
+function dotSVG(x, y, r) {
+  return `<circle cx="${x}" cy="${y}" r="${r}" fill="${COL.dot}"/><circle cx="${x}" cy="${y}" r="${r1(r * .58)}" fill="#fffdf6"/><circle cx="${x}" cy="${y}" r="${r1(r * .3)}" fill="#e0453a"/>`;
+}
+function stickSVG(x, y, h) {
+  const w = 6.4, top = r1(y - h / 2);
+  return `<rect x="${r1(x - w / 2)}" y="${top}" width="${w}" height="${h}" rx="3" fill="${COL.bam}"/><rect x="${r1(x - w / 2)}" y="${r1(y - .9)}" width="${w}" height="1.8" fill="#bff0cc"/><rect x="${r1(x - 1)}" y="${r1(top + 2)}" width="2" height="${r1(h - 4)}" rx="1" fill="#0d5e29" opacity=".45"/>`;
+}
+
+function faceSVG(f) {
+  let s = '';
+  if (f < 9) {
+    const n = f + 1;
+    s += idxText(n, COL.dot);
+    if (n === 1) s += dotSVG(33, 49, 15);
+    else GRID[n].forEach(([c, r]) => { s += dotSVG(GX[c], GY[r], 6.6); });
+  } else if (f < 18) {
+    const n = f - 8;
+    s += idxText(n, COL.bam);
+    if (n === 1) {
+      s += stickSVG(33, 50, 42);
+      s += `<path d="M36 36 C44 30 50 32 53 28 C50 38 44 40 36 40Z M30 52 C22 46 16 48 13 44 C16 54 22 56 30 56Z" fill="#2fb35a"/>`;
+    } else GRID[n].forEach(([c, r]) => { s += stickSVG(GX[c], GY[r], 15); });
+  } else if (f < 27) {
+    const n = f - 17;
+    s += idxText(n, COL.chr);
+    const path = STROKES[n - 1].map(line => 'M' + line.map(([u, v]) => `${r1(14 + u * 3.9)} ${r1(28 + v * 4.2)}`).join(' L')).join(' ');
+    s += `<path d="${path}" fill="none" stroke="${COL.chr}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`;
+    s += `<rect x="40" y="6" width="14" height="4" rx="2" fill="${COL.chr}" opacity=".35"/>`;
+  } else if (f < 31) {
+    const k = f - 27;
+    // Letra grande y una aguja que apunta hacia su lado
+    const ang = [90, 180, 270, 0][k];
+    s += `<g transform="rotate(${ang} 46 14)" opacity=".55"><path d="M46 6 L49 14 L43 14 Z" fill="${COL.wind}"/><path d="M46 22 L49 14 L43 14 Z" fill="#9aa0d6"/></g>`;
+    s += `<text x="31" y="66" text-anchor="middle" font-size="48" font-weight="900" fill="${COL.wind}" font-family="Arial Black,Arial,Helvetica,sans-serif">${WIND_LETTERS[k]}</text>`;
+  } else if (f === 31) {
+    s += idxText('R', COL.red);
+    s += `<path d="M33 25 C41 34 49 41 47 54 C45.5 64 39 70 33 70 C25 70 18 64 18 55 C18 47 24 44 26 37 C29 43 32 45 33 49 C36 42 36 34 33 25Z" fill="${COL.red}"/><path d="M33 51 C38 55 39 60 37 64 C35 67 31 67 29 64 C27 60 30 57 33 51Z" fill="#ffc23d"/>`;
+  } else if (f === 32) {
+    s += idxText('V', COL.green);
+    s += `<path d="M33 26 L48 36 L48 60 L33 70 L18 60 L18 36Z" fill="${COL.green}"/><path d="M33 34 L41 40 L41 56 L33 62 L25 56 L25 40Z" fill="none" stroke="#a6f0c4" stroke-width="2.6"/>`;
+  } else if (f === 33) {
+    s += idxText('B', COL.white);
+    s += `<rect x="16" y="27" width="34" height="43" rx="3" fill="none" stroke="${COL.white}" stroke-width="4"/><rect x="23" y="34" width="20" height="29" rx="2" fill="none" stroke="${COL.white}" stroke-width="2.2" stroke-dasharray="4 2.5"/>`;
+  } else if (f < SEASON) {
+    // Flores: misma silueta de cinco pétalos en cuatro colores, sobre fondo rosado
+    const k = f - FLOWER;
+    const c = ['#e0457b', '#ef7a1a', '#8e44ad', '#c79a00'][k];
+    s += `<rect x="2" y="2" width="56" height="74" rx="6" fill="#ffc9e0" opacity=".55"/>`;
+    s += `<path d="M33 70 C33 62 31 58 33 52" stroke="#2f9a50" stroke-width="3" fill="none"/>`;
+    for (let p = 0; p < 5; p++) {
+      const a = (p * 72 - 90) * Math.PI / 180;
+      s += `<circle cx="${r1(33 + Math.cos(a) * 10)}" cy="${r1(42 + Math.sin(a) * 10)}" r="8" fill="${c}"/>`;
+    }
+    s += `<circle cx="33" cy="42" r="5" fill="#ffe04d"/>`;
+    s += `<text x="4.5" y="19.5" font-size="15" font-weight="900" fill="${c}" font-family="Arial Black,Arial,Helvetica,sans-serif">${k + 1}</text>`;
+  } else {
+    // Estaciones: cuatro dibujos distintos sobre fondo celeste
+    const k = f - SEASON;
+    s += `<rect x="2" y="2" width="56" height="74" rx="6" fill="#b9e8f2" opacity=".6"/>`;
+    if (k === 0) s += `<path d="M33 70 L33 44" stroke="#2f9a50" stroke-width="3.4"/><path d="M33 50 C24 50 18 44 17 34 C27 34 33 40 33 50Z M33 46 C33 36 40 30 50 30 C50 40 43 46 33 46Z" fill="#3cb862"/>`;
+    else if (k === 1) {
+      s += `<circle cx="33" cy="48" r="11" fill="#f39c12"/>`;
+      for (let p = 0; p < 8; p++) {
+        const a = p * Math.PI / 4;
+        s += `<path d="M${r1(33 + Math.cos(a) * 15)} ${r1(48 + Math.sin(a) * 15)} L${r1(33 + Math.cos(a) * 21)} ${r1(48 + Math.sin(a) * 21)}" stroke="#e67e00" stroke-width="3.4" stroke-linecap="round"/>`;
+      }
+    } else if (k === 2) s += `<path d="M33 26 C46 36 49 52 33 70 C17 52 20 36 33 26Z" fill="#c0561b" transform="rotate(28 33 48)"/><path d="M33 30 L33 68" stroke="#ffd7a8" stroke-width="2" transform="rotate(28 33 48)"/>`;
+    else {
+      let d = '';
+      for (let p = 0; p < 3; p++) {
+        const a = p * Math.PI / 3 + Math.PI / 2, cx = Math.cos(a) * 19, cy = Math.sin(a) * 19;
+        d += `M${r1(33 - cx)} ${r1(48 - cy)} L${r1(33 + cx)} ${r1(48 + cy)} `;
+      }
+      s += `<path d="${d}" stroke="#2a78c8" stroke-width="3.6" stroke-linecap="round"/><circle cx="33" cy="48" r="4" fill="#2a78c8"/>`;
+    }
+  }
+  return `<svg viewBox="0 0 60 78" aria-hidden="true">${s}</svg>`;
+}
+
+// ---------- Tableros ----------
+// Cada capa es una cuadrícula de fichas ('x') con un corrimiento en medias fichas, así una capa puede
+// quedar montada a medias sobre la de abajo. Las coordenadas internas van en medias fichas.
+const LAYOUTS = {
+  pagoda: { name: 'Pagoda', layers: [
+    { z: 0, o: [0, 0], r: ['...xxx...', '..xxxxx..', '.xxx.xxx.', 'xxxxxxxxx', '..xxxxx..', '..xxxxx..', 'xxxxxxxxx', '.xxx.xxx.', '..xxxxx..', '...xxx...'] },
+    { z: 1, o: [0, 0], r: ['.........', '...xxx...', '..xx.xx..', '.xxxxxxx.', '...xxx...', '...xxx...', '.xxxxxxx.', '..xx.xx..', '...xxx...'] },
+    { z: 2, o: [1, 0], r: ['', '', '', '..xxxx..', '...xx...', '...xx...', '..xxxx..'] },
+    { z: 3, o: [0, 1], r: ['', '', '', '....x....', '....x....'] },
+  ] },
+  mariposa: { name: 'Mariposa', layers: [
+    { z: 0, o: [0, 0], r: ['xx.....xx', 'xxx...xxx', 'xxxx.xxxx', '.xxxxxxx.', '..xxxxx..', '..xxxxx..', '.xxxxxxx.', 'xxxx.xxxx', 'xxx...xxx', 'xx.....xx'] },
+    { z: 1, o: [0, 0], r: ['x.......x', '.x.....x.', '.xx...xx.', '..xxxxx..', '...xxx...', '...xxx...', '..xxxxx..', '.xx...xx.', '.x.....x.'] },
+    { z: 2, o: [0, 0], r: ['', '', '', '....x....', '....x....', '....x....', '....x....'] },
+    { z: 3, o: [0, 1], r: ['', '', '', '....x....', '....x....'] },
+  ] },
+  fortaleza: { name: 'Fortaleza', layers: [
+    { z: 0, o: [0, 0], r: ['xx.xxx.xx', 'xxxxxxxxx', '.xxxxxxx.', '.xx...xx.', '.xx.x.xx.', '.xx...xx.', '.xxxxxxx.', 'xxxxxxxxx', 'xx.xxx.xx'] },
+    { z: 1, o: [0, 0], r: ['xx.....xx', 'xx.xxx.xx', '...xxx...', '', '....x....', '', '...xxx...', 'xx.xxx.xx', 'xx.....xx'] },
+    { z: 2, o: [1, 1], r: ['x......x', '...xx...', '', '', '', '...xx...', '', 'x......x'] },
+  ] },
+  diamante: { name: 'Diamante', layers: [
+    { z: 0, o: [0, 0], r: ['....x....', '...xxx...', '..xxxxx..', '.xxxxxxx.', 'xxxxxxxxx', 'xxxxxxxxx', 'xxxxxxxxx', '.xxxxxxx.', '..xxxxx..', '...xxx...', '....x....'] },
+    { z: 1, o: [0, 1], r: ['', '....x....', '...xxx...', '..xxxxx..', '..xxxxx..', '..xxxxx..', '...xxx...', '....x....'] },
+    { z: 2, o: [0, 0], r: ['', '', '', '....x....', '...xxx...', '...xxx...', '....x....'] },
+    { z: 3, o: [0, 1], r: ['', '', '', '....x....', '', '....x....'] },
+  ] },
+  piramide: { name: 'Pirámide', layers: [
+    { z: 0, o: [0, 0], r: ['xxxxxx', 'xxxxxx', 'xxxxxx', 'xxxxxx', 'xxxxxx', 'xxxxxx'] },
+    { z: 1, o: [1, 1], r: ['xxxxx', 'xxxxx', 'xxxxx', 'xxxxx', 'xxxxx'] },
+    { z: 2, o: [4, 4], r: ['xxx', 'xxx', 'xxx'] },
+    { z: 3, o: [6, 5], r: ['x', 'x'] },
+  ] },
+  puente: { name: 'Puente', layers: [
+    { z: 0, o: [0, 0], r: ['xxx.....xxx', 'xxxxxxxxxxx', 'xxxxxxxxxxx', 'xxx.....xxx', 'xxx.....xxx', 'xxxxxxxxxxx', 'xxxxxxxxxxx', 'xxx.....xxx'] },
+    { z: 1, o: [0, 0], r: ['.xx.....xx.', '.xxxxxxxxx.', '.xx.....xx.', '.xx.....xx.', '.xx.....xx.', '.xx.....xx.', '.xxxxxxxxx.', '.xx.....xx.'] },
+    { z: 2, o: [1, 0], r: ['', '.x.xxxx.x.', '', '.x......x.', '.x......x.', '', '.x.xxxx.x.'] },
+    { z: 3, o: [0, 1], r: ['', '.....x.....', '', '', '', '.....x.....'] },
+  ] },
+  tortuga: { name: 'Tortuga', layers: [
+    { z: 0, o: [2, 0], r: ['xxxxxxxxxxxx', '..xxxxxxxx..', '.xxxxxxxxxx.', 'xxxxxxxxxxxx', 'xxxxxxxxxxxx', '.xxxxxxxxxx.', '..xxxxxxxx..', 'xxxxxxxxxxxx'] },
+    { z: 1, o: [8, 2], r: ['xxxxxx', 'xxxxxx', 'xxxxxx', 'xxxxxx', 'xxxxxx', 'xxxxxx'] },
+    { z: 2, o: [10, 4], r: ['xxxx', 'xxxx', 'xxxx', 'xxxx'] },
+    { z: 3, o: [12, 6], r: ['xx', 'xx'] },
+    { z: 4, o: [13, 7], r: ['x'] },
+    { z: 0, o: [0, 7], r: ['x'] },
+    { z: 0, o: [26, 7], r: ['xx'] },
+  ] },
+};
+const DAILY_LAYOUTS = ['pagoda', 'mariposa', 'fortaleza', 'diamante'];
+const FREE_LAYOUTS = [
+  { key: 'piramide', size: 'Pequeño' },
+  { key: 'mariposa', size: 'Mediano' },
+  { key: 'puente', size: 'Grande' },
+  { key: 'tortuga', size: 'Clásico' },
+];
+
+// Geometría precalculada: posiciones en orden de dibujo (capa, luego diagonal) y, para cada ficha,
+// cuáles la tapan, cuáles tiene debajo y cuáles la tocan por la izquierda y por la derecha.
+const GEO = {};
+function layoutPositions(key) {
+  const out = [];
+  LAYOUTS[key].layers.forEach(ly => ly.r.forEach((row, ry) => [...row].forEach((c, rx) => {
+    if (c === 'x') out.push([rx * 2 + ly.o[0], ry * 2 + ly.o[1], ly.z]);
+  })));
+  return out;
+}
+function prepare(list) {
+  const pos = list.slice().sort((a, b) => a[2] - b[2] || (a[0] + a[1]) - (b[0] + b[1]) || a[0] - b[0]);
+  const n = pos.length;
+  const above = [], below = [], left = [], right = [];
+  for (let i = 0; i < n; i++) { above.push([]); below.push([]); left.push([]); right.push([]); }
+  for (let i = 0; i < n; i++) {
+    const [x, y, z] = pos[i];
+    for (let j = 0; j < n; j++) {
+      if (i === j) continue;
+      const [x2, y2, z2] = pos[j];
+      if (Math.abs(y2 - y) >= 2) continue;
+      if (z2 > z && Math.abs(x2 - x) < 2) { above[i].push(j); below[j].push(i); }
+      else if (z2 === z && x2 === x - 2) left[i].push(j);
+      else if (z2 === z && x2 === x + 2) right[i].push(j);
+    }
+  }
+  const xs = pos.map(p => p[0]), ys = pos.map(p => p[1]);
+  const minX = Math.min(...xs), minY = Math.min(...ys);
+  return {
+    pos, n, above, below, left, right, minX, minY,
+    spanX: Math.max(...xs) + 2 - minX, spanY: Math.max(...ys) + 2 - minY,
+    maxZ: Math.max(...pos.map(p => p[2])),
+  };
+}
+function geo(key) {
+  return GEO[key] || (GEO[key] = prepare(layoutPositions(key)));
+}
+
+// ---------- Reglas ----------
+// Libre: nada encima (aunque sea en parte) y el lado izquierdo o el derecho sin fichas
+function isFree(g, p, i) {
+  if (!p[i]) return false;
+  for (const j of g.above[i]) if (p[j]) return false;
+  let l = false, r = false;
+  for (const j of g.left[i]) if (p[j]) { l = true; break; }
+  if (!l) return true;
+  for (const j of g.right[i]) if (p[j]) { r = true; break; }
+  return !r;
+}
+function freeList(g, p) {
+  const out = [];
+  for (let i = 0; i < g.n; i++) if (p[i] && isFree(g, p, i)) out.push(i);
+  return out;
+}
+// Todas las parejas que se pueden quitar ahora mismo
+function freePairs(g, faces, p) {
+  const by = new Map();
+  for (const i of freeList(g, p)) {
+    const k = groupOf(faces[i]);
+    if (!by.has(k)) by.set(k, []);
+    by.get(k).push(i);
+  }
+  const out = [];
+  for (const list of by.values()) for (let a = 0; a < list.length; a++) for (let b = a + 1; b < list.length; b++) out.push([list[a], list[b]]);
+  return out;
+}
+const countLeft = p => { let c = 0; for (let i = 0; i < p.length; i++) c += p[i] ? 1 : 0; return c; };
+
+// ---------- Generación con solución garantizada ----------
+// Se arma al revés: sobre el tablero completo, se eligen dos posiciones que estén libres en ese momento,
+// se les asigna una pareja y se sacan. Repetido hasta vaciarlo, ese orden es una solución válida.
+// Se prefieren las fichas que tapan a otras para no terminar con una pila sola (punto muerto).
+function removalOrder(g, p0, rng, attempts) {
+  for (let t = 0; t < (attempts || 80); t++) {
+    const p = p0.slice();
+    let left = countLeft(p);
+    const seq = [];
+    while (left > 0) {
+      const free = [], w = [];
+      for (let i = 0; i < g.n; i++) {
+        if (!p[i] || !isFree(g, p, i)) continue;
+        let k = 0;
+        for (const j of g.below[i]) if (p[j]) k++;
+        free.push(i);
+        w.push(1 + 3 * k + g.pos[i][2]);
+      }
+      if (free.length < 2) break;
+      const pick = () => {
+        let sum = 0;
+        for (const v of w) sum += v;
+        let r = rng() * sum, k = 0;
+        while (k < w.length - 1 && (r -= w[k]) >= 0) k++;
+        const i = free[k];
+        free.splice(k, 1);
+        w.splice(k, 1);
+        return i;
+      };
+      const a = pick(), b = pick();
+      p[a] = p[b] = 0;
+      seq.push([a, b]);
+      left -= 2;
+    }
+    if (!left) return seq;
+  }
+  return null;
+}
+
+// Juego de fichas para n posiciones (múltiplo de 4): siempre flores y estaciones, y el resto de las
+// caras elegidas al azar; cada cara aparece 4 veces. Con 144 fichas es el juego clásico completo.
+function tileSet(n, rng) {
+  const kinds = shuffleArr(Array.from({ length: 34 }, (_, i) => i), rng).slice(0, n / 4 - 2);
+  const pairs = [];
+  for (const k of kinds) pairs.push([k, k], [k, k]);
+  for (const base of [FLOWER, SEASON]) {
+    const f = shuffleArr([base, base + 1, base + 2, base + 3], rng);
+    pairs.push([f[0], f[1]], [f[2], f[3]]);
+  }
+  return shuffleArr(pairs, rng);
+}
+
+function dealTiles(key, seed) {
+  const g = geo(key), rng = mulberry32(seed);
+  const pairs = tileSet(g.n, rng);
+  const order = removalOrder(g, new Array(g.n).fill(1), rng, 400);
+  const faces = new Array(g.n).fill(0);
+  order.forEach(([a, b], k) => { faces[a] = pairs[k][0]; faces[b] = pairs[k][1]; });
+  return { faces, order };
+}
+
+// Mezclar: las fichas que quedan se vuelven a repartir sobre las mismas posiciones con el mismo método,
+// así la nueva disposición siempre tiene solución. Devuelve null si la forma que queda no se puede vaciar
+// de ninguna manera (por ejemplo, dos fichas solas una encima de otra).
+function reshuffle(g, faces, p, rng) {
+  const by = new Map();
+  for (let i = 0; i < g.n; i++) {
+    if (!p[i]) continue;
+    const k = groupOf(faces[i]);
+    if (!by.has(k)) by.set(k, []);
+    by.get(k).push(faces[i]);
+  }
+  const pairs = [];
+  for (const list of by.values()) for (let k = 0; k + 1 < list.length; k += 2) pairs.push([list[k], list[k + 1]]);
+  shuffleArr(pairs, rng);
+  const order = removalOrder(g, p.slice(), rng, 120);
+  if (!order) return null;
+  const nf = faces.slice();
+  order.forEach(([a, b], k) => { nf[a] = pairs[k][0]; nf[b] = pairs[k][1]; });
+  return { faces: nf, order };
+}
+
+// ---------- Solucionador (para las pistas y las pruebas) ----------
+// Búsqueda en profundidad con memoria de posiciones vistas. Jugada segura: si todas las fichas que quedan
+// de un grupo están libres, sacarlas no puede estorbar. Poda: si de un grupo quedan dos y una tapa a la otra,
+// no hay salida. Si una búsqueda se alarga, vuelve a empezar con otro orden de desempate (reinicios con
+// presupuesto creciente). Límite por nodos, no por tiempo: el resultado es igual en cualquier equipo.
+const ZOB = {};
+function zobrist(key, n) {
+  if (ZOB[key]) return ZOB[key];
+  const rng = mulberry32(0x5eed + n);
+  const a = new Int32Array(n), b = new Int32Array(n);
+  for (let i = 0; i < n; i++) { a[i] = (rng() * 4294967296) | 0; b[i] = (rng() * 4294967296) | 0; }
+  return (ZOB[key] = [a, b]);
+}
+function solve(key, faces, p0, nodeLimit) {
+  const g = geo(key), [Z1, Z2] = zobrist(key, g.n);
+  const p = p0.slice();
+  const rem = new Int16Array(36), byGroup = [];
+  for (let k = 0; k < 36; k++) byGroup.push([]);
+  let left = 0, h1 = 0, h2 = 0;
+  for (let i = 0; i < g.n; i++) if (p[i]) { left++; rem[groupOf(faces[i])]++; byGroup[groupOf(faces[i])].push(i); h1 ^= Z1[i]; h2 ^= Z2[i]; }
+  const covers = (a, b) => g.above[b].includes(a);
+  // Dos fichas de un grupo que se tapan entre sí ya no pueden salir nunca
+  function deadlock() {
+    for (let k = 0; k < 36; k++) {
+      if (rem[k] !== 2) continue;
+      let a = -1, b = -1;
+      for (const i of byGroup[k]) if (p[i]) { if (a < 0) a = i; else b = i; }
+      if (covers(a, b) || covers(b, a)) return true;
+    }
+    return false;
+  }
+  let rng = null;
+  // Dos maneras de ordenar las jugadas, que se turnan en los reinicios: por lo que destraba cada ficha
+  // (altura, lo que tiene debajo y sus vecinas de fila) o por cuántas fichas quedan libres al hacerla
+  let style = 0;
+  function value(a, b) {
+    let v = 0;
+    if (style === 0) {
+      for (const i of [a, b]) {
+        v += 3 * g.pos[i][2];
+        for (const j of g.below[i]) if (p[j]) v += 2;
+        for (const j of g.left[i]) if (p[j]) v++;
+        for (const j of g.right[i]) if (p[j]) v++;
+      }
+    } else {
+      p[a] = p[b] = 0;
+      const near = new Set(g.below[a].concat(g.left[a], g.right[a], g.below[b], g.left[b], g.right[b]));
+      for (const j of near) if (p[j] && isFree(g, p, j)) v += 10;
+      p[a] = p[b] = 1;
+      v += 3 * (g.pos[a][2] + g.pos[b][2]);
+      for (const j of g.below[a]) if (p[j]) v++;
+      for (const j of g.below[b]) if (p[j]) v++;
+    }
+    return v + (rng ? rng() * 6 : 0);
+  }
+  function moves() {
+    const by = new Map();
+    for (const i of freeList(g, p)) {
+      const k = groupOf(faces[i]);
+      if (!by.has(k)) by.set(k, []);
+      by.get(k).push(i);
+    }
+    const out = [];
+    for (const [k, list] of by) {
+      if (list.length < 2) continue;
+      if (list.length === rem[k]) return [[list[0], list[1]]];
+      for (let a = 0; a < list.length; a++) for (let b = a + 1; b < list.length; b++) out.push([list[a], list[b], value(list[a], list[b])]);
+    }
+    return out.sort((m, n) => n[2] - m[2]);
+  }
+  function take(a, b, on) {
+    p[a] = p[b] = on ? 1 : 0;
+    const d = on ? 1 : -1;
+    rem[groupOf(faces[a])] += d;
+    rem[groupOf(faces[b])] += d;
+    left += 2 * d;
+    h1 ^= Z1[a] ^ Z1[b];
+    h2 ^= Z2[a] ^ Z2[b];
+  }
+  // Solo se recuerdan las posiciones demostradas sin salida: siguen valiendo después de un reinicio
+  const dead = new Set(), path = [];
+  let nodes = 0, budget = 0, aborted = false;
+  function rec() {
+    if (!left) return true;
+    if (nodes >= budget) { aborted = true; return false; }
+    nodes++;
+    const key2 = (h1 >>> 0) * 2097152 + (h2 & 0x1FFFFF);
+    if (dead.has(key2)) return false;
+    if (deadlock()) { dead.add(key2); return false; }
+    for (const [a, b] of moves()) {
+      take(a, b, false);
+      path.push([a, b]);
+      if (rec()) return true;
+      path.pop();
+      take(a, b, true);
+      if (aborted) return false;
+    }
+    dead.add(key2);
+    return false;
+  }
+  let step = 250, round = 0, won = false;
+  for (;;) {
+    budget = Math.min(nodeLimit, nodes + step);
+    aborted = false;
+    won = rec();
+    if (won || !aborted || nodes >= nodeLimit) break;
+    round++;
+    style = round % 2;
+    if (round >= 2) rng = mulberry32(0xbadc0de + round);
+    step = Math.round(step * 1.5);
+  }
+  return { won, aborted: !won && aborted, nodes, path: won ? path.slice() : null };
+}
+
+// ---------- Partida ----------
+// Una partida guarda las caras, qué posiciones siguen en la mesa y la pila para deshacer.
+// En el reto del día, cada pista suma 15 s y cada mezcla 30 s al tiempo final.
+const HINT_PENALTY = 15, SHUFFLE_PENALTY = 30, HINT_NODES = 10000;
+
+// plan: una solución conocida desde la posición actual (la de construcción al repartir o mezclar, o la
+// última que encontró el solucionador). Solo sirve para las pistas y se comprueba antes de usarla.
+function newGame(key, seed, daily) {
+  const { faces, order } = dealTiles(key, seed);
+  return { layout: key, seed, daily: !!daily, faces, present: new Array(faces.length).fill(1), undo: [], elapsed: 0, penalty: 0, hints: 0, shuffles: 0, done: false, rank: '', plan: order };
+}
+const gameGeo = s => geo(s.layout);
+const canMatch = (s, a, b) => {
+  const g = gameGeo(s);
+  return a !== b && isFree(g, s.present, a) && isFree(g, s.present, b) && sameGroup(s.faces[a], s.faces[b]);
+};
+const isWon = s => countLeft(s.present) === 0;
+const pairsLeft = s => countLeft(s.present) / 2;
+const movesAvailable = s => freePairs(gameGeo(s), s.faces, s.present).length;
+const isStuck = s => !isWon(s) && movesAvailable(s) === 0;
+
+function doMatch(s, a, b) {
+  if (s.done || !canMatch(s, a, b)) return null;
+  s.present[a] = s.present[b] = 0;
+  const rec = { k: 'm', a, b };
+  s.undo.push(rec);
+  s.plan = followPlan(s, a, b);
+  return rec;
+}
+
+// Ajusta el plan a la pareja que se acaba de sacar. Si estaba en el plan, se quita y el resto sigue valiendo.
+// Si sus fichas estaban emparejadas con otras dos (todas del mismo grupo), esas dos pasan a ser pareja,
+// en el lugar de la más tardía o de la más temprana: la primera opción que funcione. Si ninguna, no hay plan.
+function followPlan(s, a, b) {
+  const plan = s.plan;
+  if (!Array.isArray(plan)) return null;
+  const i = plan.findIndex(m => m.includes(a)), j = plan.findIndex(m => m.includes(b));
+  if (i < 0 || j < 0) return null;
+  if (i === j) return plan.filter((_, k) => k !== i);
+  const c = plan[i][0] === a ? plan[i][1] : plan[i][0], d = plan[j][0] === b ? plan[j][1] : plan[j][0];
+  for (const at of [Math.max(i, j), Math.min(i, j)]) {
+    const other = at === i ? j : i;
+    const next = plan.map((m, k) => (k === at ? [c, d] : m)).filter((_, k) => k !== other);
+    if (planWorks(s, next)) return next;
+  }
+  return null;
+}
+function planWorks(s, plan) {
+  try {
+    if (!Array.isArray(plan) || !plan.length) return false;
+    const g = gameGeo(s), p = s.present.slice();
+    for (const [a, b] of plan) {
+      if (a === b || !isFree(g, p, a) || !isFree(g, p, b) || !sameGroup(s.faces[a], s.faces[b])) return false;
+      p[a] = p[b] = 0;
+    }
+    return countLeft(p) === 0;
+  } catch { return false; }
+}
+
+const shuffleSeed = s => (Math.imul(s.seed ^ 0x51ed, 2654435761) + Math.imul(s.shuffles + 1, 40503) + countLeft(s.present)) | 0;
+function doShuffle(s) {
+  if (s.done || isWon(s)) return null;
+  const r = reshuffle(gameGeo(s), s.faces, s.present, mulberry32(shuffleSeed(s)));
+  if (!r) return null;
+  const rec = { k: 's', faces: s.faces.slice() };
+  s.undo.push(rec);
+  s.faces = r.faces;
+  s.plan = r.order;
+  s.shuffles++;
+  if (s.daily) s.penalty += SHUFFLE_PENALTY;
+  return rec;
+}
+
+function doUndo(s) {
+  if (s.done || !s.undo.length) return null;
+  const rec = s.undo.pop();
+  if (rec.k === 'm') s.present[rec.a] = s.present[rec.b] = 1;
+  else s.faces = rec.faces.slice();
+  // Al deshacer, la pareja vuelve primero y después el plan que había
+  s.plan = rec.k === 'm' && Array.isArray(s.plan) ? [[rec.a, rec.b], ...s.plan] : null;
+  return rec;
+}
+
+// Pista: la primera jugada de una solución desde la posición actual. Si la búsqueda no termina a tiempo,
+// la pareja libre que más destraba; si demuestra que ya no hay salida, lo avisa.
+function findHint(s) {
+  const g = gameGeo(s);
+  const all = freePairs(g, s.faces, s.present);
+  if (!all.length) return { pair: null, status: 'none' };
+  if (planWorks(s, s.plan)) return { pair: s.plan[0], status: 'ok' };
+  const r = solve(s.layout, s.faces, s.present, HINT_NODES);
+  if (r.won) { s.plan = r.path; return { pair: r.path[0], status: 'ok' }; }
+  s.plan = null;
+  let best = all[0], bw = -1;
+  for (const [a, b] of all) {
+    const w = g.pos[a][2] + g.pos[b][2] + g.below[a].length + g.below[b].length;
+    if (w > bw) { bw = w; best = [a, b]; }
+  }
+  return { pair: best, status: r.aborted ? 'unknown' : 'dead' };
+}
+function doHint(s) {
+  if (s.done) return null;
+  const h = findHint(s);
+  if (h.pair) {
+    s.hints++;
+    if (s.daily) s.penalty += HINT_PENALTY;
+  }
+  return h;
+}
+
+// Reiniciar vuelve al reparto inicial; el reloj y las penalizaciones siguen contando
+function restartGame(s) {
+  if (s.done) return;
+  const d = dealTiles(s.layout, s.seed);
+  s.faces = d.faces;
+  s.plan = d.order;
+  s.present = new Array(s.faces.length).fill(1);
+  s.undo = [];
+}
+
+const totalTime = s => s.elapsed + s.penalty;
+// Valor del reto diario: segundos hasta ganar con las penalizaciones (menos es mejor), con una décima
+const RESULT_MIN = 20, RESULT_MAX = 86400;
+const resultValue = s => Math.min(RESULT_MAX, Math.max(RESULT_MIN, Math.round(totalTime(s) * 10) / 10));
+
+// Una partida guardada solo se usa si sus caras son las del reparto y la pila para deshacer es coherente
+function validGame(s) {
+  try {
+    if (!s || !LAYOUTS[s.layout] || !Number.isInteger(s.seed)) return false;
+    const g = geo(s.layout), n = g.n;
+    if (!Array.isArray(s.faces) || s.faces.length !== n || !Array.isArray(s.present) || s.present.length !== n || !Array.isArray(s.undo)) return false;
+    if (!s.present.every(v => v === 0 || v === 1)) return false;
+    if (!(s.elapsed >= 0) || !(s.penalty >= 0) || !Number.isInteger(s.hints) || !Number.isInteger(s.shuffles)) return false;
+    const sorted = a => a.slice().sort((x, y) => x - y).join(',');
+    const base = sorted(dealTiles(s.layout, s.seed).faces);
+    if (sorted(s.faces) !== base) return false;
+    const cnt = new Int16Array(36);
+    s.present.forEach((v, i) => { if (v) cnt[groupOf(s.faces[i])]++; });
+    if (cnt.some(c => c % 2)) return false;
+    // Deshacer todo, en una copia, tiene que llevar al tablero completo
+    const p = s.present.slice();
+    for (let k = s.undo.length - 1; k >= 0; k--) {
+      const r = s.undo[k];
+      if (r.k === 'm') {
+        if (!Number.isInteger(r.a) || !Number.isInteger(r.b) || r.a === r.b || p[r.a] !== 0 || p[r.b] !== 0) return false;
+        p[r.a] = p[r.b] = 1;
+      } else if (r.k === 's') {
+        if (!Array.isArray(r.faces) || sorted(r.faces) !== base) return false;
+      } else return false;
+    }
+    return p.every(v => v === 1);
+  } catch { return false; }
+}
+
+// ---------- Fechas y guardado ----------
+const LAUNCH_DAY = Date.UTC(2026, 10, 6) / 864e5;   // el reto #1
+function dayIndex() {
+  const n = new Date();
+  return Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) / 864e5;
+}
+const dailyLayout = d => DAILY_LAYOUTS[((d % DAILY_LAYOUTS.length) + DAILY_LAYOUTS.length) % DAILY_LAYOUTS.length];
+const dailySeed = d => (Math.imul(d, 2654435761) ^ 0x6d6a6e67) | 0;
+const newDailyGame = d => newGame(dailyLayout(d), dailySeed(d), true);
+
+function load(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+}
+function save(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+}
+
+// ---------- Medidas ----------
+// La ficha mide 1 × 1,3; las capas altas se corren arriba a la izquierda lo mismo que mide el canto.
+const TILE_RATIO = 1.3, EDGE = .11, MIN_W = 28, MAX_W = 62;
+function computeLayout(g, W, H) {
+  const gap = W < 500 ? 1 : 2;
+  const nx = g.spanX / 2, ny = g.spanY / 2, depth = EDGE * (g.maxZ + 1);
+  const fitW = (W - 4 - gap * (nx - 1)) / (nx + depth);
+  const fitH = (H - 6 - gap * (ny - 1)) / (ny * TILE_RATIO + depth);
+  const w = Math.floor(Math.max(MIN_W, Math.min(MAX_W, fitW, fitH)));
+  const h = Math.round(w * TILE_RATIO);
+  const e = Math.max(2, Math.round(w * EDGE));
+  const cw = Math.ceil(nx * w + gap * (nx - 1) + e * (g.maxZ + 1) + 4);
+  const ch = Math.ceil(ny * h + gap * (ny - 1) + e * (g.maxZ + 1) + 6);
+  return { w, h, e, gap, cw, ch, scroll: cw > W + 1 || ch > H + 1 };
+}
+function tileXY(g, L, i) {
+  const [x, y, z] = g.pos[i];
+  return [
+    2 + (g.maxZ - z) * L.e + (x - g.minX) / 2 * (L.w + L.gap),
+    2 + (g.maxZ - z) * L.e + (y - g.minY) / 2 * (L.h + L.gap),
+  ];
+}
+
+// ---------- Estado de la pantalla ----------
+const $ = id => document.getElementById(id);
+const REDUCED = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+const boardEl = $('board'), tilesEl = $('tiles');
+
+let mode = 'daily', day = dayIndex();
+let state = null, L = null, builtFor = null;
+let started = false, lastTick = 0, confirming = false, confirmTimer = null;
+let sel = -1, hintTimer = null, blockedToasts = 0;
+let soundOn = load('mahjongSonido', true), highlight = load('mahjongResaltar', false);
+let stats = load('mahjongStats', null) || { played: 0, streak: 0, maxStreak: 0, lastDay: null, bestTime: null, free: {}, lastLayout: 'piramide' };
+let tileEls = [];
+const FACE_CACHE = [];
+const faceHTML = f => FACE_CACHE[f] || (FACE_CACHE[f] = faceSVG(f));
+
+function freeStats(key) {
+  stats.free = stats.free || {};
+  return stats.free[key] || (stats.free[key] = { wins: 0, best: null });
+}
+function persist() {
+  if (!state) return;
+  if (mode === 'daily') save('mahjongDaily', { day, ...state });
+  else save('mahjongLibre', state);
+}
+
+function startDaily() {
+  if (state) persist();
+  mode = 'daily';
+  day = dayIndex();
+  const saved = load('mahjongDaily', null);
+  state = saved && saved.day === day && saved.daily && validGame(saved) ? saved : newDailyGame(day);
+  delete state.day;
+  begin();
+  persist();
+  if (state.done) showWin();
+}
+
+function startFree(key) {
+  if (state) persist();
+  mode = 'free';
+  const saved = key ? null : load('mahjongLibre', null);
+  if (key) { stats.lastLayout = key; save('mahjongStats', stats); }
+  const k = key || (LAYOUTS[stats.lastLayout] ? stats.lastLayout : 'piramide');
+  state = saved && !saved.done && !saved.daily && validGame(saved) ? saved : newGame(k, (Math.random() * 4294967296) | 0, false);
+  begin();
+  persist();
+}
+
+function begin() {
+  sel = -1;
+  started = !state.done && (state.undo.length > 0 || state.elapsed > 0);
+  lastTick = performance.now();
+  resetConfirm();
+  clearHint();
+  ['win-modal', 'new-modal', 'stuck-modal'].forEach(id => $(id).classList.remove('show'));
+  $('tab-daily').classList.toggle('active', mode === 'daily');
+  $('tab-free').classList.toggle('active', mode === 'free');
+  build();
+  measure();
+  render(false);
+  updateHud();
+}
+
+// ---------- Dibujo ----------
+function build() {
+  if (builtFor === state.layout) return;
+  builtFor = state.layout;
+  const g = gameGeo(state);
+  tilesEl.textContent = '';
+  tileEls = [];
+  for (let i = 0; i < g.n; i++) {
+    const el = document.createElement('div');
+    el.className = 't';
+    el.dataset.i = i;
+    el.style.zIndex = i + 1;
+    el._f = -1;
+    tilesEl.appendChild(el);
+    tileEls.push(el);
+  }
+}
+
+function measure() {
+  if (!state) return;
+  const g = gameGeo(state);
+  L = computeLayout(g, boardEl.clientWidth, boardEl.clientHeight);
+  tilesEl.style.setProperty('--w', L.w + 'px');
+  tilesEl.style.setProperty('--h', L.h + 'px');
+  tilesEl.style.setProperty('--e', L.e + 'px');
+  tilesEl.style.width = L.cw + 'px';
+  tilesEl.style.height = L.ch + 'px';
+  boardEl.classList.toggle('scroll', L.scroll);
+  tileEls.forEach((el, i) => {
+    const [x, y] = tileXY(g, L, i);
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+  });
+}
+
+function render(animate) {
+  const g = gameGeo(state), s = state;
+  boardEl.classList.toggle('hl', highlight);
+  tileEls.forEach((el, i) => {
+    if (el._f !== s.faces[i]) {
+      el._f = s.faces[i];
+      el.innerHTML = faceHTML(s.faces[i]);
+      el.setAttribute('aria-label', faceName(s.faces[i]));
+    }
+    if (s.present[i]) {
+      clearTimeout(el._t);
+      if (el.classList.contains('out') || el.style.display === 'none') {
+        el.classList.remove('out');
+        el.style.display = '';
+        if (animate && !REDUCED) {
+          el.classList.add('back');
+          setTimeout(() => el.classList.remove('back'), 220);
+        }
+      }
+      el.classList.toggle('blk', !isFree(g, s.present, i));
+      el.classList.toggle('sel', i === sel);
+    } else if (el.style.display !== 'none' && !el.classList.contains('out')) {
+      el.classList.remove('sel', 'hint');
+      if (animate && !REDUCED) {
+        el.classList.add('out');
+        el._t = setTimeout(() => { el.style.display = 'none'; el.classList.remove('out'); }, 230);
+      } else el.style.display = 'none';
+    }
+  });
+}
+
+const fmt = sec => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
+const layoutName = key => LAYOUTS[key].name;
+
+function updateHud() {
+  const s = state;
+  $('label').textContent = mode === 'daily' ? `Reto #${day - LAUNCH_DAY + 1} · ${layoutName(s.layout)}` : `Libre · ${layoutName(s.layout)}`;
+  $('clock').textContent = `⏱ ${fmt(mode === 'daily' ? totalTime(s) : s.elapsed)}`;
+  const moves = s.done ? 0 : movesAvailable(s);
+  $('pairs-left').textContent = `Quedan ${pairsLeft(s)} pares`;
+  $('moves-left').textContent = moves === 1 ? '1 jugada' : `${moves} jugadas`;
+  $('moves-left').setAttribute('aria-label', `${moves} parejas libres para quitar ahora`);
+  $('moves-left').classList.toggle('zero', !s.done && moves === 0);
+  $('btn-undo').disabled = !s.undo.length || s.done;
+  $('btn-hint').disabled = s.done || moves === 0;
+  $('btn-shuffle').disabled = s.done;
+  $('btn-shuffle').classList.toggle('pulse', !s.done && moves === 0);
+  $('btn-hl').classList.toggle('on', highlight);
+  $('btn-hl').setAttribute('aria-pressed', String(highlight));
+  if (!confirming) $('btn-restart').textContent = mode === 'daily' ? '🔄 Reiniciar' : '🆕 Nueva';
+  const showResult = s.done && mode === 'daily';
+  $('btn-restart').style.display = showResult ? 'none' : '';
+  $('btn-result').style.display = showResult ? '' : 'none';
+}
+
+// El reloj corre desde el primer toque y se detiene si la pestaña no está visible
+function tick(now) {
+  requestAnimationFrame(tick);
+  if (started && state && !state.done && !document.hidden) {
+    const delta = (now - lastTick) / 1000;
+    if (delta > 0 && delta < 2) {
+      const before = Math.floor(state.elapsed);
+      state.elapsed += delta;
+      if (Math.floor(state.elapsed) !== before) updateHud();
+    }
+  }
+  lastTick = now;
+}
+setInterval(() => { if (started && state && !state.done) persist(); }, 5000);
+
+function startClock() {
+  if (!started) { started = true; lastTick = performance.now(); }
+}
+function flashPenalty(sec) {
+  toast(`+${sec} s en el reto del día`);
+  const c = $('clock');
+  c.classList.remove('pen');
+  void c.offsetWidth;
+  c.classList.add('pen');
+}
+
+// ---------- Jugar ----------
+function tapTile(i) {
+  const s = state;
+  if (s.done || !s.present[i]) return;
+  const g = gameGeo(s);
+  startClock();
+  if (!isFree(g, s.present, i)) {
+    nope(i);
+    if (blockedToasts++ < 3) toast('Esa ficha está bloqueada: necesita nada encima y un lado libre');
+    return;
+  }
+  clearHint();
+  if (sel < 0) { sel = i; beep(620, .04); }
+  else if (sel === i) { sel = -1; beep(420, .04); }
+  else if (sameGroup(s.faces[sel], s.faces[i])) {
+    const a = sel;
+    sel = -1;
+    doMatch(s, a, i);
+    afterChange(true);
+    beep(784, .07);
+    setTimeout(() => beep(1047, .09), 70);
+    return;
+  } else { sel = i; beep(300, .05); }
+  render(false);
+}
+
+function afterChange(animate) {
+  render(animate);
+  updateHud();
+  if (isWon(state)) { finish(); return; }
+  persist();
+  if (isStuck(state)) setTimeout(() => { if (isStuck(state) && !state.done) showStuck(); }, 450);
+}
+
+function nope(i) {
+  const el = tileEls[i];
+  el.classList.remove('nope');
+  void el.offsetWidth;
+  el.classList.add('nope');
+  setTimeout(() => el.classList.remove('nope'), 300);
+  beep(150, .08);
+  if (navigator.vibrate) navigator.vibrate(25);
+}
+
+function undoLast() {
+  if (state.done || !state.undo.length) return;
+  const rec = doUndo(state);
+  sel = -1;
+  clearHint();
+  if (rec.k === 's') mixAnim();
+  render(true);
+  updateHud();
+  persist();
+  beep(260, .05);
+}
+
+function mixAnim() {
+  if (REDUCED) return;
+  tilesEl.classList.remove('mix');
+  void tilesEl.offsetWidth;
+  tilesEl.classList.add('mix');
+  setTimeout(() => tilesEl.classList.remove('mix'), 400);
+}
+
+function shuffleNow() {
+  $('stuck-modal').classList.remove('show');
+  if (state.done) return;
+  startClock();
+  const rec = doShuffle(state);
+  if (!rec) {
+    beep(150, .1);
+    toast('Ninguna mezcla deja estas fichas con salida: deshaz algunas jugadas');
+    return;
+  }
+  sel = -1;
+  clearHint();
+  mixAnim();
+  [392, 523, 659].forEach((f, i) => setTimeout(() => beep(f, .06), i * 50));
+  if (state.daily) flashPenalty(SHUFFLE_PENALTY);
+  afterChange(false);
+}
+
+function clearHint() {
+  clearTimeout(hintTimer);
+  tileEls.forEach(el => el.classList.remove('hint'));
+}
+
+function showHint() {
+  if (state.done) return;
+  startClock();
+  const h = doHint(state);
+  clearHint();
+  if (!h.pair) { showStuck(); return; }
+  sel = -1;
+  render(false);
+  h.pair.forEach(i => tileEls[i].classList.add('hint'));
+  hintTimer = setTimeout(clearHint, 2600);
+  beep(520, .05);
+  const pen = state.daily ? ` (+${HINT_PENALTY} s)` : '';
+  if (h.status === 'dead') toast(`Con esta disposición ya no se puede terminar: deshaz o mezcla${pen}`);
+  else if (state.daily) flashPenalty(HINT_PENALTY);
+  updateHud();
+  persist();
+}
+
+function showStuck() {
+  if (state.done || !isStuck(state)) return;
+  $('stuck-sub').textContent = state.undo.length
+    ? 'Puedes mezclar las fichas que quedan, siempre de forma que se pueda terminar, o deshacer y probar otro camino.'
+    : 'Puedes mezclar las fichas que quedan, siempre de forma que se pueda terminar.';
+  $('stuck-shuffle').textContent = state.daily ? `🔀 Mezclar (+${SHUFFLE_PENALTY} s)` : '🔀 Mezclar';
+  $('stuck-undo').style.display = state.undo.length ? '' : 'none';
+  $('stuck-modal').classList.add('show');
+  beep(200, .12);
+}
+
+function resetConfirm() {
+  confirming = false;
+  clearTimeout(confirmTimer);
+}
+
+// En el reto del día, dos toques: un toque perdido no debe borrar la partida
+function pressRestart() {
+  if (mode === 'free') { openNewModal(); return; }
+  if (state.done) return;
+  if (state.undo.length && !confirming) {
+    confirming = true;
+    $('btn-restart').textContent = '¿Seguro?';
+    toast('Toca otra vez para volver al reparto inicial');
+    confirmTimer = setTimeout(() => { confirming = false; updateHud(); }, 3000);
+    return;
+  }
+  resetConfirm();
+  restartGame(state);
+  sel = -1;
+  clearHint();
+  mixAnim();
+  render(false);
+  updateHud();
+  persist();
+  beep(330, .09);
+}
+
+function openNewModal() {
+  $('lay-list').innerHTML = FREE_LAYOUTS.map(({ key, size }) =>
+    `<button class="btn btn-dark lay-btn${key === state.layout ? ' current' : ''}" data-k="${key}"><span>${layoutName(key)}</span><small>${size} · ${geo(key).n} fichas</small></button>`).join('');
+  $('new-modal').classList.add('show');
+}
+
+tilesEl.addEventListener('click', e => {
+  const el = e.target.closest('.t');
+  if (el) tapTile(+el.dataset.i);
+});
+
+document.addEventListener('keydown', e => {
+  if (document.querySelector('.modal.show') || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if ((k === 'z' && (e.ctrlKey || e.metaKey)) || (k === 'u' && !e.ctrlKey && !e.metaKey)) { e.preventDefault(); undoLast(); }
+  else if (e.ctrlKey || e.metaKey) return;
+  else if (k === 'p' || k === 'h') showHint();
+  else if (k === 'm') shuffleNow();
+  else if (k === 'escape' && sel >= 0) { sel = -1; render(false); }
+});
+
+// ---------- Final ----------
+function finish() {
+  const s = state;
+  s.done = true;
+  sel = -1;
+  clearHint();
+  if (mode === 'daily') {
+    stats.played++;
+    stats.streak = stats.lastDay === day - 1 ? stats.streak + 1 : 1;
+    stats.maxStreak = Math.max(stats.maxStreak, stats.streak);
+    stats.lastDay = day;
+    if (stats.bestTime === null || totalTime(s) < stats.bestTime) stats.bestTime = totalTime(s);
+  } else {
+    const f = freeStats(s.layout);
+    f.wins++;
+    if (f.best === null || s.elapsed < f.best) f.best = s.elapsed;
+  }
+  save('mahjongStats', stats);
+  persist();
+  updateHud();
+  [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, .16), 250 + i * 110));
+  if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
+  celebrate();
+  if (mode === 'daily') sendResult();
+  setTimeout(showWin, REDUCED ? 200 : 900);
+}
+
+function celebrate() {
+  if (REDUCED) return;
+  const marks = ['🀄', '✿', '★', '●'];
+  for (let i = 0; i < 24; i++) {
+    const el = document.createElement('div');
+    el.className = 'conf';
+    el.textContent = marks[i % marks.length];
+    el.style.color = i % 2 ? '#ff4d6d' : '#ffd000';
+    el.style.left = `${Math.random() * 100}%`;
+    el.style.animationDelay = `${Math.random() * .5}s`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2000);
+  }
+}
+
+const statBox = (value, label) => `<div class="stat"><b>${value}</b><span>${label}</span></div>`;
+
+function rankText({ total, beaten }) {
+  if (total < JuegaYaDiario.MIN_JUGADORES) return '🥇 Estás entre los primeros en resolver el reto de hoy';
+  if (beaten === 0) return `👥 Hoy lo resolvieron ${total} jugadores`;
+  return `👥 Hoy lo resolvieron ${total} jugadores. Tu tiempo superó al de ${beaten}`;
+}
+
+// Solo se envía al ganar por primera vez: al recargar se muestra el texto guardado
+async function sendResult() {
+  const run = state;
+  const result = await JuegaYaDiario.enviar('mahjong', resultValue(run));
+  if (!result) return;
+  run.rank = rankText(result);
+  if (run === state) {
+    $('win-rank').textContent = run.rank;
+    persist();
+  }
+}
+
+function showWin() {
+  const s = state;
+  if (!s.done) return;
+  $('win-title').textContent = '¡Tablero despejado!';
+  if (mode === 'daily') {
+    $('win-sub').textContent = `Reto #${day - LAUNCH_DAY + 1} · ${layoutName(s.layout)}` + (s.penalty ? ` · incluye +${s.penalty} s de ayudas` : ' · sin ayudas');
+    $('win-stats').innerHTML = statBox(fmt(totalTime(s)), 'Tiempo') + statBox(s.hints, 'Pistas') + statBox(s.shuffles, 'Mezclas') + statBox(stats.streak, 'Racha');
+    $('win-rank').textContent = s.rank || '';
+    $('btn-primary').textContent = '♾️ Jugar en modo libre';
+    $('btn-primary').onclick = () => startFree(null);
+    $('next-in').style.display = 'block';
+    updateCountdown();
+  } else {
+    const f = freeStats(s.layout);
+    $('win-sub').textContent = `${layoutName(s.layout)} · partidas ganadas: ${f.wins}`;
+    $('win-stats').innerHTML = statBox(fmt(s.elapsed), 'Tiempo') + statBox(s.hints, 'Pistas') + statBox(s.shuffles, 'Mezclas') + statBox(fmt(f.best), 'Mejor');
+    $('win-rank').textContent = '';
+    $('btn-primary').textContent = '🆕 Nueva partida';
+    $('btn-primary').onclick = () => startFree(s.layout);
+    $('next-in').style.display = 'none';
+  }
+  $('win-modal').classList.add('show');
+}
+
+function updateCountdown() {
+  const now = new Date();
+  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  const sec = Math.max(0, Math.floor((next - now) / 1000));
+  const pad = v => String(v).padStart(2, '0');
+  $('next-in').textContent = `Próximo reto en ${pad(Math.floor(sec / 3600))}:${pad(Math.floor(sec / 60) % 60)}:${pad(sec % 60)}`;
+}
+setInterval(updateCountdown, 1000);
+
+function shareText() {
+  const url = 'https://www.juegaya.app/juego/mahjong?utm_source=compartido';
+  const s = state;
+  if (mode === 'daily') {
+    const extra = s.penalty ? ` (con +${s.penalty} s de ayudas)` : ' sin ayudas';
+    return `🀄 Mahjong #${day - LAUNCH_DAY + 1} · ${layoutName(s.layout)}\n⏱ ${fmt(totalTime(s))}${extra} · 🔥 Racha: ${stats.streak}\n\n¿Puedes superarme?\n${url}`;
+  }
+  return `🀄 Mahjong (${layoutName(s.layout)}): despejé el tablero en ${fmt(s.elapsed)}\n\n¿Puedes superarme?\n${url}`;
+}
+$('btn-share').addEventListener('click', async () => {
+  const text = shareText();
+  if (navigator.share) {
+    try { await navigator.share({ text }); return; } catch (err) { if (err.name === 'AbortError') return; }
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('¡Copiado! Pégalo donde quieras');
+  } catch {
+    toast('No se pudo copiar');
+  }
+});
+
+let toastTimer;
+function toast(msg) {
+  $('toast').textContent = msg;
+  $('toast').classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2200);
+}
+
+// ---------- Sonido ----------
+let audio;
+function beep(freq, dur) {
+  if (!soundOn) return;
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.type = 'sine';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(.12, audio.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, audio.currentTime + dur + .05);
+    o.connect(g).connect(audio.destination);
+    o.start();
+    o.stop(audio.currentTime + dur + .06);
+  } catch {}
+}
+
+// ---------- Botones e inicio ----------
+$('tab-daily').addEventListener('click', () => { if (mode !== 'daily') startDaily(); });
+$('tab-free').addEventListener('click', () => { if (mode !== 'free') startFree(null); });
+$('btn-undo').addEventListener('click', undoLast);
+$('btn-hint').addEventListener('click', showHint);
+$('btn-shuffle').addEventListener('click', shuffleNow);
+$('btn-restart').addEventListener('click', pressRestart);
+$('btn-result').addEventListener('click', showWin);
+$('btn-hl').addEventListener('click', () => {
+  highlight = !highlight;
+  save('mahjongResaltar', highlight);
+  render(false);
+  updateHud();
+});
+$('stuck-shuffle').addEventListener('click', shuffleNow);
+$('stuck-undo').addEventListener('click', () => { $('stuck-modal').classList.remove('show'); undoLast(); });
+$('stuck-close').addEventListener('click', () => $('stuck-modal').classList.remove('show'));
+$('win-modal').addEventListener('click', e => { if (e.target === $('win-modal')) $('win-modal').classList.remove('show'); });
+$('stuck-modal').addEventListener('click', e => { if (e.target === $('stuck-modal')) $('stuck-modal').classList.remove('show'); });
+$('new-modal').addEventListener('click', e => {
+  const btn = e.target.closest('.lay-btn');
+  if (btn) startFree(btn.dataset.k);
+  else if (e.target === $('new-modal') || e.target === $('close-new')) $('new-modal').classList.remove('show');
+});
+$('btn-help').addEventListener('click', () => $('help-modal').classList.add('show'));
+$('close-help').addEventListener('click', () => $('help-modal').classList.remove('show'));
+$('btn-sound').addEventListener('click', () => {
+  soundOn = !soundOn;
+  save('mahjongSonido', soundOn);
+  $('btn-sound').textContent = soundOn ? '🔊' : '🔇';
+});
+$('btn-sound').textContent = soundOn ? '🔊' : '🔇';
+$('help-tiles').innerHTML = [4, 12, 22, 29, 31, 35, 39].map(f => `<span>${faceHTML(f)}</span>`).join('');
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) persist();
+  else if (mode === 'daily' && dayIndex() !== day) startDaily();
+  else lastTick = performance.now();
+});
+addEventListener('pagehide', persist);
+
+new ResizeObserver(() => { if (state) measure(); }).observe(boardEl);
+requestAnimationFrame(tick);
+startDaily();
+if (!load('mahjongVioAyuda', false)) {
+  $('help-modal').classList.add('show');
+  save('mahjongVioAyuda', true);
+}
+</script>
+</body>
+</html>

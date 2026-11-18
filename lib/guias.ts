@@ -8,10 +8,11 @@ import { guia2048 } from './guias/2048'
 import { guiaViborita } from './guias/viborita'
 import { guiaBuscaminas } from './guias/buscaminas'
 import { guiaSolitarioSpider } from './guias/solitario-spider'
+import { guiaMahjong } from './guias/mahjong'
 
 export type { Guia }
 
-export const GUIAS: Guia[] = [guiaSudoku, guiaSolitario, guiaAhorcado, guiaPalabro, guiaCrucigrama, guia2048, guiaViborita, guiaBuscaminas, guiaSolitarioSpider]
+export const GUIAS: Guia[] = [guiaSudoku, guiaSolitario, guiaAhorcado, guiaPalabro, guiaCrucigrama, guia2048, guiaViborita, guiaBuscaminas, guiaSolitarioSpider, guiaMahjong]
 
 export function getGuia(slug: string) {
   return GUIAS.find(g => g.slug === slug)
