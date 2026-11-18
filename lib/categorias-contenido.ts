@@ -92,8 +92,26 @@ export const CONTENIDO_CATEGORIAS: Record<string, ContenidoCategoria> = {
     },
   },
 
+  arcade: {
+    titulo: 'Arcade de reflejos, en partidas de un minuto',
+    parrafos: [
+      'Los juegos arcade de esta categoría se aprenden en segundos y se dominan con práctica: una sola regla, reflejos y la tentación de jugar una partida más para superar tu récord. No hay niveles que desbloquear ni nada que comprar.',
+      'Cada uno se controla de forma distinta. En Neon Bird todo es un solo toque, y el secreto está en el ritmo, no en la velocidad. En Corre mi Bro tienes que leer el obstáculo que viene, porque saltar no sirve contra un bus y agacharse no sirve contra algo en el suelo. En La Viborita la dificultad sale de tu propio cuerpo: cuanto más larga es la serpiente, más tienes que planear las vueltas.',
+      'Un consejo para los tres: no juegues con prisa después de perder. La mayoría de las partidas cortas se pierden por reaccionar tarde a algo que ya se veía venir, así que mirar un poco más adelante en la pantalla rinde más que tocar más rápido.',
+      'Funcionan en el celular con toques y gestos, y en la computadora con el teclado. Tu mejor marca queda guardada en tu navegador para que tengas siempre un número que superar.',
+    ],
+    eleccion: {
+      titulo: 'Cuál elegir',
+      items: [
+        { slug: 'viborita', texto: 'Si te gusta planear: come fruta, crece y no te encierres. Tiene un reto diario igual para todos.' },
+        { slug: 'neon-bird', texto: 'Si quieres algo de un solo toque: pasa entre los pilares y cuida el ritmo.' },
+        { slug: 'corre-mi-bro', texto: 'Si prefieres acción: corre por calles de Lima, CDMX, Bogotá y Buenos Aires esquivando obstáculos.' },
+      ],
+    },
+  },
+
   puzzle: {
-    titulo: 'Cinco tipos de puzzle distintos',
+    titulo: 'Seis tipos de puzzle distintos',
     parrafos: [
       'Aunque todos son puzzles, cada juego de esta categoría pide una forma distinta de pensar. Algunos tienen reloj y te obligan a decidir rápido; otros no tienen límite de tiempo y premian planear varias jugadas por adelantado.',
       'Si te gusta jugar con calma, empieza por Bloques Locos o 2048: no hay prisa y cada partida es más larga cuanto mejor planeas. Si prefieres algo con tensión, Gelatinas Locas tiene una barra de tiempo que se vacía. Y si buscas un reto que se resuelva, como un acertijo, Flechas Locas tiene una solución exacta en cada tablero.',
@@ -107,6 +125,7 @@ export const CONTENIDO_CATEGORIAS: Record<string, ContenidoCategoria> = {
         { slug: '2048', texto: 'Fusionar números: desliza el tablero y une iguales hasta llegar al 2048.' },
         { slug: 'flechas-locas', texto: 'Ordenar: encuentra en qué orden sacar las flechas para que ninguna choque.' },
         { slug: 'frutas-locas', texto: 'Físicas: une frutas iguales para crear otras más grandes, hasta llegar a la sandía.' },
+        { slug: 'buscaminas', texto: 'Deducir: cada número te dice cuántas minas tiene alrededor; abre todo sin pisar ninguna.' },
         { slug: 'gelatinas-locas', texto: 'Combinar contra el reloj: junta tres o más gelatinas iguales antes de que se acabe el tiempo.' },
       ],
     },

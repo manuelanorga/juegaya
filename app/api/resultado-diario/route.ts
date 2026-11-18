@@ -11,12 +11,15 @@ const GAMES = {
   solitario: { min: 3, max: 86400 },          // segundos
   sudoku: { min: 3, max: 86400 },             // segundos, con penalizaciones
   crucigrama: { min: 3, max: 86400 },         // segundos, con penalizaciones
+  buscaminas: { min: 1, max: 86400 },
+  'solitario-spider': { min: 10, max: 86400 }, // segundos         // segundos, solo victorias
+  viborita: { min: -389, max: 0 },            // puntos en negativo: más puntos es mejor; 0 = chocó sin comer
   palabro: { min: 1, max: 7 },                // intentos; 7 = no adivinó la palabra
   'bloques-locos': { min: -9_999_999, max: -1 }, // puntos en negativo: aquí más puntos es mejor
 } as const
 
 const BodySchema = z.object({
-  game: z.enum(['sopa-de-letras', 'palabro', 'bloques-locos', 'flechas-locas', 'ahorcado', 'solitario', 'sudoku', 'crucigrama']),
+  game: z.enum(['sopa-de-letras', 'palabro', 'bloques-locos', 'flechas-locas', 'ahorcado', 'solitario', 'sudoku', 'crucigrama', 'buscaminas', 'viborita', 'solitario-spider']),
   date: z.iso.date(),
   session: z.string().regex(/^[a-z0-9]{1,64}$/i),
   value: z.number(),

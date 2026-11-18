@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Buscaminas - JuegaYa</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body { background: #111120; color: #fff; font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif; overflow: hidden; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  button, select { font-family: inherit; }
+  #app { height: 100%; height: 100dvh; max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; padding: 10px 12px 12px; gap: 8px; }
+  .tabs { display: flex; gap: 6px; flex-shrink: 0; max-width: 640px; width: 100%; margin: 0 auto; }
+  .tab { flex: 1; min-height: 36px; padding: 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,.1); background: #1e1e34; color: rgba(255,255,255,.55); font-size: 13px; font-weight: 800; cursor: pointer; }
+  .tab.active { background: #ffd000; border-color: #ffd000; color: #1a1400; }
+  .icon-btn { width: 38px; flex: none; padding: 0; font-size: 15px; }
+  .status { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0; min-height: 30px; max-width: 640px; width: 100%; margin: 0 auto; }
+  .left { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .label { font-size: 15px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .meta { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800; color: rgba(255,255,255,.8); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .meta span { background: #1e1e34; border: 1px solid rgba(255,255,255,.1); border-radius: 9px; padding: 4px 8px; }
+  #left-count.bump { animation: bump .3s; }
+  @keyframes bump { 40% { transform: scale(1.25); } }
+  #level { background: #1e1e34; color: #fff; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 6px 4px; font-size: 12px; font-weight: 700; max-width: 130px; }
+  .mini-btn { background: #262640; color: #fff; border: 1px solid rgba(255,255,255,.15); border-radius: 10px; padding: 6px 9px; font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+  #board-wrap { flex: 1; min-height: 0; display: flex; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; border-radius: 10px; }
+  #board { --cell: 30px; margin: auto; display: grid; grid-auto-rows: var(--cell); padding: 3px; background: #0b0b18; border: 2px solid #3a3a62; border-radius: 10px; touch-action: none; flex: none; transition: border-color .3s, box-shadow .3s; }
+  #board.pan { touch-action: pan-x pan-y; }
+  #board.won { border-color: #ffd000; box-shadow: 0 0 22px rgba(255,208,0,.45); }
+  #board.lost { border-color: #ff5a5a; animation: shake .45s; }
+  @keyframes shake { 15% { transform: translate(-5px, 2px); } 35% { transform: translate(5px, -2px); } 55% { transform: translate(-3px, 1px); } 75% { transform: translate(3px, 0); } }
+  .c { width: var(--cell); height: var(--cell); border: 1px solid #0b0b18; border-radius: calc(var(--cell) * .16); display: flex; align-items: center; justify-content: center; font-size: calc(var(--cell) * .6); font-weight: 900; line-height: 1; cursor: pointer; font-variant-numeric: tabular-nums; }
+  .c.h { background: linear-gradient(160deg, #3d3d6a, #2a2a4a); box-shadow: inset 0 calc(var(--cell) * -.08) 0 rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.12); }
+  .c.h.press { background: #23233d; box-shadow: none; }
+  @media (hover: hover) { .c.h:hover { background: linear-gradient(160deg, #4a4a7c, #33335a); } }
+  .c.f { font-size: calc(var(--cell) * .55); }
+  .c.o { background: #17172b; cursor: default; }
+  .c.o.n { cursor: pointer; }
+  .c.fresh { animation: open .22s ease-out backwards; animation-delay: var(--d, 0ms); }
+  @keyframes open { from { background: #3d3d6a; transform: scale(.82); } }
+  .n1 { color: #5ec8ff; } .n2 { color: #6fe39a; } .n3 { color: #ff7a6b; } .n4 { color: #c39bff; }
+  .n5 { color: #ffb347; } .n6 { color: #3ee6d3; } .n7 { color: #ff8fc7; } .n8 { color: #d9dbe8; }
+  .c.m { background: #2a1426; font-size: calc(var(--cell) * .58); }
+  .c.x { background: #e5484d; }
+  .c.wf { background: #2a1426; position: relative; }
+  .c.wf::after { content: ''; position: absolute; inset: 18%; background: linear-gradient(45deg, transparent 45%, #ff5a5a 45%, #ff5a5a 55%, transparent 55%); }
+  .c.boomin { animation: pop .35s ease-out backwards; animation-delay: var(--d, 0ms); }
+  .c.cheer { animation: cheer .5s ease-out backwards; animation-delay: var(--d, 0ms); }
+  @keyframes pop { from { transform: scale(.2); opacity: 0; } 60% { transform: scale(1.15); } }
+  @keyframes cheer { 40% { transform: translateY(calc(var(--cell) * -.18)); filter: brightness(1.6); } }
+  .c.cur { outline: 2px solid #ffd000; outline-offset: -2px; }
+  .controls { display: flex; gap: 6px; flex-shrink: 0; max-width: 640px; width: 100%; margin: 0 auto; }
+  .seg { flex: 1; display: flex; background: #1e1e34; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; padding: 3px; gap: 3px; }
+  .seg button { flex: 1; min-height: 44px; border: 0; border-radius: 9px; background: transparent; color: rgba(255,255,255,.6); font-size: 15px; font-weight: 900; cursor: pointer; touch-action: manipulation; }
+  .seg button.on { background: #ffd000; color: #1a1400; }
+  #btn-flagmode.on { background: #ff6b6b; color: #2a0505; }
+  #btn-zoom { width: 52px; flex: none; border-radius: 12px; border: 1px solid rgba(255,255,255,.12); background: #1e1e34; color: #fff; font-size: 18px; cursor: pointer; touch-action: manipulation; }
+  .modal { position: fixed; inset: 0; background: rgba(5,5,15,.78); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+  .modal.show { display: flex; }
+  .card { background: #1e1e34; border: 1px solid rgba(255,255,255,.12); border-radius: 18px; padding: 22px 20px; width: 100%; max-width: 360px; max-height: 100%; overflow-y: auto; text-align: center; }
+  .card h2 { font-size: 22px; font-weight: 900; color: #ffd000; margin-bottom: 8px; }
+  .card h2.bad { color: #ff7a6b; }
+  .card p, .card li { font-size: 14px; line-height: 1.5; color: rgba(255,255,255,.72); }
+  .card ul { text-align: left; padding-left: 18px; margin: 8px 0 14px; }
+  .stats { display: flex; justify-content: center; gap: 16px; margin: 12px 0; }
+  .stat b { display: block; font-size: 22px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 11px; color: rgba(255,255,255,.5); font-weight: 700; }
+  #over-rank { font-size: 13px; font-weight: 700; color: #ffd000; margin: 2px 0 6px; min-height: 18px; }
+  .btn { display: block; width: 100%; padding: 12px; border-radius: 12px; border: none; font-size: 14px; font-weight: 900; cursor: pointer; margin-top: 8px; text-decoration: none; text-align: center; }
+  .btn-gold { background: linear-gradient(135deg,#ffd000,#ffaa00); color: #1a1000; }
+  .btn-dark { background: #262640; color: #fff; border: 1px solid rgba(255,255,255,.15); }
+  #next-in { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 10px; }
+  #toast { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 20; max-width: calc(100% - 24px); width: max-content; text-align: center; }
+  #toast.show { opacity: 1; }
+  @media (max-height: 600px) { .seg button { min-height: 38px; } }
+  @media (prefers-reduced-motion: reduce) {
+    #board.lost, .c.fresh, .c.boomin, .c.cheer, #left-count.bump { animation: none; }
+    #toast { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="tabs">
+    <button class="tab active" id="tab-daily">📅 Del día</button>
+    <button class="tab" id="tab-free">♾️ Libre</button>
+    <button class="tab icon-btn" id="btn-sound" aria-label="Sonido">🔊</button>
+    <button class="tab icon-btn" id="btn-help" aria-label="Cómo jugar">?</button>
+  </div>
+  <div class="status">
+    <div class="left">
+      <div class="label" id="label"></div>
+      <select id="level" aria-label="Nivel"></select>
+      <button class="mini-btn" id="btn-new"></button>
+    </div>
+    <div class="meta">
+      <span id="left-count" aria-label="Minas por marcar">💣 0</span>
+      <span>⏱ <span id="clock">0:00</span></span>
+    </div>
+  </div>
+  <div id="board-wrap"><div id="board" role="grid" aria-label="Campo de minas"></div></div>
+  <div class="controls">
+    <div class="seg" role="group" aria-label="Qué hace un toque">
+      <button id="btn-digmode" class="on" aria-pressed="true">⛏️ Abrir</button>
+      <button id="btn-flagmode" aria-pressed="false">🚩 Bandera</button>
+    </div>
+    <button id="btn-zoom" aria-label="Ver todo el tablero">🔍</button>
+  </div>
+</div>
+
+<div class="modal" id="help-modal">
+  <div class="card">
+    <h2>Cómo jugar</h2>
+    <ul>
+      <li>Abre <b>todas las casillas sin mina</b>. Cada número dice cuántas minas hay en las 8 casillas que lo rodean.</li>
+      <li><b>Toca</b> para abrir. Para poner una 🚩, usa el botón <b>Bandera</b> o <b>mantén presionada</b> la casilla. En la computadora: clic izquierdo abre y clic derecho marca.</li>
+      <li>Toca un <b>número que ya tenga sus banderas</b> alrededor para abrir de una vez sus otras vecinas. Si una bandera está mal, ¡explota!</li>
+      <li>En <b>Libre</b>, la primera casilla que abres nunca tiene mina y abre una zona.</li>
+      <li>El <b>reto del día</b> (10×14, 22 minas) empieza con una zona abierta y se resuelve con lógica, sin adivinar. Tienes <b>un solo intento</b>: si pisas una mina, se acaba hasta mañana.</li>
+    </ul>
+    <button class="btn btn-gold" id="close-help">¡A jugar!</button>
+  </div>
+</div>
+
+<div class="modal" id="over-modal">
+  <div class="card">
+    <h2 id="over-title"></h2>
+    <p id="over-sub"></p>
+    <div class="stats" id="over-stats"></div>
+    <p id="over-rank" aria-live="polite"></p>
+    <button class="btn btn-gold" id="btn-primary"></button>
+    <button class="btn btn-dark" id="btn-share">💬 Compartir resultado</button>
+    <button class="btn btn-dark" id="btn-see">👀 Ver el tablero</button>
+    <a class="btn btn-dark" href="/juegos/diarios" target="_top">📅 Más juegos diarios</a>
+    <div id="next-in"></div>
+  </div>
+</div>
+<div id="toast" role="status"></div>
+
+<script src="../resultado-diario.js"></script>
+<script>
+// ---------- Azar con semilla ----------
+function mulberry32(seed) {
+  return () => {
+    seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// ---------- Geometría ----------
+const NB_CACHE = {};
+function neighborTable(rows, cols) {
+  const key = rows + 'x' + cols;
+  if (NB_CACHE[key]) return NB_CACHE[key];
+  const t = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const list = [];
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          const rr = r + dr, cc = c + dc;
+          if ((dr || dc) && rr >= 0 && rr < rows && cc >= 0 && cc < cols) list.push(rr * cols + cc);
+        }
+      }
+      t.push(list);
+    }
+  }
+  return (NB_CACHE[key] = t);
+}
+// Minas como texto de '0' y '1'; cuenta de minas vecinas de cada casilla
+function countsOf(rows, cols, mines) {
+  const NB = neighborTable(rows, cols);
+  const adj = new Int8Array(rows * cols);
+  for (let i = 0; i < adj.length; i++) {
+    let k = 0;
+    for (const j of NB[i]) if (mines.charCodeAt(j) === 49) k++;
+    adj[i] = k;
+  }
+  return adj;
+}
+// Reparte "total" minas al azar dejando libre la casilla "safe" y sus vecinas
+function layMines(rows, cols, total, rng, safe) {
+  const n = rows * cols;
+  const banned = new Set(safe >= 0 ? [safe, ...neighborTable(rows, cols)[safe]] : []);
+  const pool = [];
+  for (let i = 0; i < n; i++) if (!banned.has(i)) pool.push(i);
+  const out = new Uint8Array(n);
+  for (let k = 0; k < total; k++) {
+    const j = k + Math.floor(rng() * (pool.length - k));
+    [pool[k], pool[j]] = [pool[j], pool[k]];
+    out[pool[k]] = 1;
+  }
+  return Array.from(out).join('');
+}
+
+// ---------- Solucionador lógico ----------
+// view[i]: -1 tapada, -2 mina ya deducida, 0..8 número a la vista.
+// Devuelve las casillas que con seguridad son libres o minas, usando solo:
+//   1) reglas de una casilla (le faltan 0 minas, o todas sus tapadas son minas)
+//   2) comparación de dos restricciones que se solapan (subconjuntos, 1-1, 1-2, 1-2-1...)
+// "totalMines" agrega el contador de minas como una restricción más sobre todas las tapadas.
+function deduce(rows, cols, view, totalMines) {
+  const n = rows * cols, NB = neighborTable(rows, cols);
+  const cons = [];
+  let knownMines = 0;
+  const unknown = [];
+  for (let i = 0; i < n; i++) {
+    if (view[i] === -2) knownMines++;
+    else if (view[i] === -1) unknown.push(i);
+    else {
+      let need = view[i];
+      const cells = [];
+      for (const j of NB[i]) {
+        if (view[j] === -1) cells.push(j);
+        else if (view[j] === -2) need--;
+      }
+      if (cells.length) cons.push({ cells, need });
+    }
+  }
+  if (totalMines != null && unknown.length) cons.push({ cells: unknown, need: totalMines - knownMines });
+  const safe = new Set(), mines = new Set();
+  for (const k of cons) {
+    if (k.need === 0) k.cells.forEach(j => safe.add(j));
+    else if (k.need === k.cells.length) k.cells.forEach(j => mines.add(j));
+  }
+  if (safe.size || mines.size) return { safe, mines };
+  // Restricciones por casilla para encontrar las que se solapan
+  const byCell = Array.from({ length: n }, () => []);
+  cons.forEach((k, idx) => k.cells.forEach(j => byCell[j].push(idx)));
+  const mark = new Int32Array(n);
+  let stamp = 0;
+  for (let a = 0; a < cons.length; a++) {
+    const A = cons[a];
+    stamp++;
+    for (const j of A.cells) mark[j] = stamp;
+    const seen = new Set();
+    for (const j of A.cells) for (const b of byCell[j]) if (b !== a) seen.add(b);
+    for (const b of seen) {
+      const B = cons[b];
+      let inter = 0;
+      for (const j of B.cells) if (mark[j] === stamp) inter++;
+      const onlyA = A.cells.length - inter;
+      // minas(A\B) - minas(B\A) = A.need - B.need; si eso es |A\B|, A\B son minas y B\A libres
+      if (A.need - B.need === onlyA) {
+        if (onlyA) {
+          const inB = new Set(B.cells);
+          for (const j of A.cells) if (!inB.has(j)) mines.add(j);
+        }
+        for (const j of B.cells) if (mark[j] !== stamp) safe.add(j);
+      }
+    }
+    if (safe.size || mines.size) return { safe, mines };
+  }
+  return { safe, mines };
+}
+// Juega el tablero desde "start" usando solo deducciones; true si llega a abrir todo
+function logicSolve(rows, cols, mines, total, start) {
+  const n = rows * cols, NB = neighborTable(rows, cols), adj = countsOf(rows, cols, mines);
+  const view = new Int8Array(n).fill(-1);
+  let open = 0;
+  const reveal = i => {
+    const stack = [i];
+    while (stack.length) {
+      const k = stack.pop();
+      if (view[k] !== -1) continue;
+      if (mines[k] === '1') throw new Error('el solucionador abrió una mina');
+      view[k] = adj[k];
+      open++;
+      if (adj[k] === 0) for (const j of NB[k]) if (view[j] === -1) stack.push(j);
+    }
+  };
+  reveal(start);
+  let steps = 0;
+  while (open < n - total) {
+    const { safe, mines: found } = deduce(rows, cols, view, total);
+    if (!safe.size && !found.size) return { solved: false, steps, open };
+    for (const j of found) {
+      if (mines[j] !== '1') throw new Error('el solucionador marcó mal una mina');
+      view[j] = -2;
+    }
+    for (const j of safe) reveal(j);
+    steps++;
+  }
+  return { solved: true, steps, open };
+}
+
+// ---------- Niveles y reto diario ----------
+const LEVELS = {
+  facil: { name: 'Fácil', rows: 9, cols: 9, mines: 10 },
+  medio: { name: 'Medio', rows: 16, cols: 16, mines: 40 },
+  dificil: { name: 'Difícil', rows: 16, cols: 30, mines: 99 },
+};
+// Reto diario: 10 columnas × 14 filas, para que entre en un celular sin desplazar (misma densidad que Medio)
+const DAILY = { name: 'Del día', rows: 14, cols: 10, mines: 22 };
+// Zona inicial abierta del reto: ni diminuta ni casi todo el tablero
+const DAILY_MIN_OPEN = 8, DAILY_MAX_OPEN = 40;
+
+function floodSize(rows, cols, mines, start) {
+  const NB = neighborTable(rows, cols), adj = countsOf(rows, cols, mines);
+  const seen = new Uint8Array(rows * cols), stack = [start];
+  let size = 0;
+  while (stack.length) {
+    const k = stack.pop();
+    if (seen[k]) continue;
+    seen[k] = 1;
+    size++;
+    if (adj[k] === 0) for (const j of NB[k]) if (!seen[j]) stack.push(j);
+  }
+  return size;
+}
+// Mismo tablero para todos en la misma fecha; se prueban semillas hasta que se resuelva sin adivinar
+function makeDaily(dayNumber) {
+  const { rows, cols, mines: total } = DAILY;
+  const rng = mulberry32(Math.imul(dayNumber, 2654435761) ^ 0x4d494e41);
+  for (let attempt = 1; ; attempt++) {
+    const r = 3 + Math.floor(rng() * (rows - 6)), c = 3 + Math.floor(rng() * (cols - 6));
+    const start = r * cols + c;
+    const mines = layMines(rows, cols, total, rng, start);
+    const size = floodSize(rows, cols, mines, start);
+    if (size < DAILY_MIN_OPEN || size > DAILY_MAX_OPEN) continue;
+    if (logicSolve(rows, cols, mines, total, start).solved) return { mines, start, attempts: attempt, openArea: size };
+  }
+}
+
+// ---------- Reglas del juego (sin pantalla) ----------
+// view: 0 tapada, 1 abierta, 2 bandera. status: ready (sin minas aún), playing, won, lost
+function newGame(rows, cols, total) {
+  return { rows, cols, total, mines: null, view: Array(rows * cols).fill(0), status: 'ready', boom: -1, elapsed: 0, started: false, start: -1, sent: false, rank: '' };
+}
+function newDailyGame(dayNumber) {
+  const p = makeDaily(dayNumber);
+  const g = newGame(DAILY.rows, DAILY.cols, DAILY.mines);
+  g.mines = p.mines;
+  g.status = 'playing';
+  g.start = p.start;
+  floodOpen(g, p.start);
+  return g;
+}
+let adjCache = { key: '', adj: null };
+function adjOf(g) {
+  if (adjCache.key !== g.mines) adjCache = { key: g.mines, adj: countsOf(g.rows, g.cols, g.mines) };
+  return adjCache.adj;
+}
+const isMine = (g, i) => g.mines !== null && g.mines[i] === '1';
+const isOver = g => g.status === 'won' || g.status === 'lost';
+function flagsAround(g, i) {
+  let k = 0;
+  for (const j of neighborTable(g.rows, g.cols)[i]) if (g.view[j] === 2) k++;
+  return k;
+}
+function openCount(g) {
+  let k = 0;
+  for (const v of g.view) if (v === 1) k++;
+  return k;
+}
+function flagCount(g) {
+  let k = 0;
+  for (const v of g.view) if (v === 2) k++;
+  return k;
+}
+const minesLeft = g => g.total - flagCount(g);
+// Abre en cascada desde i; las banderas no se tocan
+function floodOpen(g, i) {
+  const NB = neighborTable(g.rows, g.cols), adj = adjOf(g);
+  const opened = [], stack = [[i, 0]];
+  while (stack.length) {
+    const [k, d] = stack.pop();
+    if (g.view[k] !== 0) continue;
+    g.view[k] = 1;
+    opened.push([k, d]);
+    if (adj[k] === 0) for (const j of NB[k]) if (g.view[j] === 0) stack.push([j, d + 1]);
+  }
+  return opened;
+}
+function checkWin(g) {
+  if (g.status !== 'playing' || openCount(g) !== g.rows * g.cols - g.total) return false;
+  g.status = 'won';
+  for (let i = 0; i < g.view.length; i++) if (isMine(g, i)) g.view[i] = 2;
+  return true;
+}
+function explode(g, i) {
+  g.status = 'lost';
+  g.boom = i;
+  g.view[i] = 1;
+}
+// Devuelve null si no hizo nada; si no, { opened, won, lost }
+function reveal(g, i, rng = Math.random) {
+  if (isOver(g) || g.view[i] !== 0) return null;
+  if (g.mines === null) {
+    g.mines = layMines(g.rows, g.cols, g.total, rng, i);
+    g.status = 'playing';
+  }
+  if (isMine(g, i)) { explode(g, i); return { opened: [[i, 0]], lost: true }; }
+  const opened = floodOpen(g, i);
+  return { opened, won: checkWin(g) };
+}
+// Abrir las vecinas de un número que ya tiene todas sus banderas
+function chord(g, i) {
+  if (g.status !== 'playing' || g.view[i] !== 1) return null;
+  const need = adjOf(g)[i];
+  if (!need) return null;
+  const hidden = neighborTable(g.rows, g.cols)[i].filter(j => g.view[j] === 0);
+  if (!hidden.length) return null;
+  if (flagsAround(g, i) !== need) return { blocked: true };
+  const bad = hidden.find(j => isMine(g, j));
+  if (bad !== undefined) { explode(g, bad); return { opened: [[bad, 0]], lost: true }; }
+  const opened = [];
+  for (const j of hidden) for (const [k, d] of floodOpen(g, j)) opened.push([k, d + 1]);
+  return { opened, won: checkWin(g) };
+}
+function toggleFlag(g, i) {
+  if (isOver(g) || g.view[i] === 1) return null;
+  g.view[i] = g.view[i] === 2 ? 0 : 2;
+  return { flagged: g.view[i] === 2 };
+}
+// Lo que hace un toque: sobre un número, abrir vecinas; si no, abrir o marcar según el modo
+function tapAction(g, i, flagMode, rng) {
+  if (g.view[i] === 1) return chord(g, i);
+  if (flagMode) return toggleFlag(g, i);
+  if (g.view[i] === 2) return null;
+  return reveal(g, i, rng);
+}
+// Porcentaje de casillas libres abiertas (para el resultado al perder)
+function clearedPct(g) {
+  const safeTotal = g.rows * g.cols - g.total;
+  let k = 0;
+  g.view.forEach((v, i) => { if (v === 1 && !isMine(g, i)) k++; });
+  return Math.floor((k / safeTotal) * 100);
+}
+// Valor que se envía al servidor: segundos (menos es mejor)
+const dailyValue = g => Math.min(86400, Math.max(1, Math.round(g.elapsed * 10) / 10));
+
+function validSaved(s, rows, cols, total) {
+  if (!s || typeof s !== 'object' || s.rows !== rows || s.cols !== cols || s.total !== total) return false;
+  const n = rows * cols;
+  if (!Array.isArray(s.view) || s.view.length !== n || !s.view.every(v => v === 0 || v === 1 || v === 2)) return false;
+  if (!['ready', 'playing', 'won', 'lost'].includes(s.status)) return false;
+  if (s.status === 'ready' ? s.mines !== null : (typeof s.mines !== 'string' || s.mines.length !== n || !/^[01]+$/.test(s.mines))) return false;
+  if (s.mines && s.mines.split('1').length - 1 !== total) return false;
+  return typeof s.elapsed === 'number' && isFinite(s.elapsed) && s.elapsed >= 0;
+}
+function restoreGame(s) {
+  return {
+    rows: s.rows, cols: s.cols, total: s.total, mines: s.mines, view: s.view.slice(), status: s.status,
+    boom: Number.isInteger(s.boom) ? s.boom : -1, elapsed: s.elapsed, started: !!s.started,
+    start: Number.isInteger(s.start) ? s.start : -1, sent: !!s.sent, rank: typeof s.rank === 'string' ? s.rank : '',
+  };
+}
+
+// ---------- Fechas, guardado y estadísticas ----------
+const LAUNCH_DAY = Date.UTC(2026, 10, 6) / 864e5;   // el reto #1
+function dayIndex() {
+  const n = new Date();
+  return Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) / 864e5;
+}
+function load(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+}
+function save(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+}
+function freshStats() {
+  const free = {};
+  for (const k of Object.keys(LEVELS)) free[k] = { played: 0, wins: 0, best: null };
+  return { played: 0, wins: 0, streak: 0, maxStreak: 0, lastDay: null, lastWinDay: null, bestTime: null, free };
+}
+function loadStats() {
+  const s = load('buscaminasStats', null), base = freshStats();
+  if (!s || typeof s !== 'object') return base;
+  const free = {};
+  for (const k of Object.keys(LEVELS)) free[k] = { ...base.free[k], ...(s.free && s.free[k]) };
+  return { ...base, ...s, free };
+}
+// Cuenta una sola vez por día, aunque se recargue la página
+function applyDaily(s, dayNumber, won, seconds) {
+  if (s.lastDay === dayNumber) return false;
+  s.played++;
+  s.lastDay = dayNumber;
+  if (won) {
+    s.wins++;
+    s.streak = s.lastWinDay === dayNumber - 1 ? s.streak + 1 : 1;
+    s.maxStreak = Math.max(s.maxStreak, s.streak);
+    s.lastWinDay = dayNumber;
+    if (s.bestTime === null || seconds < s.bestTime) s.bestTime = seconds;
+  } else {
+    s.streak = 0;
+  }
+  return true;
+}
+// Devuelve true si es un récord que mejora uno anterior
+function applyFree(s, level, won, seconds) {
+  const f = s.free[level];
+  f.played++;
+  if (!won) return false;
+  f.wins++;
+  const record = f.best !== null && seconds < f.best;
+  if (f.best === null || seconds < f.best) f.best = seconds;
+  return record;
+}
+const currentStreak = (s, dayNumber) => (s.lastWinDay !== null && s.lastWinDay >= dayNumber - 1 ? s.streak : 0);
+
+// ================= Pantalla =================
+const $ = id => document.getElementById(id);
+if (typeof document !== 'undefined' && $('board')) initUI();
+
+function initUI() {
+const reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+const coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+const MIN_CELL = coarse ? 28 : 18, MAX_CELL = 44;
+
+let mode = 'daily', day = dayIndex();
+let game = null, flagMode = false, lastTick = 0, shownSecond = -1, newRecord = false;
+let freeLevel = LEVELS[load('buscaminasNivel', 'facil')] ? load('buscaminasNivel', 'facil') : 'facil';
+let soundOn = load('buscaminasSonido', true);
+let zoomFit = !!load('buscaminasZoom', false);
+let stats = loadStats();
+let cells = [], rotated = false, builtKey = '', cursor = -1, centerOn = -1;
+
+function persist() {
+  if (!game) return;
+  if (mode === 'daily') save('buscaminasDaily', { day, ...game });
+  else save('buscaminasLibre_' + freeLevel, game);
+}
+
+function startDaily() {
+  mode = 'daily';
+  day = dayIndex();
+  const fresh = newDailyGame(day);
+  const saved = load('buscaminasDaily', null);
+  game = saved && saved.day === day && validSaved(saved, DAILY.rows, DAILY.cols, DAILY.mines) && saved.mines === fresh.mines
+    ? restoreGame(saved) : fresh;
+  centerOn = game.start;
+  begin();
+  if (isOver(game)) {
+    if (applyDaily(stats, day, game.status === 'won', game.elapsed)) save('buscaminasStats', stats);
+    showOver();
+  }
+}
+function startFree(fresh) {
+  mode = 'free';
+  const L = LEVELS[freeLevel];
+  const saved = load('buscaminasLibre_' + freeLevel, null);
+  game = !fresh && validSaved(saved, L.rows, L.cols, L.mines) && !isOver(saved) ? restoreGame(saved) : newGame(L.rows, L.cols, L.mines);
+  centerOn = -1;
+  persist();
+  begin();
+}
+function begin() {
+  shownSecond = -1;
+  cursor = -1;
+  flagMode = false;
+  $('over-modal').classList.remove('show');
+  $('tab-daily').classList.toggle('active', mode === 'daily');
+  $('tab-free').classList.toggle('active', mode === 'free');
+  $('label').style.display = mode === 'daily' ? 'block' : 'none';
+  $('label').textContent = `Reto #${day - LAUNCH_DAY + 1} · ${DAILY.cols}×${DAILY.rows}`;
+  $('level').style.display = mode === 'free' ? 'block' : 'none';
+  const board = $('board');
+  board.classList.remove('won', 'lost');
+  if (game.status === 'won') board.classList.add('won');
+  builtKey = '';
+  resizeBoard();
+  renderAll();
+}
+
+// ---------- Tablero ----------
+const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+// Con el tablero girado, la fila en pantalla es la columna del tablero
+const across = () => (rotated ? game.rows : game.cols);
+const down = () => (rotated ? game.cols : game.rows);
+const toLogical = (dr, dc) => (rotated ? dc * game.cols + dr : dr * game.cols + dc);
+const toDisplay = i => (rotated ? [i % game.cols, Math.floor(i / game.cols)] : [Math.floor(i / game.cols), i % game.cols]);
+
+function buildBoard() {
+  const board = $('board');
+  board.innerHTML = '';
+  board.style.gridTemplateColumns = `repeat(${across()}, var(--cell))`;
+  cells = Array(game.rows * game.cols);
+  const frag = document.createDocumentFragment();
+  for (let dr = 0; dr < down(); dr++) {
+    for (let dc = 0; dc < across(); dc++) {
+      const i = toLogical(dr, dc);
+      const el = document.createElement('div');
+      el.dataset.i = i;
+      el.setAttribute('role', 'gridcell');
+      frag.appendChild(el);
+      cells[i] = el;
+    }
+  }
+  board.appendChild(frag);
+}
+function resizeBoard() {
+  if (!game) return;
+  const wrap = $('board-wrap');
+  const W = wrap.clientWidth - 10, H = wrap.clientHeight - 10;
+  const fitFor = (a, d) => Math.floor(Math.min(W / a, H / d));
+  const normal = fitFor(game.cols, game.rows), turned = fitFor(game.rows, game.cols);
+  const nextRot = game.cols > game.rows && turned > normal;
+  const fit = Math.max(nextRot ? turned : normal, 8);
+  const key = `${game.rows}x${game.cols}${nextRot}`;
+  if (key !== builtKey) {
+    rotated = nextRot;
+    builtKey = key;
+    buildBoard();
+    renderBoard();
+  }
+  const tooSmall = fit < MIN_CELL;
+  const cell = Math.min(MAX_CELL, tooSmall && !zoomFit ? MIN_CELL : fit);
+  $('board').style.setProperty('--cell', cell + 'px');
+  const pans = cell * across() > W + 4 || cell * down() > H + 4;
+  $('board').classList.toggle('pan', pans);
+  if (!pans) { wrap.scrollLeft = 0; wrap.scrollTop = 0; }
+  else maybePanHint();
+  $('btn-zoom').style.display = tooSmall ? 'block' : 'none';
+  $('btn-zoom').textContent = zoomFit ? '🔎' : '🔍';
+  $('btn-zoom').setAttribute('aria-label', zoomFit ? 'Agrandar casillas' : 'Ver todo el tablero');
+  if (pans && centerOn >= 0) {
+    const [dr, dc] = toDisplay(centerOn);
+    wrap.scrollLeft = Math.max(0, (dc + .5) * cell - wrap.clientWidth / 2);
+    wrap.scrollTop = Math.max(0, (dr + .5) * cell - wrap.clientHeight / 2);
+  }
+  centerOn = -1;
+}
+
+// Aviso único cuando el tablero no entra con casillas cómodas
+let panHintPending = false;
+function maybePanHint() {
+  if (load('buscaminasVioDesliza', false)) return;
+  if ($('help-modal').classList.contains('show')) { panHintPending = true; return; }
+  panHintPending = false;
+  save('buscaminasVioDesliza', true);
+  toast('👆 Desliza para ver todo el tablero · 🔍 lo muestra completo', 3500);
+}
+
+function cellState(i) {
+  const v = game.view[i], over = isOver(game);
+  if (v === 1) {
+    if (isMine(game, i)) return { cls: 'c o x', text: '💥', label: 'mina que explotó' };
+    const a = adjOf(game)[i];
+    return { cls: a ? `c o n n${a}` : 'c o', text: a ? String(a) : '', label: a ? `${a}` : 'vacía' };
+  }
+  if (v === 2) {
+    if (game.status === 'lost' && !isMine(game, i)) return { cls: 'c wf', text: '🚩', label: 'bandera equivocada' };
+    return { cls: 'c h f', text: '🚩', label: 'bandera' };
+  }
+  if (over && isMine(game, i)) return { cls: 'c m', text: '💣', label: 'mina' };
+  return { cls: 'c h', text: '', label: 'tapada' };
+}
+// effects: Map de casilla → [clase, demora en ms]
+function renderBoard(effects) {
+  if (!cells.length) return;
+  for (let i = 0; i < cells.length; i++) {
+    const el = cells[i];
+    const s = cellState(i);
+    const fx = effects && effects.get(i);
+    el.className = s.cls + (fx ? ' ' + fx[0] : '') + (i === cursor ? ' cur' : '');
+    if (fx) el.style.setProperty('--d', fx[1] + 'ms');
+    if (el.textContent !== s.text) el.textContent = s.text;
+    const [dr, dc] = toDisplay(i);
+    el.setAttribute('aria-label', `Fila ${dr + 1}, columna ${dc + 1}: ${s.label}`);
+  }
+}
+function updateClock() {
+  const whole = Math.floor(game.elapsed);
+  if (whole !== shownSecond) { shownSecond = whole; $('clock').textContent = fmt(game.elapsed); }
+}
+function updateHud() {
+  updateClock();
+  const left = minesLeft(game);
+  $('left-count').textContent = `💣 ${left}`;
+  $('left-count').setAttribute('aria-label', `Minas por marcar: ${left}`);
+  $('btn-digmode').classList.toggle('on', !flagMode);
+  $('btn-flagmode').classList.toggle('on', flagMode);
+  $('btn-digmode').setAttribute('aria-pressed', String(!flagMode));
+  $('btn-flagmode').setAttribute('aria-pressed', String(flagMode));
+  const newBtn = $('btn-new');
+  if (mode === 'free') {
+    newBtn.style.display = 'block';
+    newBtn.textContent = '🔄 Nueva';
+    updateLevelOptions();
+  } else {
+    newBtn.style.display = isOver(game) ? 'block' : 'none';
+    newBtn.textContent = '🏁 Resultado';
+  }
+}
+function updateLevelOptions() {
+  const select = $('level');
+  Object.keys(LEVELS).forEach((k, idx) => {
+    const best = stats.free[k].best;
+    select.children[idx].textContent = LEVELS[k].name + (best != null ? ` 🏆 ${fmt(best)}` : '');
+  });
+  select.value = freeLevel;
+}
+function renderAll(effects) {
+  renderBoard(effects);
+  updateHud();
+}
+
+// El reloj corre desde la primera jugada y se detiene si la pestaña no está visible
+function tick(now) {
+  requestAnimationFrame(tick);
+  if (game && game.started && game.status === 'playing' && !document.hidden) {
+    const delta = (now - lastTick) / 1000;
+    if (delta > 0 && delta < 2) {
+      game.elapsed += delta;
+      updateClock();
+    }
+  }
+  lastTick = now;
+}
+setInterval(() => { if (game && game.started && !isOver(game)) persist(); }, 5000);
+
+// ---------- Jugar ----------
+function markStarted() {
+  if (!game.started) { game.started = true; lastTick = performance.now(); }
+}
+function act(i, kind) {
+  if (!game || isOver(game)) return;
+  const result = kind === 'flag' ? (game.view[i] === 1 ? null : toggleFlag(game, i)) : tapAction(game, i, flagMode);
+  if (!result) return;
+  if (result.blocked) {
+    beep(180, .05);
+    toast(`Este ${adjOf(game)[i]} necesita ${adjOf(game)[i]} 🚩 alrededor`);
+    return;
+  }
+  markStarted();
+  if ('flagged' in result) {
+    beep(result.flagged ? 880 : 440, .05);
+    if (navigator.vibrate) navigator.vibrate(result.flagged ? 25 : 10);
+    const el = $('left-count');
+    el.classList.remove('bump');
+    void el.offsetWidth;
+    el.classList.add('bump');
+    renderAll();
+    persist();
+    return;
+  }
+  if (result.lost) { lose(); return; }
+  const fx = new Map();
+  if (!reducedMotion) for (const [k, d] of result.opened) fx.set(k, ['fresh', Math.min(d, 12) * 25]);
+  beep(result.opened.length > 1 ? 520 : 640, .04);
+  renderAll(fx);
+  if (result.won) { win(); return; }
+  persist();
+}
+
+function lose() {
+  persist();
+  beep(140, .25);
+  setTimeout(() => beep(90, .35), 120);
+  if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
+  const [br, bc] = toDisplay(game.boom);
+  const fx = new Map();
+  if (!reducedMotion) {
+    game.view.forEach((v, i) => {
+      if (isMine(game, i) && i !== game.boom && v !== 2) {
+        const [r, c] = toDisplay(i);
+        fx.set(i, ['boomin', Math.min(1200, Math.hypot(r - br, c - bc) * 45)]);
+      }
+    });
+  }
+  const board = $('board');
+  board.classList.remove('lost');
+  void board.offsetWidth;
+  board.classList.add('lost');
+  renderAll(fx);
+  finish(false);
+  setTimeout(showOver, reducedMotion ? 400 : 1300);
+}
+function win() {
+  [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, .16), i * 110));
+  const fx = new Map();
+  if (!reducedMotion) {
+    game.view.forEach((v, i) => {
+      if (isMine(game, i)) {
+        const [r, c] = toDisplay(i);
+        fx.set(i, ['cheer', (r + c) * 30]);
+      }
+    });
+  }
+  $('board').classList.add('won');
+  renderAll(fx);
+  finish(true);
+  setTimeout(showOver, reducedMotion ? 400 : 1100);
+}
+function finish(won) {
+  newRecord = false;
+  if (mode === 'daily') applyDaily(stats, day, won, game.elapsed);
+  else newRecord = applyFree(stats, freeLevel, won, game.elapsed);
+  save('buscaminasStats', stats);
+  flagMode = false;
+  persist();
+  updateHud();
+}
+
+// ---------- Toques, mouse y teclado ----------
+let press = null;
+const cellFrom = e => {
+  const el = e.target && e.target.closest ? e.target.closest('.c') : null;
+  return el && el.dataset.i !== undefined ? +el.dataset.i : -1;
+};
+function clearPress() {
+  if (!press) return;
+  clearTimeout(press.timer);
+  if (cells[press.i]) cells[press.i].classList.remove('press');
+  press = null;
+}
+const board = $('board');
+board.addEventListener('contextmenu', e => e.preventDefault());
+board.addEventListener('pointerdown', e => {
+  const i = cellFrom(e);
+  clearPress();
+  if (i < 0 || !game || isOver(game)) return;
+  if (e.pointerType === 'mouse') {
+    if (e.button === 2) { act(i, 'flag'); return; }
+    if (e.button !== 0) return;
+    press = { i, mouse: true };
+  } else {
+    press = { i, x: e.clientX, y: e.clientY, long: false };
+    press.timer = setTimeout(() => {
+      if (!press || press.i !== i) return;
+      press.long = true;
+      if (game.view[i] !== 1) act(i, 'flag');
+      if (cells[i]) cells[i].classList.remove('press');
+    }, 350);
+  }
+  if (game.view[i] === 0 && !flagMode) cells[i].classList.add('press');
+});
+board.addEventListener('pointermove', e => {
+  if (!press || press.mouse) return;
+  if (Math.hypot(e.clientX - press.x, e.clientY - press.y) > 10) clearPress();
+});
+board.addEventListener('pointerup', e => {
+  if (!press) return;
+  const p = press;
+  clearPress();
+  if (p.long) return;
+  if (p.mouse && cellFrom(e) !== p.i) return;
+  act(p.i, 'tap');
+});
+board.addEventListener('pointercancel', clearPress);
+board.addEventListener('pointerleave', e => { if (press && press.mouse) clearPress(); });
+
+function setFlagMode(on) {
+  if (isOver(game)) return;
+  flagMode = on;
+  beep(on ? 760 : 560, .03);
+  updateHud();
+}
+function moveCursor(dr, dc) {
+  if (cursor < 0) cursor = game.start >= 0 ? game.start : Math.floor(game.rows / 2) * game.cols + Math.floor(game.cols / 2);
+  else {
+    const [r, c] = toDisplay(cursor);
+    cursor = toLogical((r + dr + down()) % down(), (c + dc + across()) % across());
+  }
+  renderBoard();
+  if (cells[cursor] && cells[cursor].scrollIntoView) cells[cursor].scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+function onKey(e) {
+  if (e.target && e.target.tagName === 'SELECT') return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if ($('help-modal').classList.contains('show') || $('over-modal').classList.contains('show')) return;
+  const arrows = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
+  if (arrows[e.key]) { e.preventDefault(); moveCursor(...arrows[e.key]); return; }
+  if (cursor < 0) return;
+  if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); act(cursor, 'tap'); return; }
+  if (e.key === 'f' || e.key === 'F') { e.preventDefault(); act(cursor, 'flag'); }
+}
+
+// ---------- Resultado ----------
+function statBox(value, label) {
+  return `<div class="stat"><b>${value}</b><span>${label}</span></div>`;
+}
+function rankText({ total, beaten }) {
+  if (total < JuegaYaDiario.MIN_JUGADORES) return '🥇 Estás entre los primeros en despejar el campo de hoy';
+  if (beaten === 0) return `👥 Hoy lo despejaron ${total} jugadores`;
+  return `👥 Hoy lo despejaron ${total} jugadores. Tu tiempo superó al de ${beaten}`;
+}
+// Solo se envía una victoria, y una sola vez; perder no envía nada
+async function showRank() {
+  const g = game;
+  if (g.status !== 'won' || dayIndex() !== day) return;
+  if (g.rank) { $('over-rank').textContent = g.rank; return; }
+  if (g.sent) return;
+  g.sent = true;
+  persist();
+  const result = await JuegaYaDiario.enviar('buscaminas', dailyValue(g));
+  if (!result) return;
+  g.rank = rankText(result);
+  if (g === game) { $('over-rank').textContent = g.rank; persist(); }
+}
+function showOver() {
+  if (!isOver(game)) return;
+  const won = game.status === 'won';
+  const title = $('over-title');
+  title.classList.toggle('bad', !won);
+  $('over-rank').textContent = '';
+  if (mode === 'daily') {
+    title.textContent = won ? '¡Campo despejado!' : '¡Pisaste una mina!';
+    $('over-sub').textContent = won ? `Reto #${day - LAUNCH_DAY + 1}` : `Reto #${day - LAUNCH_DAY + 1} · Despejaste el ${clearedPct(game)} %. Mañana hay otro campo.`;
+    $('over-stats').innerHTML = (won ? statBox(fmt(game.elapsed), 'Tiempo') : statBox(clearedPct(game) + '%', 'Despejado'))
+      + statBox(currentStreak(stats, day), 'Racha') + statBox(stats.maxStreak, 'Mejor racha')
+      + (stats.bestTime != null ? statBox(fmt(stats.bestTime), 'Mejor') : '');
+    $('btn-primary').textContent = '♾️ Jugar en modo libre';
+    $('btn-primary').onclick = () => { persist(); startFree(false); };
+    $('next-in').style.display = 'block';
+    updateCountdown();
+    $('over-modal').classList.add('show');
+    showRank();
+  } else {
+    const f = stats.free[freeLevel];
+    title.textContent = won ? (newRecord ? '¡Nuevo récord!' : '¡Campo despejado!') : '¡Boom!';
+    $('over-sub').textContent = `Nivel ${LEVELS[freeLevel].name}` + (won ? '' : ` · Despejaste el ${clearedPct(game)} %`);
+    $('over-stats').innerHTML = (won ? statBox(fmt(game.elapsed), 'Tiempo') : statBox(clearedPct(game) + '%', 'Despejado'))
+      + statBox(f.best != null ? fmt(f.best) : '–', 'Mejor') + statBox(`${f.wins}/${f.played}`, 'Ganadas');
+    $('btn-primary').textContent = `🔄 Otra partida (${LEVELS[freeLevel].name.toLowerCase()})`;
+    $('btn-primary').onclick = () => startFree(true);
+    $('next-in').style.display = 'none';
+    $('over-modal').classList.add('show');
+  }
+}
+function updateCountdown() {
+  const now = new Date();
+  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  const s = Math.max(0, Math.floor((next - now) / 1000));
+  const pad = v => String(v).padStart(2, '0');
+  $('next-in').textContent = `Próximo reto en ${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
+  // A medianoche llega el reto nuevo, salvo que haya una partida en curso
+  if (mode === 'daily' && dayIndex() !== day && (!game.started || isOver(game))) startDaily();
+}
+setInterval(updateCountdown, 1000);
+
+function shareText() {
+  const url = 'https://www.juegaya.app/juego/buscaminas?utm_source=compartido';
+  const won = game.status === 'won';
+  if (mode === 'daily') {
+    const line = won ? `✅ Despejé el campo en ${fmt(game.elapsed)}` : `💥 Hoy pisé una mina (despejé el ${clearedPct(game)} %)`;
+    return `💣 Buscaminas #${day - LAUNCH_DAY + 1}\n${line} · 🔥 Racha: ${currentStreak(stats, day)}\n\n¿Puedes superarme?\n${url}`;
+  }
+  const line = won ? `✅ Despejé el campo en ${fmt(game.elapsed)}` : `💥 Despejé el ${clearedPct(game)} % antes de pisar una mina`;
+  return `💣 Buscaminas ${LEVELS[freeLevel].name}\n${line}\n\n¿Puedes superarme?\n${url}`;
+}
+$('btn-share').addEventListener('click', async () => {
+  const text = shareText();
+  if (navigator.share) {
+    try { await navigator.share({ text }); return; } catch (err) { if (err.name === 'AbortError') return; }
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('¡Copiado! Pégalo donde quieras');
+  } catch {
+    toast('No se pudo copiar');
+  }
+});
+
+let toastTimer;
+function toast(msg, ms = 1800) {
+  $('toast').textContent = msg;
+  $('toast').classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('toast').classList.remove('show'), ms);
+}
+
+// ---------- Sonido ----------
+let audio;
+function beep(freq, dur) {
+  if (!soundOn) return;
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.type = 'triangle';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(.12, audio.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, audio.currentTime + dur);
+    o.connect(g).connect(audio.destination);
+    o.start();
+    o.stop(audio.currentTime + dur);
+  } catch {}
+}
+
+// ---------- Botones e inicio ----------
+for (const k of Object.keys(LEVELS)) {
+  const o = document.createElement('option');
+  o.value = k;
+  $('level').appendChild(o);
+}
+$('tab-daily').addEventListener('click', () => { if (mode !== 'daily') { persist(); startDaily(); } });
+$('tab-free').addEventListener('click', () => { if (mode !== 'free') { persist(); startFree(false); } });
+$('level').addEventListener('change', e => {
+  persist();
+  freeLevel = e.target.value;
+  save('buscaminasNivel', freeLevel);
+  e.target.blur();
+  startFree(false);
+});
+$('btn-new').addEventListener('click', () => { if (mode === 'free') startFree(true); else showOver(); });
+$('btn-digmode').addEventListener('click', () => setFlagMode(false));
+$('btn-flagmode').addEventListener('click', () => setFlagMode(true));
+$('btn-zoom').addEventListener('click', () => {
+  zoomFit = !zoomFit;
+  save('buscaminasZoom', zoomFit);
+  resizeBoard();
+});
+$('btn-see').addEventListener('click', () => $('over-modal').classList.remove('show'));
+$('over-modal').addEventListener('click', e => { if (e.target === $('over-modal')) $('over-modal').classList.remove('show'); });
+$('btn-help').addEventListener('click', () => $('help-modal').classList.add('show'));
+$('close-help').addEventListener('click', () => {
+  $('help-modal').classList.remove('show');
+  if (panHintPending) maybePanHint();
+});
+$('btn-sound').addEventListener('click', () => {
+  soundOn = !soundOn;
+  save('buscaminasSonido', soundOn);
+  $('btn-sound').textContent = soundOn ? '🔊' : '🔇';
+});
+$('btn-sound').textContent = soundOn ? '🔊' : '🔇';
+window.addEventListener('keydown', onKey);
+document.addEventListener('visibilitychange', persist);
+window.addEventListener('pagehide', persist);
+
+new ResizeObserver(() => resizeBoard()).observe($('board-wrap'));
+requestAnimationFrame(tick);
+startDaily();
+if (!load('buscaminasVioAyuda', false)) {
+  $('help-modal').classList.add('show');
+  save('buscaminasVioAyuda', true);
+}
+}
+</script>
+</body>
+</html>

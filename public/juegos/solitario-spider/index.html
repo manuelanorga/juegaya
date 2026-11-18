@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Solitario Spider - JuegaYa</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body { background: #111120; color: #fff; font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif; overflow: hidden; user-select: none; -webkit-user-select: none; }
+  button { font-family: inherit; }
+  #app { height: 100%; max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; padding: 8px 8px 10px; gap: 7px; }
+  .tabs { display: flex; gap: 6px; flex-shrink: 0; }
+  .tab { flex: 1; padding: 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,.1); background: #1e1e34; color: rgba(255,255,255,.55); font-size: 13px; font-weight: 800; cursor: pointer; }
+  .tab.active { background: #ffd000; border-color: #ffd000; color: #1a1400; }
+  .icon-btn { width: 38px; flex: none; padding: 0; font-size: 15px; }
+  .hud { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0; min-height: 22px; padding: 0 2px; }
+  .label { font-size: 15px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .meta { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 800; color: rgba(255,255,255,.7); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  #table { flex: 1; min-height: 0; position: relative; touch-action: none; overflow: hidden; }
+  .slot { position: absolute; left: 0; top: 0; width: var(--w); height: var(--h); border-radius: calc(var(--w) * .1); background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.1); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,.2); font-size: calc(var(--w) * .42); font-weight: 900; pointer-events: none; }
+  .slot.hint { border-color: #ffd000; box-shadow: 0 0 0 2px #ffd000, 0 0 12px rgba(255,208,0,.6); }
+  #stock-hit { position: absolute; left: 0; top: 0; height: var(--h); z-index: 400; border: 0; background: none; border-radius: calc(var(--w) * .1); cursor: pointer; touch-action: none; }
+  #stock-hit.hint { box-shadow: 0 0 0 2px #ffd000, 0 0 12px rgba(255,208,0,.6); }
+  #stock-hit:focus-visible, .pc:focus-visible { outline: 2px solid #ffd000; outline-offset: 1px; }
+  #stock-count { position: absolute; right: 2px; bottom: 2px; min-width: 16px; padding: 1px 3px; border-radius: 6px; background: rgba(0,0,0,.72); color: #ffd000; font-size: 11px; font-weight: 800; line-height: 14px; font-variant-numeric: tabular-nums; }
+
+  /* Las cartas siempre existen y solo cambian de posición: así todo movimiento se anima solo */
+  .pc { position: absolute; left: 0; top: 0; width: var(--w); height: var(--h); transition: transform .16s ease-out; cursor: pointer; touch-action: none; outline: none; }
+  .pc.drag { transition: none; cursor: grabbing; }
+  .pc.drag > .face { box-shadow: 0 6px 14px rgba(0,0,0,.5); }
+  #table.noanim .pc { transition: none; }
+  .face, .back { position: absolute; inset: 0; border-radius: calc(var(--w) * .1); overflow: hidden; }
+  .face { display: none; background: #fdfbf4; border: 1px solid rgba(0,0,0,.28); box-shadow: 0 1px 2px rgba(0,0,0,.35); font-family: Arial, Helvetica, 'Segoe UI Symbol', 'Apple Symbols', sans-serif; }
+  .pc.up > .face { display: block; }
+  .pc.up > .back { display: none; }
+  /* Cuatro colores: con cartas tan angostas, picas y tréboles se distinguen mejor así */
+  .pc.s0 .face { color: #14142a; }
+  .pc.s1 .face { color: #cf1238; }
+  .pc.s2 .face { color: #0b6e3a; }
+  .pc.s3 .face { color: #1d54c4; }
+  .pc.hint > .face { box-shadow: 0 0 0 2px #ffd000, 0 0 10px rgba(255,208,0,.8); }
+  /* Rango y palo en la esquina superior izquierda: es la franja que se ve con las cartas solapadas */
+  .corner { position: absolute; left: calc(var(--w) * .04); top: 0; display: flex; align-items: center; height: calc(var(--fs) * 1.1); font-size: var(--fs); font-weight: 900; line-height: 1; letter-spacing: -.08em; white-space: nowrap; }
+  .corner i { font-style: normal; font-size: .78em; margin-left: .12em; letter-spacing: 0; }
+  .big { position: absolute; right: calc(var(--w) * .07); bottom: calc(var(--w) * .03); font-size: calc(var(--w) * .62); line-height: 1; }
+  .back { background: #23235c repeating-linear-gradient(45deg, transparent 0 4px, rgba(255,208,0,.16) 4px 5px); border: 1px solid rgba(255,208,0,.55); box-shadow: 0 1px 2px rgba(0,0,0,.35), inset 0 0 0 2px #1a1a48; }
+  .back::after { content: ''; position: absolute; left: 50%; top: 50%; width: 26%; aspect-ratio: 1; transform: translate(-50%, -50%) rotate(45deg); background: #ffd000; border-radius: 2px; opacity: .85; }
+  .pc.nope > * { animation: nope .28s; }
+  @keyframes nope { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
+  .actions { display: flex; align-items: center; justify-content: center; gap: 6px; flex-shrink: 0; }
+  .mini-btn { background: #262640; color: #fff; border: 1px solid rgba(255,255,255,.15); border-radius: 10px; padding: 8px 10px; font-size: 13px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+  .mini-btn:disabled { opacity: .4; cursor: default; }
+  .mini-btn.gold { background: linear-gradient(135deg,#ffd000,#ffaa00); color: #1a1000; border-color: #ffd000; }
+  .modal { position: fixed; inset: 0; background: rgba(5,5,15,.78); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 1500; }
+  .modal.show { display: flex; }
+  .card { background: #1e1e34; border: 1px solid rgba(255,255,255,.12); border-radius: 18px; padding: 22px 20px; width: 100%; max-width: 360px; max-height: 100%; overflow-y: auto; text-align: center; }
+  .card h2 { font-size: 22px; font-weight: 900; color: #ffd000; margin-bottom: 8px; }
+  .card p, .card li { font-size: 14px; line-height: 1.5; color: rgba(255,255,255,.72); }
+  .card ul { text-align: left; padding-left: 18px; margin: 8px 0 14px; }
+  .card li + li { margin-top: 4px; }
+  .stats { display: flex; justify-content: center; gap: 16px; margin: 12px 0; }
+  .stat b { display: block; font-size: 22px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 11px; color: rgba(255,255,255,.5); font-weight: 700; }
+  #win-rank { font-size: 13px; font-weight: 700; color: #ffd000; margin: 2px 0 6px; min-height: 18px; }
+  .btn { display: block; width: 100%; padding: 12px; border-radius: 12px; border: none; font-size: 14px; font-weight: 900; cursor: pointer; margin-top: 8px; text-decoration: none; text-align: center; }
+  .btn-gold { background: linear-gradient(135deg,#ffd000,#ffaa00); color: #1a1000; }
+  .btn-dark { background: #262640; color: #fff; border: 1px solid rgba(255,255,255,.15); }
+  .suit-btn { display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left; }
+  .suit-btn small { font-size: 12px; font-weight: 700; opacity: .65; }
+  .suit-btn.current { outline: 2px solid #ffd000; outline-offset: -2px; }
+  #next-in { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 10px; }
+  #toast { position: fixed; bottom: 58px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 24px); background: #000; color: #fff; padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 2000; text-align: center; }
+  #toast.show { opacity: 1; }
+  .conf { position: fixed; top: -40px; pointer-events: none; z-index: 1400; font-size: 24px; animation: fall 1.3s ease-in forwards; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(420deg); opacity: .6; } }
+  @media (prefers-reduced-motion: reduce) {
+    .pc { transition: none; }
+    .pc.nope > * { animation: none; }
+    .conf { display: none; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="tabs">
+    <button class="tab active" id="tab-daily">📅 Del día</button>
+    <button class="tab" id="tab-free">♾️ Libre</button>
+    <button class="tab icon-btn" id="btn-sound" aria-label="Sonido">🔊</button>
+    <button class="tab icon-btn" id="btn-help" aria-label="Cómo jugar">?</button>
+  </div>
+  <div class="hud">
+    <div class="label" id="label"></div>
+    <div class="meta"><span id="score"></span><span id="moves"></span><span id="clock"></span></div>
+  </div>
+  <div id="table" role="group" aria-label="Mesa de solitario Spider"></div>
+  <div class="actions">
+    <button class="mini-btn" id="btn-undo">↩️ Deshacer</button>
+    <button class="mini-btn" id="btn-hint">💡 Pista</button>
+    <button class="mini-btn" id="btn-restart"></button>
+    <button class="mini-btn gold" id="btn-result">🏆 Ver resultado</button>
+  </div>
+</div>
+
+<div class="modal" id="help-modal">
+  <div class="card">
+    <h2>Cómo jugar</h2>
+    <ul>
+      <li>Arma <b>8 escaleras completas</b>, de la <b>K al A</b> y <b>del mismo palo</b>. Cada escalera completa sale sola de la mesa.</li>
+      <li>Puedes poner una carta sobre otra <b>un punto más alta, de cualquier palo</b>. Pero solo se mueven <b>juntas</b> las cartas que bajan en orden y son <b>del mismo palo</b>.</li>
+      <li>Una <b>columna vacía</b> acepta cualquier carta o grupo.</li>
+      <li>Toca el <b>mazo</b> (arriba a la derecha) para repartir una carta a cada columna. <b>No se puede repartir con una columna vacía</b>: llénala antes.</li>
+      <li><b>Toca una carta</b> y va sola al mejor lugar (primero donde sigue su palo), o <b>arrástrala</b>. <b>💡 Pista</b> te sugiere una jugada y <b>Deshacer</b> no tiene límite.</li>
+      <li>Empiezas con <b>500 puntos</b>: cada jugada resta 1 y cada escalera completa suma 100.</li>
+      <li>El <b>reto del día</b> es con 2 palos y el mismo reparto para todos. En <b>Libre</b> eliges 1, 2 o 4 palos.</li>
+      <li>Con teclado: <b>U</b> o <b>Ctrl+Z</b> deshace, <b>P</b> da una pista y <b>D</b> reparte.</li>
+    </ul>
+    <button class="btn btn-gold" id="close-help">¡A jugar!</button>
+  </div>
+</div>
+
+<div class="modal" id="new-modal">
+  <div class="card">
+    <h2>Nueva partida</h2>
+    <p>¿Con cuántos palos quieres jugar?</p>
+    <button class="btn btn-dark suit-btn" data-ns="1"><span>♠ 1 palo</span><small>Fácil</small></button>
+    <button class="btn btn-dark suit-btn" data-ns="2"><span>♠ ♥ 2 palos</span><small>Medio</small></button>
+    <button class="btn btn-dark suit-btn" data-ns="4"><span>♠ ♥ ♣ ♦ 4 palos</span><small>Difícil</small></button>
+    <button class="btn btn-dark" id="close-new" style="opacity:.75">Seguir con esta partida</button>
+  </div>
+</div>
+
+<div class="modal" id="win-modal">
+  <div class="card">
+    <h2 id="win-title"></h2>
+    <p id="win-sub"></p>
+    <div class="stats" id="win-stats"></div>
+    <p id="win-rank" aria-live="polite"></p>
+    <button class="btn btn-gold" id="btn-primary"></button>
+    <button class="btn btn-dark" id="btn-share">💬 Compartir resultado</button>
+    <a class="btn btn-dark" href="/juegos/diarios" target="_top">📅 Más juegos diarios</a>
+    <div id="next-in"></div>
+  </div>
+</div>
+<div id="toast" role="status"></div>
+
+<script src="../resultado-diario.js"></script>
+<script>
+// ---------- Cartas ----------
+// Dos barajas: una carta es un número de 0 a 103. El rango es c % 13 (A = 0 ... K = 12) y el palo
+// depende del modo: con 1 palo todas son picas, con 2 se alternan picas y corazones, con 4 hay de todo.
+const SUITS = ['♠︎', '♥︎', '♣︎', '♦︎'];
+const SUIT_NAMES = ['picas', 'corazones', 'tréboles', 'diamantes'];
+const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+const NCOLS = 10;
+const rankOf = c => c % 13;
+const suitOf = (c, ns) => (ns === 1 ? 0 : Math.floor(c / 13) % ns);
+
+function mulberry32(seed) {
+  return () => {
+    seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// La cima de cada montón es el último elemento. En cada columna, las down[i] primeras están boca abajo.
+// found guarda las escaleras completas, cada una del A (abajo) a la K (arriba).
+function dealFromSeed(seed, ns) {
+  const rng = mulberry32(seed);
+  const deck = Array.from({ length: 104 }, (_, i) => i);
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  const cols = [], down = [];
+  let p = 0;
+  for (let i = 0; i < NCOLS; i++) {
+    const n = i < 4 ? 6 : 5;
+    cols.push(deck.slice(p, p + n));
+    down.push(n - 1);
+    p += n;
+  }
+  return { ns, cols, down, stock: deck.slice(p), found: [], moves: 0 };
+}
+
+// ---------- Reglas ----------
+const canStack = (card, onto) => rankOf(onto) === rankOf(card) + 1;
+// lo va encima de hi y forman parte de la misma escalera de un palo
+const linked = (ns, lo, hi) => rankOf(hi) === rankOf(lo) + 1 && suitOf(hi, ns) === suitOf(lo, ns);
+const isWon = b => b.found.length === 8;
+const canDeal = b => b.stock.length > 0 && b.cols.every(c => c.length > 0);
+const scoreOf = b => Math.max(0, 500 + 100 * b.found.length - b.moves);
+
+// Primera carta del grupo que se puede mover desde la columna i (o -1 si está vacía)
+function runStart(b, i) {
+  const col = b.cols[i];
+  if (!col.length) return -1;
+  let p = col.length - 1;
+  while (p > b.down[i] && linked(b.ns, col[p], col[p - 1])) p--;
+  return p;
+}
+
+// Largo de la escalera de un palo que hay en la cima de la columna j
+function topRunLength(b, j) {
+  const p = runStart(b, j);
+  return p < 0 ? 0 : b.cols[j].length - p;
+}
+
+// m = { i, n, j }: mover las n cartas de arriba de la columna i a la columna j
+function isLegalMove(b, m) {
+  const col = b.cols[m.i], dest = b.cols[m.j];
+  if (!col || !dest || m.i === m.j || !Number.isInteger(m.n) || m.n < 1) return false;
+  const p = col.length - m.n;
+  if (p < 0 || p < runStart(b, m.i)) return false;
+  return !dest.length || canStack(col[p], dest[dest.length - 1]);
+}
+
+// Si la columna j termina en una escalera completa de K a A del mismo palo, la retira
+function takeComplete(b, j) {
+  const col = b.cols[j], n = col.length;
+  if (n < 13 || n - 13 < b.down[j] || rankOf(col[n - 1]) !== 0) return null;
+  for (let k = n - 1; k > n - 13; k--) if (!linked(b.ns, col[k], col[k - 1])) return null;
+  b.found.push(col.splice(n - 13, 13).reverse());
+  let flip = false;
+  if (col.length && col.length === b.down[j]) { b.down[j]--; flip = true; }
+  return { j, flip };
+}
+
+// Cada jugada devuelve el registro necesario para deshacerla, o null si no es válida
+function applyMove(b, m) {
+  if (!isLegalMove(b, m)) return null;
+  const src = b.cols[m.i];
+  const cards = src.splice(src.length - m.n, m.n);
+  let flip = false;
+  if (src.length && src.length === b.down[m.i]) { b.down[m.i]--; flip = true; }
+  b.cols[m.j].push(...cards);
+  b.moves++;
+  const d = takeComplete(b, m.j);
+  return { k: 'm', i: m.i, n: m.n, j: m.j, flip, head: cards[0], done: d ? [d] : [] };
+}
+
+// Reparte una carta boca arriba a cada columna. Regla clásica: no se puede con una columna vacía.
+function dealRow(b) {
+  if (!canDeal(b)) return null;
+  for (let i = 0; i < NCOLS; i++) b.cols[i].push(b.stock.pop());
+  b.moves++;
+  const done = [];
+  for (let i = 0; i < NCOLS; i++) {
+    const d = takeComplete(b, i);
+    if (d) done.push(d);
+  }
+  return { k: 'deal', done };
+}
+
+function undoStep(b, r) {
+  b.moves--;
+  for (let k = r.done.length - 1; k >= 0; k--) {
+    const d = r.done[k];
+    if (d.flip) b.down[d.j]++;
+    b.cols[d.j].push(...b.found.pop().slice().reverse());
+  }
+  if (r.k === 'deal') {
+    for (let i = NCOLS - 1; i >= 0; i--) b.stock.push(b.cols[i].pop());
+    return;
+  }
+  const dest = b.cols[r.j];
+  const cards = dest.splice(dest.length - r.n, r.n);
+  if (r.flip) b.down[r.i]++;
+  b.cols[r.i].push(...cards);
+}
+
+const applyStep = (b, s) => (s.k === 'deal' ? dealRow(b) : applyMove(b, s));
+
+// Un tablero guardado solo se usa si tiene las 104 cartas sin repetir y medidas coherentes
+function validBoard(b) {
+  try {
+    if (![1, 2, 4].includes(b.ns) || b.cols.length !== NCOLS || b.down.length !== NCOLS) return false;
+    if (b.stock.length % 10 || !Number.isInteger(b.moves)) return false;
+    const seen = new Set();
+    const add = c => { if (!Number.isInteger(c) || c < 0 || c > 103 || seen.has(c)) throw 0; seen.add(c); };
+    b.cols.forEach((col, i) => {
+      if (!(b.down[i] >= 0) || (col.length ? b.down[i] >= col.length : b.down[i] !== 0)) throw 0;
+      col.forEach(add);
+    });
+    b.stock.forEach(add);
+    b.found.forEach(run => { if (run.length !== 13) throw 0; run.forEach(add); });
+    return seen.size === 104;
+  } catch { return false; }
+}
+
+// De dónde se tomaría la carta: null si está boca abajo; ok = false si está boca arriba pero
+// no se puede mover (las de encima no bajan en orden o no son de su palo)
+function sourceOf(b, card) {
+  for (let i = 0; i < NCOLS; i++) {
+    const idx = b.cols[i].indexOf(card);
+    if (idx < 0) continue;
+    if (idx < b.down[i]) return null;
+    return { i, n: b.cols[i].length - idx, ok: idx >= runStart(b, i) };
+  }
+  return null;
+}
+
+// Mejor destino al tocar una carta: donde sigue su palo, luego cualquier carta un punto más alta y,
+// por último, una columna vacía (salvo que el grupo ya sea toda su columna)
+function bestDestination(b, src) {
+  const col = b.cols[src.i];
+  const head = col[col.length - src.n];
+  let any = null, empty = null;
+  for (let k = 1; k < NCOLS; k++) {
+    const j = (src.i + k) % NCOLS;
+    const dest = b.cols[j];
+    const m = { i: src.i, n: src.n, j };
+    if (!dest.length) {
+      if (empty === null && src.n < col.length) empty = m;
+      continue;
+    }
+    const top = dest[dest.length - 1];
+    if (!canStack(head, top)) continue;
+    if (suitOf(top, b.ns) === suitOf(head, b.ns)) return m;
+    if (any === null) any = m;
+  }
+  return any || empty;
+}
+
+// ---------- Jugadas útiles (pistas y solucionador) ----------
+// Descarta lo que no cambia nada: pasar un grupo de una carta un punto más alta a otra igual,
+// partir una escalera de un palo sin alargar otra, o mover una columna entera a un hueco.
+function usefulMoves(b) {
+  const ns = b.ns, out = [];
+  let firstEmpty = -1;
+  for (let j = 0; j < NCOLS; j++) if (!b.cols[j].length) { firstEmpty = j; break; }
+  const runLen = [];
+  for (let j = 0; j < NCOLS; j++) runLen.push(topRunLength(b, j));
+  for (let i = 0; i < NCOLS; i++) {
+    const col = b.cols[i], n = col.length;
+    if (!n) continue;
+    const d = b.down[i], p0 = n - runLen[i], head = col[p0];
+    const below = p0 > d ? col[p0 - 1] : -1;
+    const lateral = below >= 0 && canStack(head, below);
+    const reveals = p0 === d && d > 0;
+    for (let j = 0; j < NCOLS; j++) {
+      const dest = b.cols[j];
+      if (j === i || !dest.length) continue;
+      const top = dest[dest.length - 1];
+      const k = rankOf(head) - rankOf(top) + 1;   // cuántas cartas del grupo quedan atrás
+      if (k < 0 || k >= runLen[i]) continue;
+      const cnt = runLen[i] - k;
+      const same = suitOf(top, ns) === suitOf(head, ns);
+      const longer = same ? runLen[j] + cnt : 0;
+      let score;
+      if (k > 0) {
+        // Partir una escalera solo sirve si la del destino queda más larga
+        if (!same || longer <= runLen[i]) continue;
+        score = 200 + longer;
+      } else {
+        if (lateral && !same) continue;
+        score = 10;
+        if (same) score += 100 + longer;
+        if (reveals) score += 300 - 10 * d;
+        if (p0 === 0) score += 150;
+      }
+      if (longer === 13) score = 1000;
+      out.push({ i, n: cnt, j, score });
+    }
+    if (firstEmpty >= 0 && p0 > 0) {
+      out.push({ i, n: runLen[i], j: firstEmpty, score: reveals ? 60 : lateral ? -80 : -20 });
+      // Para poder repartir hay que llenar el hueco: si no hay otra cosa, sirve partir una escalera
+      if (b.stock.length) {
+        for (let p = p0 + 1; p < n; p++) out.push({ i, n: n - p, j: firstEmpty, score: -150 - (n - p) });
+      }
+    }
+  }
+  // Inserción estable: el empate siempre se resuelve igual
+  for (let a = 1; a < out.length; a++) {
+    const m = out[a];
+    let z = a - 1;
+    while (z >= 0 && out[z].score < m.score) { out[z + 1] = out[z]; z--; }
+    out[z + 1] = m;
+  }
+  return out;
+}
+
+// Sin jugadas útiles y sin cartas para repartir: la partida no avanza más
+const isStuck = b => !isWon(b) && !b.stock.length && !usefulMoves(b).length;
+
+// ---------- Solucionador ----------
+// Búsqueda en profundidad con las jugadas útiles en orden y repartir como última opción.
+// Límite por nodos, no por tiempo: el resultado es idéntico en cualquier navegador.
+const NODE_LIMIT = 1500;
+const MAX_VARIANTS = 30;
+const MAX_DEPTH = 500;
+
+function cloneBoard(b) {
+  return { ns: b.ns, cols: b.cols.map(c => c.slice()), down: b.down.slice(), stock: b.stock.slice(), found: b.found.map(r => r.slice()), moves: b.moves };
+}
+
+function solveBoard(start, nodeLimit) {
+  const b = cloneBoard(start);
+  const seen = new Set();
+  const path = [];
+  let nodes = 0, aborted = false, best = b.found.length;
+
+  // Huella numérica del estado (dos mezclas de 32 bits): mucho más rápida que armar un texto
+  function keyOf() {
+    let h1 = 0x9E3779B9 ^ b.stock.length, h2 = 0x85EBCA6B + b.stock.length;
+    for (let i = 0; i < NCOLS; i++) {
+      const col = b.cols[i];
+      h1 = Math.imul(h1 ^ (200 + b.down[i]), 0x01000193);
+      h2 = Math.imul(h2 + 200 + b.down[i], 0x5BD1E995) ^ (h2 >>> 15);
+      for (let p = b.down[i]; p < col.length; p++) {
+        h1 = Math.imul(h1 ^ col[p], 0x01000193);
+        h2 = Math.imul(h2 + col[p] + 1, 0x5BD1E995) ^ (h2 >>> 15);
+      }
+    }
+    return (h1 >>> 0) * 2097152 + (h2 & 0x1FFFFF);
+  }
+
+  function search() {
+    if (isWon(b)) return true;
+    if (nodes >= nodeLimit) { aborted = true; return false; }
+    if (path.length >= MAX_DEPTH) return false;
+    nodes++;
+    const key = keyOf();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    const steps = usefulMoves(b);
+    if (canDeal(b)) steps.push({ k: 'deal' });
+    for (const s of steps) {
+      const rec = applyStep(b, s);
+      if (!rec) continue;
+      path.push(s);
+      if (b.found.length > best) best = b.found.length;
+      if (search()) return true;
+      path.pop();
+      undoStep(b, rec);
+      if (aborted) return false;
+    }
+    return false;
+  }
+
+  const won = search();
+  return { won, nodes, best, solution: won ? path.map(s => (s.k ? { k: s.k } : { i: s.i, n: s.n, j: s.j })) : null };
+}
+
+function replaySolution(b, solution) {
+  for (const s of solution) if (!applyStep(b, s)) return false;
+  return isWon(b);
+}
+
+// Prueba variantes en orden y usa la primera con solución comprobada; si ninguna se resuelve
+// dentro del límite, la que más escaleras completó.
+function pickVariant(seedOf, ns, maxVariants, nodeLimit) {
+  let top = { variant: 0, seed: seedOf(0), solved: false, best: -1 };
+  for (let v = 0; v < maxVariants; v++) {
+    const seed = seedOf(v);
+    const r = solveBoard(dealFromSeed(seed, ns), nodeLimit);
+    if (r.won) return { variant: v, seed, solved: true, best: 8 };
+    if (r.best > top.best) top = { variant: v, seed, solved: false, best: r.best };
+  }
+  return top;
+}
+
+const DAILY_SUITS = 2;
+const dailySeed = (d, v) => (Math.imul(d, 2654435761) + Math.imul(v, 40503) + 104) | 0;
+const dailyVariant = d => pickVariant(v => dailySeed(d, v), DAILY_SUITS, MAX_VARIANTS, NODE_LIMIT);
+
+// ---------- Fechas y guardado ----------
+const LAUNCH_DAY = Date.UTC(2026, 10, 6) / 864e5;   // el reto #1
+function dayIndex() {
+  const n = new Date();
+  return Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) / 864e5;
+}
+function load(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+}
+function save(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+}
+
+// La caché solo evita repetir la búsqueda: guarda exactamente lo que la búsqueda devolvería
+function dailyChoice(d) {
+  const cached = load('spiderVariante', null);
+  if (cached && cached.day === d && Number.isInteger(cached.variant)) {
+    return { variant: cached.variant, seed: dailySeed(d, cached.variant), solved: !!cached.solved };
+  }
+  const pick = dailyVariant(d);
+  save('spiderVariante', { day: d, variant: pick.variant, solved: pick.solved });
+  return pick;
+}
+
+// ---------- Medidas ----------
+function computeLayout(W, H) {
+  const gap = W < 420 ? 2 : Math.round(Math.min(W * .012, 8));
+  const w = Math.max(22, Math.min(Math.floor((W - 9 * gap) / NCOLS), Math.floor(H / 5.6), 84));
+  const h = Math.round(w * 1.4);
+  const rowGap = Math.max(6, gap * 2);
+  const fs = Math.max(11, Math.round(Math.min(w * .42, 24)));
+  return {
+    W, H, w, h, gap, rowGap, fs,
+    ox: Math.floor((W - NCOLS * w - 9 * gap) / 2),
+    tabY: h + rowGap,
+    upStd: Math.max(Math.round(h * .27), Math.round(fs * 1.3)),
+    upMin: Math.ceil(fs * 1.1),
+    downStd: Math.round(h * .12),
+    downMin: Math.max(3, Math.round(h * .06)),
+  };
+}
+
+// Separación de una columna: se aprieta sola para que quepa siempre en la altura disponible.
+// Primero las visibles hasta el mínimo legible, luego las ocultas y, si aún falta, otra vez las visibles.
+function columnSpacing(L, nDown, nUp) {
+  const avail = Math.max(0, L.H - L.tabY - L.h);
+  const gaps = Math.max(0, nUp - 1);
+  let dn = L.downStd, un = L.upStd;
+  const over = () => dn * nDown + un * gaps > avail;
+  if (over() && gaps) un = Math.max(L.upMin, (avail - dn * nDown) / gaps);
+  if (over() && nDown) dn = Math.max(L.downMin, (avail - un * gaps) / nDown);
+  if (over() && gaps) un = Math.max(1, (avail - dn * nDown) / gaps);
+  if (over() && nDown) dn = Math.max(0, (avail - un * gaps) / nDown);
+  return { dn, un };
+}
+
+// ---------- Estado ----------
+const $ = id => document.getElementById(id);
+const REDUCED = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+const tableEl = $('table');
+
+let mode = 'daily', day = dayIndex();
+let state = null, L = null;
+let started = false, lastTick = 0, confirmTimer = null, confirming = false;
+let drag = null, hintTimer = null, hintIdx = 0, faceSuits = 0;
+let soundOn = load('spiderSonido', true);
+let stats = load('spiderStats', null) || { played: 0, streak: 0, maxStreak: 0, lastDay: null, bestTime: null, free: {}, lastSuits: 1 };
+const cardEls = [];
+const slotEls = { cols: [], found: [] };
+let stockHit, stockCount, stockSlot, settleTimer;
+
+function freeStats(ns) {
+  stats.free = stats.free || {};
+  return stats.free[ns] || (stats.free[ns] = { wins: 0, best: null });
+}
+
+function persist() {
+  if (!state) return;
+  if (mode === 'daily') save('spiderDaily', { day, ...state });
+  else save('spiderLibre', state);
+}
+
+const usable = s => s && s.board && validBoard(s.board) && Array.isArray(s.undo);
+
+function startDaily() {
+  if (state) persist();
+  mode = 'daily';
+  day = dayIndex();
+  const saved = load('spiderDaily', null);
+  if (usable(saved) && saved.day === day) {
+    state = saved;
+  } else {
+    const pick = dailyChoice(day);
+    state = { seed: pick.seed, ns: DAILY_SUITS, variant: pick.variant, solved: pick.solved, board: dealFromSeed(pick.seed, DAILY_SUITS), undo: [], elapsed: 0, done: false, rank: '' };
+  }
+  begin();
+  persist();
+  if (state.done) showWin();
+}
+
+function newFreeState(ns) {
+  const seed = (Math.random() * 4294967296) | 0;
+  return { seed, ns, board: dealFromSeed(seed, ns), undo: [], elapsed: 0, done: false };
+}
+
+function startFree(ns) {
+  if (state) persist();
+  mode = 'free';
+  const saved = ns ? null : load('spiderLibre', null);
+  if (ns) { stats.lastSuits = ns; save('spiderStats', stats); }
+  state = usable(saved) && !saved.done ? saved : newFreeState(ns || stats.lastSuits || 1);
+  begin();
+  persist();
+}
+
+function begin() {
+  drag = null;
+  started = !state.done && (state.board.moves > 0 || state.elapsed > 0);
+  lastTick = performance.now();
+  resetConfirm();
+  clearHint();
+  $('win-modal').classList.remove('show');
+  $('new-modal').classList.remove('show');
+  $('tab-daily').classList.toggle('active', mode === 'daily');
+  $('tab-free').classList.toggle('active', mode === 'free');
+  tableEl.classList.add('noanim');
+  render();
+  setTimeout(() => tableEl.classList.remove('noanim'), 60);
+  updateHud();
+}
+
+// Reiniciar vuelve al reparto inicial; el reloj y las jugadas siguen contando para que sea justo
+function restartDeal() {
+  if (state.done) return;
+  const moves = state.board.moves;
+  state.board = dealFromSeed(state.seed, state.board.ns);
+  state.board.moves = moves;
+  state.undo = [];
+  clearHint();
+  render();
+  updateHud();
+  persist();
+  beep(330, .09);
+}
+
+// ---------- Dibujo ----------
+const colX = (L, i) => L.ox + i * (L.w + L.gap);
+
+function buildTable() {
+  const slot = text => {
+    const el = document.createElement('div');
+    el.className = 'slot';
+    el.textContent = text;
+    tableEl.appendChild(el);
+    return el;
+  };
+  for (let k = 0; k < 8; k++) slotEls.found.push(slot('K'));
+  stockSlot = slot('');
+  for (let i = 0; i < NCOLS; i++) slotEls.cols.push(slot(''));
+  for (let c = 0; c < 104; c++) {
+    const el = document.createElement('div');
+    el.className = 'pc';
+    el.dataset.c = c;
+    el._x = el._y = NaN;
+    tableEl.appendChild(el);
+    cardEls.push(el);
+  }
+  stockHit = document.createElement('button');
+  stockHit.id = 'stock-hit';
+  stockCount = document.createElement('span');
+  stockCount.id = 'stock-count';
+  stockHit.appendChild(stockCount);
+  tableEl.appendChild(stockHit);
+}
+
+// El palo de cada carta depende del modo, así que las caras se rehacen al cambiar de 1, 2 o 4 palos
+function paintFaces(ns) {
+  if (faceSuits === ns) return;
+  faceSuits = ns;
+  cardEls.forEach((el, c) => {
+    const s = suitOf(c, ns), r = RANKS[rankOf(c)];
+    el.className = el.className.replace(/\bs\d\b/g, '').trim() + ' s' + s;
+    el.dataset.name = `${r} de ${SUIT_NAMES[s]}`;
+    el.innerHTML = `<div class="face"><div class="corner">${r}<i>${SUITS[s]}</i></div><div class="big">${SUITS[s]}</div></div><div class="back"></div>`;
+  });
+}
+
+function measure() {
+  L = computeLayout(tableEl.clientWidth, tableEl.clientHeight);
+  tableEl.style.setProperty('--w', L.w + 'px');
+  tableEl.style.setProperty('--h', L.h + 'px');
+  tableEl.style.setProperty('--fs', L.fs + 'px');
+  const place = (el, x, y) => { el.style.transform = `translate(${x}px, ${y}px)`; };
+  for (let k = 0; k < 8; k++) place(slotEls.found[k], colX(L, k), 0);
+  place(stockSlot, colX(L, NCOLS - 1), 0);
+  for (let i = 0; i < NCOLS; i++) place(slotEls.cols[i], colX(L, i), L.tabY);
+  // El botón del mazo cubre las dos últimas columnas: ahí se abren en abanico los repartos que quedan
+  place(stockHit, colX(L, NCOLS - 2), 0);
+  stockHit.style.width = (2 * L.w + L.gap) + 'px';
+}
+
+function putCard(c, x, y, z, up, focusable) {
+  const el = cardEls[c];
+  const moved = el._x !== x || el._y !== y;
+  el._x = x;
+  el._y = y;
+  el._z = z;
+  el.classList.toggle('up', up);
+  el.classList.remove('drag');
+  el.style.transform = `translate(${x}px, ${y}px)`;
+  el.style.zIndex = moved ? 500 + z : z;
+  el.setAttribute('aria-label', up ? el.dataset.name : 'Carta boca abajo');
+  if (focusable) el.setAttribute('tabindex', '0');
+  else el.removeAttribute('tabindex');
+}
+
+function render() {
+  if (!L || !L.w) measure();
+  const b = state.board;
+  paintFaces(b.ns);
+  for (let i = 0; i < NCOLS; i++) {
+    const col = b.cols[i], d = b.down[i];
+    const { dn, un } = columnSpacing(L, d, col.length - d);
+    let y = L.tabY;
+    col.forEach((c, k) => {
+      const up = k >= d;
+      putCard(c, colX(L, i), y, 10 + k, up, up);
+      y += up ? un : dn;
+    });
+  }
+  // Mazo: un montoncito por reparto pendiente, el próximo a la derecha
+  const groups = b.stock.length / 10;
+  const step = Math.min((L.w + L.gap) / 4, L.w * .3);
+  b.stock.forEach((c, k) => {
+    const g = Math.floor(k / 10);
+    putCard(c, colX(L, NCOLS - 1) - (groups - 1 - g) * step, 0, k + 1, false, false);
+  });
+  b.found.forEach((run, k) => run.forEach((c, r) => putCard(c, colX(L, k), 0, r + 1, true, false)));
+  stockCount.textContent = groups || '';
+  stockCount.style.display = groups ? 'block' : 'none';
+  stockHit.setAttribute('aria-label', groups ? `Mazo: repartir una carta a cada columna, quedan ${groups} repartos` : 'Mazo vacío');
+  clearTimeout(settleTimer);
+  settleTimer = setTimeout(() => cardEls.forEach(el => { if (!el.classList.contains('drag')) el.style.zIndex = el._z; }), 220);
+}
+
+const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+const suitsLabel = ns => (ns === 1 ? '1 palo' : `${ns} palos`);
+
+function updateHud() {
+  const b = state.board;
+  $('label').textContent = mode === 'daily' ? `Reto #${day - LAUNCH_DAY + 1} · ${suitsLabel(b.ns)}` : `Libre · ${suitsLabel(b.ns)}`;
+  $('score').textContent = `⭐ ${scoreOf(b)}`;
+  $('moves').textContent = `🔢 ${b.moves}`;
+  $('clock').textContent = `⏱ ${fmt(state.elapsed)}`;
+  $('btn-undo').disabled = !state.undo.length || state.done;
+  $('btn-hint').disabled = state.done;
+  if (!confirming) $('btn-restart').textContent = mode === 'daily' ? '🔄 Reiniciar' : '🆕 Nueva';
+  const showResult = state.done && mode === 'daily';
+  $('btn-restart').style.display = showResult ? 'none' : 'block';
+  $('btn-result').style.display = showResult ? 'block' : 'none';
+}
+
+// El reloj corre desde la primera jugada y se detiene si la pestaña no está visible
+function tick(now) {
+  requestAnimationFrame(tick);
+  if (started && !state.done && !document.hidden) {
+    const delta = (now - lastTick) / 1000;
+    if (delta > 0 && delta < 2) {
+      const before = Math.floor(state.elapsed);
+      state.elapsed += delta;
+      if (Math.floor(state.elapsed) !== before) updateHud();
+    }
+  }
+  lastTick = now;
+}
+setInterval(() => { if (started && state && !state.done) persist(); }, 5000);
+
+// ---------- Jugar ----------
+// Toda jugada real pasa por aquí: guarda cómo deshacerla, anima, suena y comprueba si se ganó
+function commit(rec, tone) {
+  if (!rec) return false;
+  if (!started) { started = true; lastTick = performance.now(); }
+  state.undo.push(rec);
+  clearHint();
+  render();
+  updateHud();
+  if (rec.done.length) {
+    [660, 830, 990].forEach((f, i) => setTimeout(() => beep(f, .1), i * 70));
+  } else if (tone) beep(tone, .06);
+  if (isWon(state.board)) finish();
+  else {
+    persist();
+    if (isStuck(state.board)) setTimeout(() => toast('No quedan jugadas útiles: usa Deshacer o empieza de nuevo'), 250);
+  }
+  return true;
+}
+
+function nope(c) {
+  const el = cardEls[c];
+  if (el) {
+    el.classList.remove('nope');
+    void el.offsetWidth;
+    el.classList.add('nope');
+    setTimeout(() => el.classList.remove('nope'), 300);
+  }
+  beep(150, .1);
+  if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function tapCard(c) {
+  if (state.done) return;
+  const src = sourceOf(state.board, c);
+  if (!src) return;
+  const m = src.ok && bestDestination(state.board, src);
+  if (!m) {
+    nope(c);
+    if (!src.ok) toast('Solo se mueven juntas las cartas en orden y del mismo palo');
+    return;
+  }
+  commit(applyMove(state.board, m), 420);
+}
+
+function tapStock() {
+  if (state.done) return;
+  const b = state.board;
+  if (!b.stock.length) return;
+  if (!canDeal(b)) {
+    beep(150, .1);
+    toast('Llena las columnas vacías antes de repartir');
+    return;
+  }
+  commit(dealRow(b), 300);
+}
+
+function undoLast() {
+  if (state.done || !state.undo.length) return;
+  undoStep(state.board, state.undo.pop());
+  clearHint();
+  render();
+  updateHud();
+  persist();
+  beep(260, .05);
+}
+
+// Cada toque de Pista muestra la siguiente jugada útil; si no hay, sugiere repartir
+function clearHint() {
+  clearTimeout(hintTimer);
+  hintIdx = 0;
+  if (!stockHit) return;
+  cardEls.forEach(el => el.classList.remove('hint'));
+  slotEls.cols.forEach(el => el.classList.remove('hint'));
+  stockHit.classList.remove('hint');
+}
+
+function showHint() {
+  if (state.done) return;
+  const b = state.board;
+  const list = usefulMoves(b);
+  const idx = hintIdx;
+  clearHint();
+  if (list.length) {
+    const m = list[idx % list.length];
+    hintIdx = idx + 1;
+    const col = b.cols[m.i];
+    col.slice(col.length - m.n).forEach(c => cardEls[c].classList.add('hint'));
+    const dest = b.cols[m.j];
+    if (dest.length) cardEls[dest[dest.length - 1]].classList.add('hint');
+    else slotEls.cols[m.j].classList.add('hint');
+    if (list.length > 1) toast(`Pista ${idx % list.length + 1} de ${list.length}: toca otra vez para ver otra`);
+  } else if (canDeal(b)) {
+    stockHit.classList.add('hint');
+    toast('No hay jugadas útiles: reparte del mazo');
+  } else if (b.stock.length) {
+    toast('Llena las columnas vacías para poder repartir');
+  } else {
+    toast('No quedan jugadas útiles: usa Deshacer o empieza de nuevo');
+  }
+  hintTimer = setTimeout(() => { const keep = hintIdx; clearHint(); hintIdx = keep; }, 2200);
+  beep(520, .05);
+}
+
+function resetConfirm() {
+  confirming = false;
+  clearTimeout(confirmTimer);
+}
+
+// En el reto del día, dos toques: un toque perdido no debe borrar la partida
+function pressRestart() {
+  if (mode === 'free') {
+    document.querySelectorAll('.suit-btn').forEach(el => el.classList.toggle('current', +el.dataset.ns === state.board.ns));
+    $('new-modal').classList.add('show');
+    return;
+  }
+  const dealt = state.board.moves > 0 && !state.done;
+  if (dealt && !confirming) {
+    confirming = true;
+    $('btn-restart').textContent = '¿Seguro? Toca otra vez';
+    confirmTimer = setTimeout(() => { confirming = false; updateHud(); }, 3000);
+    return;
+  }
+  resetConfirm();
+  restartDeal();
+  updateHud();
+}
+
+// ---------- Arrastre ----------
+tableEl.addEventListener('pointerdown', e => {
+  if (drag || state.done || e.button > 0) return;
+  if (e.target.closest('#stock-hit')) { e.preventDefault(); tapStock(); return; }
+  const el = e.target.closest('.pc');
+  if (!el) return;
+  const card = +el.dataset.c;
+  const src = sourceOf(state.board, card);
+  if (!src) return;
+  e.preventDefault();
+  if (!src.ok) { tapCard(card); return; }
+  try { tableEl.setPointerCapture(e.pointerId); } catch {}
+  const col = state.board.cols[src.i];
+  drag = { id: e.pointerId, card, src, list: col.slice(col.length - src.n), sx: e.clientX, sy: e.clientY, dx: 0, dy: 0, moving: false };
+});
+
+tableEl.addEventListener('pointermove', e => {
+  if (!drag || e.pointerId !== drag.id) return;
+  drag.dx = e.clientX - drag.sx;
+  drag.dy = e.clientY - drag.sy;
+  if (!drag.moving) {
+    if (Math.hypot(drag.dx, drag.dy) < 7) return;
+    drag.moving = true;
+    drag.list.forEach((c, k) => {
+      cardEls[c].classList.add('drag');
+      cardEls[c].style.zIndex = 1000 + k;
+    });
+  }
+  drag.list.forEach(c => {
+    const el = cardEls[c];
+    el.style.transform = `translate(${el._x + drag.dx}px, ${el._y + drag.dy}px)`;
+  });
+});
+
+function overlap(ax, ay, bx, by, bw, bh, w, h) {
+  const ox = Math.min(ax + w, bx + bw) - Math.max(ax, bx);
+  const oy = Math.min(ay + h, by + bh) - Math.max(ay, by);
+  return ox > 0 && oy > 0 ? ox * oy : 0;
+}
+
+// Columnas que toca la carta soltada, de la que más cubre a la que menos
+function dropTargets(x, y) {
+  const out = [];
+  for (let j = 0; j < NCOLS; j++) {
+    const area = overlap(x, y, colX(L, j) - L.gap / 2, L.tabY, L.w + L.gap, L.H - L.tabY, L.w, L.h);
+    if (area) out.push({ j, area });
+  }
+  return out.sort((a, b) => b.area - a.area);
+}
+
+function endDrag(e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  const d = drag;
+  drag = null;
+  if (!d.moving) { tapCard(d.card); return; }
+  const head = cardEls[d.list[0]];
+  for (const t of dropTargets(head._x + d.dx, head._y + d.dy)) {
+    if (t.j === d.src.i) continue;
+    const rec = applyMove(state.board, { i: d.src.i, n: d.src.n, j: t.j });
+    if (rec) { commit(rec, 420); return; }
+  }
+  returnCards(d);
+  const back = dropTargets(head._x + d.dx, head._y + d.dy);
+  if (!back.length || back[0].j !== d.src.i) nope(d.card);
+}
+
+// Forzar la marca de "movida" para que vuelva por encima de las demás
+function returnCards(d) {
+  d.list.forEach(c => { cardEls[c]._x = NaN; });
+  render();
+}
+
+tableEl.addEventListener('pointerup', endDrag);
+tableEl.addEventListener('pointercancel', e => {
+  if (!drag || e.pointerId !== drag.id) return;
+  const d = drag;
+  drag = null;
+  if (d.moving) returnCards(d);
+});
+
+tableEl.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  e.preventDefault();
+  if (e.target === stockHit) tapStock();
+  else if (e.target.dataset && e.target.dataset.c !== undefined) tapCard(+e.target.dataset.c);
+});
+
+document.addEventListener('keydown', e => {
+  if (document.querySelector('.modal.show') || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if ((k === 'z' && (e.ctrlKey || e.metaKey)) || (k === 'u' && !e.ctrlKey && !e.metaKey)) { e.preventDefault(); undoLast(); }
+  else if (e.ctrlKey || e.metaKey) return;
+  else if (k === 'p' || k === 'h') showHint();
+  else if (k === 'd') tapStock();
+});
+
+// ---------- Final ----------
+function finish() {
+  state.done = true;
+  clearHint();
+  if (mode === 'daily') {
+    stats.played++;
+    stats.streak = stats.lastDay === day - 1 ? stats.streak + 1 : 1;
+    stats.maxStreak = Math.max(stats.maxStreak, stats.streak);
+    stats.lastDay = day;
+    if (stats.bestTime === null || state.elapsed < stats.bestTime) stats.bestTime = state.elapsed;
+  } else {
+    const f = freeStats(state.board.ns);
+    f.wins++;
+    if (f.best === null || state.elapsed < f.best) f.best = state.elapsed;
+  }
+  save('spiderStats', stats);
+  persist();
+  updateHud();
+  [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, .16), 250 + i * 110));
+  if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
+  celebrate();
+  if (mode === 'daily') sendResult();
+  setTimeout(showWin, REDUCED ? 200 : 1000);
+}
+
+function celebrate() {
+  if (REDUCED) return;
+  for (let i = 0; i < 26; i++) {
+    const el = document.createElement('div');
+    el.className = 'conf';
+    const s = i % 4;
+    el.textContent = SUITS[s];
+    el.style.color = s % 2 ? '#ff4d6d' : '#ffd000';
+    el.style.left = `${Math.random() * 100}%`;
+    el.style.animationDelay = `${Math.random() * .5}s`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2000);
+  }
+}
+
+function statBox(value, label) {
+  return `<div class="stat"><b>${value}</b><span>${label}</span></div>`;
+}
+
+function rankText({ total, beaten }) {
+  if (total < JuegaYaDiario.MIN_JUGADORES) return '🥇 Estás entre los primeros en resolver el reto de hoy';
+  if (beaten === 0) return `👥 Hoy lo resolvieron ${total} jugadores`;
+  return `👥 Hoy lo resolvieron ${total} jugadores. Tu tiempo superó al de ${beaten}`;
+}
+
+// Valor del reto diario: segundos hasta ganar (menos es mejor), con una décima
+const resultValue = elapsed => Math.min(86400, Math.max(10, Math.round(elapsed * 10) / 10));
+
+// Solo se envía al ganar por primera vez: al recargar se muestra el texto guardado
+async function sendResult() {
+  const run = state;
+  const result = await JuegaYaDiario.enviar('solitario-spider', resultValue(run.elapsed));
+  if (!result) return;
+  run.rank = rankText(result);
+  if (run === state) {
+    $('win-rank').textContent = run.rank;
+    persist();
+  }
+}
+
+function showWin() {
+  if (!state.done) return;
+  const b = state.board;
+  $('win-title').textContent = '¡Spider resuelto!';
+  if (mode === 'daily') {
+    $('win-sub').textContent = `Reto #${day - LAUNCH_DAY + 1} · ${suitsLabel(b.ns)}`;
+    $('win-stats').innerHTML = statBox(fmt(state.elapsed), 'Tiempo') + statBox(b.moves, 'Jugadas') + statBox(scoreOf(b), 'Puntos') + statBox(stats.streak, 'Racha');
+    $('win-rank').textContent = state.rank || '';
+    $('btn-primary').textContent = '♾️ Jugar en modo libre';
+    $('btn-primary').onclick = () => startFree(0);
+    $('next-in').style.display = 'block';
+    updateCountdown();
+  } else {
+    const f = freeStats(b.ns);
+    $('win-sub').textContent = `${suitsLabel(b.ns)} · partidas ganadas: ${f.wins}`;
+    $('win-stats').innerHTML = statBox(fmt(state.elapsed), 'Tiempo') + statBox(b.moves, 'Jugadas') + statBox(scoreOf(b), 'Puntos') + statBox(fmt(f.best), 'Mejor');
+    $('win-rank').textContent = '';
+    $('btn-primary').textContent = '🆕 Nueva partida';
+    $('btn-primary').onclick = () => startFree(b.ns);
+    $('next-in').style.display = 'none';
+  }
+  $('win-modal').classList.add('show');
+}
+
+function updateCountdown() {
+  const now = new Date();
+  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  const s = Math.max(0, Math.floor((next - now) / 1000));
+  const pad = v => String(v).padStart(2, '0');
+  $('next-in').textContent = `Próximo reto en ${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
+}
+setInterval(updateCountdown, 1000);
+
+function shareText() {
+  const url = 'https://www.juegaya.app/juego/solitario-spider?utm_source=compartido';
+  const b = state.board;
+  if (mode === 'daily') {
+    return `🕷️ Solitario Spider #${day - LAUNCH_DAY + 1} (${suitsLabel(b.ns)})\n⏱ ${fmt(state.elapsed)} · 🔢 ${b.moves} jugadas · ⭐ ${scoreOf(b)} · 🔥 Racha: ${stats.streak}\n\n¿Puedes superarme?\n${url}`;
+  }
+  return `🕷️ Solitario Spider (${suitsLabel(b.ns)}): gané en ${fmt(state.elapsed)} con ${b.moves} jugadas\n\n¿Puedes superarme?\n${url}`;
+}
+$('btn-share').addEventListener('click', async () => {
+  const text = shareText();
+  if (navigator.share) {
+    try { await navigator.share({ text }); return; } catch (err) { if (err.name === 'AbortError') return; }
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('¡Copiado! Pégalo donde quieras');
+  } catch {
+    toast('No se pudo copiar');
+  }
+});
+
+let toastTimer;
+function toast(msg) {
+  $('toast').textContent = msg;
+  $('toast').classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2000);
+}
+
+// ---------- Sonido ----------
+let audio;
+function beep(freq, dur) {
+  if (!soundOn) return;
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.type = 'triangle';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(.1, audio.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, audio.currentTime + dur);
+    o.connect(g).connect(audio.destination);
+    o.start();
+    o.stop(audio.currentTime + dur);
+  } catch {}
+}
+
+// ---------- Botones e inicio ----------
+$('tab-daily').addEventListener('click', () => { if (mode !== 'daily') startDaily(); });
+$('tab-free').addEventListener('click', () => { if (mode !== 'free') startFree(0); });
+$('btn-undo').addEventListener('click', undoLast);
+$('btn-hint').addEventListener('click', showHint);
+$('btn-restart').addEventListener('click', pressRestart);
+$('btn-result').addEventListener('click', showWin);
+$('win-modal').addEventListener('click', e => { if (e.target === $('win-modal')) $('win-modal').classList.remove('show'); });
+$('new-modal').addEventListener('click', e => {
+  const btn = e.target.closest('.suit-btn');
+  if (btn) startFree(+btn.dataset.ns);
+  else if (e.target === $('new-modal') || e.target === $('close-new')) $('new-modal').classList.remove('show');
+});
+$('btn-help').addEventListener('click', () => $('help-modal').classList.add('show'));
+$('close-help').addEventListener('click', () => $('help-modal').classList.remove('show'));
+$('btn-sound').addEventListener('click', () => {
+  soundOn = !soundOn;
+  save('spiderSonido', soundOn);
+  $('btn-sound').textContent = soundOn ? '🔊' : '🔇';
+});
+$('btn-sound').textContent = soundOn ? '🔊' : '🔇';
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) persist();
+  else if (mode === 'daily' && dayIndex() !== day) startDaily();
+  else lastTick = performance.now();
+});
+addEventListener('pagehide', persist);
+
+buildTable();
+measure();
+new ResizeObserver(() => {
+  measure();
+  if (!state) return;
+  tableEl.classList.add('noanim');
+  render();
+  setTimeout(() => tableEl.classList.remove('noanim'), 60);
+}).observe(tableEl);
+requestAnimationFrame(tick);
+startDaily();
+if (!load('spiderVioAyuda', false)) {
+  $('help-modal').classList.add('show');
+  save('spiderVioAyuda', true);
+}
+</script>
+</body>
+</html>

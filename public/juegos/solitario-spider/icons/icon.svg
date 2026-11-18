@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0f6b4f"/><stop offset="1" stop-color="#10122e"/></linearGradient>
+  </defs>
+  <rect width="256" height="256" fill="url(#bg)"/>
+  <!-- Escalera de cartas solapadas, como una columna del juego -->
+  <g font-family="Arial, Helvetica, sans-serif" font-weight="900">
+    <rect x="34" y="22" width="118" height="160" rx="12" fill="#fdfbf4" stroke="#14142a" stroke-opacity=".35" stroke-width="2"/>
+    <text x="44" y="56" font-size="34" fill="#14142a">K</text>
+    <path transform="translate(88 44) scale(.36)" d="M0-34C-8-20-34-6-34 12C-34 24-24 31-14 29C-9 28-5 25-3 21C-4 30-7 36-12 40H12C7 36 4 30 3 21C5 25 9 28 14 29C24 31 34 24 34 12C34-6 8-20 0-34Z" fill="#14142a"/>
+    <rect x="34" y="66" width="118" height="160" rx="12" fill="#fdfbf4" stroke="#14142a" stroke-opacity=".35" stroke-width="2"/>
+    <text x="44" y="100" font-size="34" fill="#14142a">Q</text>
+    <path transform="translate(92 88) scale(.36)" d="M0-34C-8-20-34-6-34 12C-34 24-24 31-14 29C-9 28-5 25-3 21C-4 30-7 36-12 40H12C7 36 4 30 3 21C5 25 9 28 14 29C24 31 34 24 34 12C34-6 8-20 0-34Z" fill="#14142a"/>
+    <rect x="34" y="110" width="118" height="160" rx="12" fill="#fdfbf4" stroke="#14142a" stroke-opacity=".35" stroke-width="2"/>
+    <text x="44" y="144" font-size="34" fill="#14142a">J</text>
+    <path transform="translate(78 132) scale(.36)" d="M0-34C-8-20-34-6-34 12C-34 24-24 31-14 29C-9 28-5 25-3 21C-4 30-7 36-12 40H12C7 36 4 30 3 21C5 25 9 28 14 29C24 31 34 24 34 12C34-6 8-20 0-34Z" fill="#14142a"/>
+    <path transform="translate(104 196) scale(.95)" d="M0-34C-8-20-34-6-34 12C-34 24-24 31-14 29C-9 28-5 25-3 21C-4 30-7 36-12 40H12C7 36 4 30 3 21C5 25 9 28 14 29C24 31 34 24 34 12C34-6 8-20 0-34Z" fill="#14142a"/>
+  </g>
+  <!-- Araña colgando de su hilo -->
+  <line x1="200" y1="0" x2="200" y2="118" stroke="#ffd000" stroke-width="3"/>
+  <g stroke="#ffd000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M190 128L166 112L158 92"/><path d="M188 138L160 134L146 118"/><path d="M189 147L162 156L150 176"/><path d="M193 154L176 172L172 194"/>
+    <path d="M210 128L234 112L242 92"/><path d="M212 138L240 134L254 118"/><path d="M211 147L238 156L250 176"/><path d="M207 154L224 172L228 194"/>
+  </g>
+  <circle cx="200" cy="124" r="11" fill="#ffd000"/>
+  <ellipse cx="200" cy="146" rx="16" ry="19" fill="#ffd000"/>
+  <circle cx="195" cy="122" r="2.6" fill="#10122e"/><circle cx="205" cy="122" r="2.6" fill="#10122e"/>
+</svg>
